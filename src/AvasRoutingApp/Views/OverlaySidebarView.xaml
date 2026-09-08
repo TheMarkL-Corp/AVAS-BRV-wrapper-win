@@ -1,0 +1,104 @@
+<UserControl x:Class="AvasRoutingApp.Views.OverlaySidebarView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:views="clr-namespace:AvasRoutingApp.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="380">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+        <Style x:Key="SidebarActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#3D405B" />
+            <Setter Property="Foreground" Value="#EDF2F4" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#4F5272" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="#1E1E24" Width="380">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Sidebar Header: Title, Controls, Telemetry Summary -->
+        <Border Grid.Row="0" Background="#2B2D42" BorderBrush="#3D405B" BorderThickness="0,0,0,1" Padding="14,12">
+            <StackPanel>
+                <DockPanel>
+                    <TextBlock Text="AVAS-223 TX PREVIEWS" FontWeight="Bold" Foreground="#4895EF" FontSize="14" VerticalAlignment="Center" />
+                    <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="#14151B" CornerRadius="4" Padding="6,2">
+                        <TextBlock Text="chip_0 only" Foreground="#8D99AE" FontSize="11" FontWeight="SemiBold" />
+                    </Border>
+                </DockPanel>
+
+                <TextBlock Text="Strict Filter: VID 105, PID 81, chip_0" Foreground="#8D99AE" FontSize="11" Margin="0,3,0,10" />
+
+                <!-- Action Toolbar: Discover / Refresh, Start All, Stop All -->
+                <WrapPanel Margin="0,0,0,8">
+                    <Button Content="🔄 Discover" Command="{Binding RefreshDevicesCommand}" Style="{StaticResource SidebarActionButtonStyle}" ToolTip="Discover and restart encoder preview streams" />
+                    <Button Content="⏹ Stop All" Command="{Binding StopAllStreamsCommand}" Style="{StaticResource SidebarActionButtonStyle}" ToolTip="Stop all active preview streams" />
+                    <Button Content="▶ Start All" Command="{Binding StartAllStreamsCommand}" Style="{StaticResource SidebarActionButtonStyle}" ToolTip="Start streaming all discovered encoders" />
+                </WrapPanel>
+
+                <!-- Stream & Multicast Telemetry Summary -->
+                <Border Background="#1E1E24" CornerRadius="4" Padding="8,6" Margin="0,4,0,0" BorderThickness="1" BorderBrush="#3D405B">
+                    <StackPanel>
+                        <DockPanel>
+                            <TextBlock Text="Active Encoders:" Foreground="#8D99AE" FontSize="11" />
+                            <TextBlock HorizontalAlignment="Right" Foreground="#EDF2F4" FontWeight="SemiBold" FontSize="11">
+                                <Run Text="{Binding ActiveStreamCount, Mode=OneWay}" Foreground="#4CAF50" />
+                                <Run Text=" / " />
+                                <Run Text="{Binding DiscoveredEncoderCount, Mode=OneWay}" />
+                            </TextBlock>
+                        </DockPanel>
+                        <TextBlock Text="{Binding MulticastPoolRangeText, Mode=OneWay}" Foreground="#8D99AE" FontSize="10" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- Sidebar Body: Scrollable Card List -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="12">
+            <StackPanel>
+                <!-- Empty State Notice -->
+                <Border Background="#2B2D42" CornerRadius="6" Padding="16" Margin="0,12,0,0" BorderBrush="#3D405B" BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding EncoderCards.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="📡" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                        <TextBlock Text="No active AVAS-223 chip_0 streams" FontWeight="Bold" Foreground="#EDF2F4" FontSize="12" HorizontalAlignment="Center" />
+                        <TextBlock Text="Click '🔄 Discover' to scan the SDVoE Control Server for connected encoders." Foreground="#8D99AE" FontSize="11" TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Card Collection ItemsControl -->
+                <ItemsControl ItemsSource="{Binding EncoderCards}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <views:EncoderCardView />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Sidebar Footer: Status bar -->
+        <Border Grid.Row="2" Background="#14151B" BorderBrush="#3D405B" BorderThickness="0,1,0,0" Padding="10,6">
+            <TextBlock Text="{Binding StatusText}" Foreground="#8D99AE" FontSize="10" TextTrimming="CharacterEllipsis" />
+        </Border>
+    </Grid>
+</UserControl>

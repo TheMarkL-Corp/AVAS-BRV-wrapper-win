@@ -1,0 +1,80 @@
+<UserControl x:Class="AvasRoutingApp.Views.EncoderCardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="260" d:DesignWidth="350">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+    </UserControl.Resources>
+
+    <Border Background="#2B2D42" BorderBrush="#3D405B" BorderThickness="1" CornerRadius="6" Margin="0,0,0,12" Padding="10">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="180" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Card Header: Device Name & Mode Badge -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                    <TextBlock Text="●" Foreground="#4895EF" Margin="0,0,6,0" VerticalAlignment="Center" FontSize="10" />
+                    <TextBlock Text="{Binding DeviceName}" FontWeight="Bold" Foreground="#EDF2F4" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="220" />
+                </StackPanel>
+                <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="#1E1E24" CornerRadius="3" Padding="6,2">
+                    <TextBlock Text="chip_0 (TX)" Foreground="#8D99AE" FontSize="10" FontWeight="SemiBold" />
+                </Border>
+            </DockPanel>
+
+            <!-- Video Viewport: Image bound to WriteableBitmap -->
+            <Border Grid.Row="1" Background="#14151B" CornerRadius="4" ClipToBounds="True" BorderBrush="#3D405B" BorderThickness="1">
+                <Grid>
+                    <!-- Live Decoded Video Viewport -->
+                    <Image Source="{Binding PreviewBitmap}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                    <!-- Waiting / Connecting Overlay -->
+                    <Border Background="#CC14151B" Visibility="{Binding IsWaitingForStream, Converter={StaticResource BoolToVisConverter}}"
+                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="CONNECTING..." Foreground="#4895EF" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                            <TextBlock Text="{Binding StatusMessage}" Foreground="#8D99AE" FontSize="10" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Card Footer: Telemetry & Live Color-Coded FPS Indicator -->
+            <Grid Grid.Row="2" Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Telemetry Details (MAC, Multicast IP:Port, Unicast IP, Resolution) -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Foreground="#8D99AE" FontSize="10" TextTrimming="CharacterEllipsis">
+                        <Run Text="MAC: " FontWeight="SemiBold" /><Run Text="{Binding MacAddress}" Foreground="#EDF2F4" />
+                    </TextBlock>
+                    <TextBlock Foreground="#8D99AE" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
+                        <Run Text="Mcast: " FontWeight="SemiBold" /><Run Text="{Binding MulticastEndpoint}" Foreground="#4895EF" />
+                    </TextBlock>
+                    <TextBlock Foreground="#8D99AE" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
+                        <Run Text="IP: " FontWeight="SemiBold" /><Run Text="{Binding UnicastIp}" />
+                        <Run Text=" | " />
+                        <Run Text="{Binding Resolution}" Foreground="#EDF2F4" />
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Right: Visual Color-Coded Live FPS Badge (Green >= 1.0, Amber < 1.0) -->
+                <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="4" Padding="8,4" Background="#1E1E24" BorderThickness="1" BorderBrush="#3D405B">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse Width="8" Height="8" Margin="0,0,6,0" VerticalAlignment="Center" Fill="{Binding FpsBrush}" />
+                        <TextBlock Text="{Binding FpsDisplay}" Foreground="{Binding FpsBrush}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

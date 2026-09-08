@@ -1,0 +1,16 @@
+## Build and Output
+**/bin/
+**/obj/
+**/publish/
+**/TestResults/
+
+## Visual Studio & IDE
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Runtime User Data
+**/WebView2_UserData/
+*.log
