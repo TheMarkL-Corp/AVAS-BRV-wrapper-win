@@ -1,0 +1,3059 @@
+﻿=== Method: VOIPS_LIB.THUMBNAIL::SetIPandPort ===
+  Locals:
+    [0] System.Boolean
+    [1] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x5941F0AF
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          THUMBNAIL::IsStart
+000E: stloc.0        
+000F: ldloc.0        
+0010: brfalse        -> 001C
+0015: ldc.i4.0       
+0016: stloc.1        
+0017: br             -> 0042
+001C: ldarg.0        
+001D: ldarg.2        
+001E: call           IPAddress::Parse
+0023: stfld          THUMBNAIL::IPA_MulticastAddress
+0028: ldarg.0        
+0029: ldarg.3        
+002A: stfld          THUMBNAIL::IPA_MulticastPort
+002F: ldarg.0        
+0030: ldarg.1        
+0031: call           IPAddress::Parse
+0036: stfld          THUMBNAIL::IPA_PCAddress
+003B: ldc.i4.1       
+003C: stloc.1        
+003D: br             -> 0042
+0042: ldloc.1        
+0043: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::Start ===
+  Locals:
+    [0] System.Boolean
+    [1] System.Exception
+0000: br.s           -> 0007
+0002: call           mtd_0x59521BFB
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          THUMBNAIL::UDP
+000E: ldnull         
+000F: ceq            
+0011: stloc.0        
+0012: ldloc.0        
+0013: brfalse        -> 0029
+0018: ldarg.0        
+0019: ldarg.0        
+001A: ldfld          THUMBNAIL::IPA_MulticastPort
+001F: newobj         UdpClient::.ctor
+0024: stfld          THUMBNAIL::UDP
+0029: nop            
+002A: nop            
+002B: ldarg.0        
+002C: ldfld          THUMBNAIL::UDP
+0031: ldarg.0        
+0032: ldfld          THUMBNAIL::IPA_MulticastAddress
+0037: ldarg.0        
+0038: ldfld          THUMBNAIL::IPA_PCAddress
+003D: callvirt       UdpClient::JoinMulticastGroup
+0042: nop            
+0043: nop            
+0044: leave          -> 005D
+0049: stloc.1        
+004A: nop            
+004B: ldloc.1        
+004C: callvirt       Exception::get_Message
+0051: call           Console::WriteLine
+0056: nop            
+0057: nop            
+0058: leave          -> 005D
+005D: ldarg.0        
+005E: ldc.i4.1       
+005F: stfld          THUMBNAIL::IsStart
+0064: ldarg.0        
+0065: call           THUMBNAIL::StartListening
+006A: nop            
+006B: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::Stop ===
+0000: br.s           -> 0007
+0002: call           mtd_0x3851BAC0
+0007: nop            
+0008: ldarg.0        
+0009: ldc.i4.0       
+000A: stfld          THUMBNAIL::IsStart
+000F: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::Close ===
+  Locals:
+    [0] System.Boolean
+    [1] System.Net.IPEndPoint
+    [2] System.Byte[]
+0000: br.s           -> 0007
+0002: call           mtd_0x3D12754B
+0007: nop            
+0008: ldarg.0        
+0009: ldc.i4.0       
+000A: stfld          THUMBNAIL::IsStart
+000F: ldarg.0        
+0010: ldfld          THUMBNAIL::UDP
+0015: ldnull         
+0016: cgt.un         
+0018: stloc.0        
+0019: ldloc.0        
+001A: brfalse        -> 0076
+001F: nop            
+0020: ldarg.0        
+0021: ldfld          THUMBNAIL::UDP
+0026: ldarg.0        
+0027: ldfld          THUMBNAIL::IPA_MulticastAddress
+002C: callvirt       UdpClient::DropMulticastGroup
+0031: nop            
+0032: nop            
+0033: ldsfld         IPAddress::Any
+0038: ldc.i4.0       
+0039: newobj         IPEndPoint::.ctor
+003E: stloc.1        
+003F: ldarg.0        
+0040: ldfld          THUMBNAIL::UDP
+0045: ldnull         
+0046: ldloca.s       V_1
+0048: callvirt       UdpClient::EndReceive
+004D: stloc.2        
+004E: nop            
+004F: leave          -> 005C
+0054: pop            
+0055: nop            
+0056: nop            
+0057: leave          -> 005C
+005C: ldarg.0        
+005D: ldfld          THUMBNAIL::UDP
+0062: callvirt       UdpClient::Close
+0067: nop            
+0068: ldarg.0        
+0069: ldnull         
+006A: stfld          THUMBNAIL::UDP
+006F: call           GC::Collect
+0074: nop            
+0075: nop            
+0076: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::GET_THUMBNAIL ===
+  Locals:
+    [0] VOIPS_LIB.THUMBNAIL+<GET_THUMBNAIL>d__14
+0000: br.s           -> 0007
+0002: call           mtd_0x6B7EB327
+0007: newobj         <GET_THUMBNAIL>d__14::.ctor
+000C: stloc.0        
+000D: ldloc.0        
+000E: call           AsyncTaskMethodBuilder`1::Create
+0013: stfld          <GET_THUMBNAIL>d__14::<>t__builder
+0018: ldloc.0        
+0019: ldarg.0        
+001A: stfld          <GET_THUMBNAIL>d__14::<>4__this
+001F: ldloc.0        
+0020: ldarg.1        
+0021: stfld          <GET_THUMBNAIL>d__14::DeviceIP
+0026: ldloc.0        
+0027: ldc.i4.m1      
+0028: stfld          <GET_THUMBNAIL>d__14::<>1__state
+002D: ldloc.0        
+002E: ldflda         <GET_THUMBNAIL>d__14::<>t__builder
+0033: ldloca.s       V_0
+0035: call           AsyncTaskMethodBuilder`1::Start
+003A: ldloc.0        
+003B: ldflda         <GET_THUMBNAIL>d__14::<>t__builder
+0040: call           AsyncTaskMethodBuilder`1::get_Task
+0045: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::SendMesage ===
+  Locals:
+    [0] System.Net.IPEndPoint
+0000: br.s           -> 0007
+0002: call           mtd_0x5C641831
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          THUMBNAIL::IPA_MulticastAddress
+000E: ldarg.0        
+000F: ldfld          THUMBNAIL::IPA_MulticastPort
+0014: newobj         IPEndPoint::.ctor
+0019: stloc.0        
+001A: ldarg.0        
+001B: ldfld          THUMBNAIL::UDP
+0020: ldarg.1        
+0021: call           THUMBNAIL::GetByteArray
+0026: ldarg.1        
+0027: callvirt       String::get_Length
+002C: ldloc.0        
+002D: callvirt       UdpClient::Send
+0032: pop            
+0033: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::GetByteArray ===
+  Locals:
+    [0] System.Byte[]
+    [1] System.Int32
+    [2] System.Boolean
+    [3] System.Byte[]
+0000: br.s           -> 0007
+0002: call           mtd_0x573666E2
+0007: nop            
+0008: ldarg.0        
+0009: callvirt       String::get_Length
+000E: newarr         System.Byte
+0013: stloc.0        
+0014: ldc.i4.0       
+0015: stloc.1        
+0016: br             -> 002A
+001B: ldloc.0        
+001C: ldloc.1        
+001D: ldarg.0        
+001E: ldloc.1        
+001F: callvirt       String::get_Chars
+0024: conv.u1        
+0025: stelem.i1      
+0026: ldloc.1        
+0027: ldc.i4.1       
+0028: add            
+0029: stloc.1        
+002A: ldloc.1        
+002B: ldarg.0        
+002C: callvirt       String::get_Length
+0031: clt            
+0033: stloc.2        
+0034: ldloc.2        
+0035: brtrue         -> 001B
+003A: ldloc.0        
+003B: stloc.3        
+003C: br             -> 0041
+0041: ldloc.3        
+0042: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::Set_StartListening ===
+0000: br.s           -> 0007
+0002: call           mtd_0x420D4E0A
+0007: nop            
+0008: ldarg.0        
+0009: call           THUMBNAIL::StartListening
+000E: nop            
+000F: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::StartListening ===
+0000: br.s           -> 0007
+0002: call           mtd_0x4730907E
+0007: nop            
+0008: ldarg.0        
+0009: ldarg.0        
+000A: ldfld          THUMBNAIL::UDP
+000F: ldarg.0        
+0010: ldftn          THUMBNAIL::Receive
+0016: newobj         AsyncCallback::.ctor
+001B: newobj         Object::.ctor
+0020: callvirt       UdpClient::BeginReceive
+0025: stfld          THUMBNAIL::ar_
+002A: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::Receive ===
+  Locals:
+    [0] System.Net.IPEndPoint
+    [1] System.Byte[]
+    [2] System.String
+    [3] System.Boolean
+    [4] System.Boolean
+    [5] RTPLib.RtpPacket
+    [6] System.Boolean
+    [7] System.Boolean
+    [8] System.Boolean
+    [9] System.Drawing.Bitmap
+    [10] System.Boolean
+    [11] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x3C600C79
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          THUMBNAIL::IsStart
+000E: ldc.i4.0       
+000F: ceq            
+0011: stloc.3        
+0012: ldloc.3        
+0013: brfalse        -> 001D
+0018: br             -> 017D
+001D: ldsfld         IPAddress::Any
+0022: ldc.i4.0       
+0023: newobj         IPEndPoint::.ctor
+0028: stloc.0        
+0029: ldarg.0        
+002A: ldfld          THUMBNAIL::UDP
+002F: ldarg.1        
+0030: ldloca.s       V_0
+0032: callvirt       UdpClient::EndReceive
+0037: stloc.1        
+0038: ldloc.0        
+0039: callvirt       IPEndPoint::get_Address
+003E: callvirt       Object::ToString
+0043: stloc.2        
+0044: ldloc.1        
+0045: ldlen          
+0046: conv.i4        
+0047: ldc.i4.s       20
+0049: clt            
+004B: ldc.i4.0       
+004C: ceq            
+004E: stloc.s        V_4
+0050: ldloc.s        V_4
+0052: brfalse        -> 014C
+0057: nop            
+0058: ldarg.0        
+0059: ldloc.2        
+005A: call           THUMBNAIL::CheckIP_IsExist
+005F: nop            
+0060: ldloc.1        
+0061: newobj         RtpPacket::.ctor
+0066: stloc.s        V_5
+0068: ldarg.0        
+0069: ldfld          THUMBNAIL::DeviceInfo
+006E: ldloc.2        
+006F: callvirt       Dictionary`2::get_Item
+0074: ldfld          THUMBNAIL_Device::RTP_Data
+0079: ldloc.s        V_5
+007B: callvirt       List`1::Add
+0080: nop            
+0081: ldloc.s        V_5
+0083: callvirt       RtpPacket::get_Marker
+0088: ldc.i4.1       
+0089: ceq            
+008B: stloc.s        V_6
+008D: ldloc.s        V_6
+008F: brfalse        -> 00A8
+0094: nop            
+0095: ldarg.0        
+0096: ldfld          THUMBNAIL::DeviceInfo
+009B: ldloc.2        
+009C: callvirt       Dictionary`2::get_Item
+00A1: ldc.i4.1       
+00A2: stfld          THUMBNAIL_Device::Is_Marker
+00A7: nop            
+00A8: ldarg.0        
+00A9: ldfld          THUMBNAIL::DeviceInfo
+00AE: ldloc.2        
+00AF: callvirt       Dictionary`2::get_Item
+00B4: ldfld          THUMBNAIL_Device::Is_Marker
+00B9: stloc.s        V_7
+00BB: ldloc.s        V_7
+00BD: brfalse        -> 014B
+00C2: nop            
+00C3: ldarg.0        
+00C4: ldloc.2        
+00C5: call           THUMBNAIL::Sort_RTPDATA
+00CA: stloc.s        V_8
+00CC: ldloc.s        V_8
+00CE: brfalse        -> 014A
+00D3: nop            
+00D4: ldarg.0        
+00D5: ldarg.0        
+00D6: ldfld          THUMBNAIL::DeviceInfo
+00DB: ldloc.2        
+00DC: callvirt       Dictionary`2::get_Item
+00E1: ldfld          THUMBNAIL_Device::RTP_Data
+00E6: call           THUMBNAIL::RawYUV422_To_Bitmap
+00EB: stloc.s        V_9
+00ED: ldloc.s        V_9
+00EF: ldnull         
+00F0: cgt.un         
+00F2: stloc.s        V_10
+00F4: ldloc.s        V_10
+00F6: brfalse        -> 012F
+00FB: nop            
+00FC: ldarg.0        
+00FD: ldfld          THUMBNAIL::DeviceInfo
+0102: ldloc.2        
+0103: callvirt       Dictionary`2::get_Item
+0108: ldloc.s        V_9
+010A: stfld          THUMBNAIL_Device::BMP_Thum
+010F: ldarg.0        
+0110: ldfld          THUMBNAIL::OnDraw
+0115: ldloc.s        V_9
+0117: ldarg.0        
+0118: ldfld          THUMBNAIL::DeviceInfo
+011D: ldloc.2        
+011E: callvirt       Dictionary`2::get_Item
+0123: ldfld          THUMBNAIL_Device::IPAddr
+0128: callvirt       OnDwawPicDelegate::Invoke
+012D: nop            
+012E: nop            
+012F: ldarg.0        
+0130: ldfld          THUMBNAIL::DeviceInfo
+0135: ldloc.2        
+0136: callvirt       Dictionary`2::get_Item
+013B: ldc.i4.0       
+013C: stfld          THUMBNAIL_Device::Is_Marker
+0141: ldarg.0        
+0142: ldloc.2        
+0143: call           THUMBNAIL::Clear_RTPDATA
+0148: nop            
+0149: nop            
+014A: nop            
+014B: nop            
+014C: ldarg.0        
+014D: ldfld          THUMBNAIL::IsStart
+0152: stloc.s        V_11
+0154: ldloc.s        V_11
+0156: brfalse        -> 0169
+015B: nop            
+015C: ldarg.0        
+015D: call           THUMBNAIL::StartListening
+0162: nop            
+0163: nop            
+0164: br             -> 017D
+0169: nop            
+016A: ldarg.0        
+016B: ldfld          THUMBNAIL::DeviceInfo
+0170: callvirt       Dictionary`2::Clear
+0175: nop            
+0176: call           GC::Collect
+017B: nop            
+017C: nop            
+017D: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::CheckIP_IsExist ===
+  Locals:
+    [0] VOIPS_LIB.THUMBNAIL+THUMBNAIL_Device
+    [1] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x5A65903F
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          THUMBNAIL::DeviceInfo
+000E: ldarg.1        
+000F: callvirt       Dictionary`2::ContainsKey
+0014: stloc.1        
+0015: ldloc.1        
+0016: brfalse        -> 0020
+001B: br             -> 003B
+0020: newobj         THUMBNAIL_Device::.ctor
+0025: stloc.0        
+0026: ldloc.0        
+0027: ldarg.1        
+0028: stfld          THUMBNAIL_Device::IPAddr
+002D: ldarg.0        
+002E: ldfld          THUMBNAIL::DeviceInfo
+0033: ldarg.1        
+0034: ldloc.0        
+0035: callvirt       Dictionary`2::Add
+003A: nop            
+003B: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::Sort_RTPDATA ===
+  Locals:
+    [0] VOIPS_LIB.THUMBNAIL+<>c__DisplayClass21_0
+    [1] RTPLib.RtpPacket
+    [2] System.Int32
+    [3] System.Collections.Generic.List`1[[RTPLib.RtpPacket, SDVoE_Tester, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
+    [4] System.Boolean
+    [5] System.Boolean
+    [6] System.Boolean
+    [7] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x452EAB92
+0007: newobj         <>c__DisplayClass21_0::.ctor
+000C: stloc.0        
+000D: nop            
+000E: ldarg.0        
+000F: ldfld          THUMBNAIL::DeviceInfo
+0014: callvirt       Dictionary`2::get_Count
+0019: ldc.i4.0       
+001A: cgt            
+001C: ldc.i4.0       
+001D: ceq            
+001F: stloc.s        V_4
+0021: ldloc.s        V_4
+0023: brfalse        -> 0030
+0028: ldc.i4.0       
+0029: stloc.s        V_5
+002B: br             -> 013A
+0030: ldarg.0        
+0031: ldfld          THUMBNAIL::DeviceInfo
+0036: ldarg.1        
+0037: callvirt       Dictionary`2::get_Item
+003C: ldarg.0        
+003D: ldfld          THUMBNAIL::DeviceInfo
+0042: ldarg.1        
+0043: callvirt       Dictionary`2::get_Item
+0048: ldfld          THUMBNAIL_Device::RTP_Data
+004D: ldsfld         <>c::<>9__21_0
+0052: dup            
+0053: brtrue         -> 006F
+0058: pop            
+0059: ldsfld         <>c::<>9
+005E: ldftn          <>c::<Sort_RTPDATA>b__21_0
+0064: newobj         Func`2::.ctor
+0069: dup            
+006A: stsfld         <>c::<>9__21_0
+006F: call           Enumerable::OrderBy
+0074: call           Enumerable::ToList
+0079: stfld          THUMBNAIL_Device::RTP_Data
+007E: ldarg.0        
+007F: ldfld          THUMBNAIL::DeviceInfo
+0084: ldarg.1        
+0085: callvirt       Dictionary`2::get_Item
+008A: ldfld          THUMBNAIL_Device::RTP_Data
+008F: ldsfld         <>c::<>9__21_1
+0094: dup            
+0095: brtrue         -> 00B1
+009A: pop            
+009B: ldsfld         <>c::<>9
+00A0: ldftn          <>c::<Sort_RTPDATA>b__21_1
+00A6: newobj         Predicate`1::.ctor
+00AB: dup            
+00AC: stsfld         <>c::<>9__21_1
+00B1: callvirt       List`1::FindLast
+00B6: stloc.1        
+00B7: ldloc.1        
+00B8: ldnull         
+00B9: ceq            
+00BB: stloc.s        V_6
+00BD: ldloc.s        V_6
+00BF: brfalse        -> 00CC
+00C4: ldc.i4.0       
+00C5: stloc.s        V_5
+00C7: br             -> 013A
+00CC: ldloc.1        
+00CD: callvirt       RtpPacket::get_LineNo
+00D2: ldc.i4.1       
+00D3: add            
+00D4: stloc.2        
+00D5: ldloc.0        
+00D6: ldloc.1        
+00D7: callvirt       RtpPacket::get_SequenceNumber
+00DC: stfld          <>c__DisplayClass21_0::SN_END
+00E1: ldloc.0        
+00E2: ldloc.0        
+00E3: ldfld          <>c__DisplayClass21_0::SN_END
+00E8: ldloc.1        
+00E9: callvirt       RtpPacket::get_LineNo
+00EE: sub            
+00EF: stfld          <>c__DisplayClass21_0::SN_START
+00F4: ldarg.0        
+00F5: ldfld          THUMBNAIL::DeviceInfo
+00FA: ldarg.1        
+00FB: callvirt       Dictionary`2::get_Item
+0100: ldfld          THUMBNAIL_Device::RTP_Data
+0105: ldloc.0        
+0106: ldftn          <>c__DisplayClass21_0::<Sort_RTPDATA>b__2
+010C: newobj         Predicate`1::.ctor
+0111: callvirt       List`1::FindAll
+0116: stloc.3        
+0117: ldloc.3        
+0118: callvirt       List`1::get_Count
+011D: ldloc.2        
+011E: clt            
+0120: stloc.s        V_7
+0122: ldloc.s        V_7
+0124: brfalse        -> 0132
+0129: nop            
+012A: ldc.i4.0       
+012B: stloc.s        V_5
+012D: br             -> 013A
+0132: ldc.i4.1       
+0133: stloc.s        V_5
+0135: br             -> 013A
+013A: ldloc.s        V_5
+013C: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::Clear_RTPDATA ===
+  Locals:
+    [0] VOIPS_LIB.THUMBNAIL+<>c__DisplayClass22_0
+    [1] System.Int32
+    [2] System.Boolean
+    [3] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x434CF67F
+0007: newobj         <>c__DisplayClass22_0::.ctor
+000C: stloc.0        
+000D: nop            
+000E: ldarg.0        
+000F: ldfld          THUMBNAIL::DeviceInfo
+0014: callvirt       Dictionary`2::get_Count
+0019: ldc.i4.0       
+001A: cgt            
+001C: ldc.i4.0       
+001D: ceq            
+001F: stloc.2        
+0020: ldloc.2        
+0021: brfalse        -> 002B
+0026: br             -> 00A1
+002B: ldloc.0        
+002C: ldarg.0        
+002D: ldfld          THUMBNAIL::DeviceInfo
+0032: ldarg.1        
+0033: callvirt       Dictionary`2::get_Item
+0038: ldfld          THUMBNAIL_Device::RTP_Data
+003D: ldsfld         <>c::<>9__22_0
+0042: dup            
+0043: brtrue         -> 005F
+0048: pop            
+0049: ldsfld         <>c::<>9
+004E: ldftn          <>c::<Clear_RTPDATA>b__22_0
+0054: newobj         Predicate`1::.ctor
+0059: dup            
+005A: stsfld         <>c::<>9__22_0
+005F: callvirt       List`1::FindLast
+0064: stfld          <>c__DisplayClass22_0::LastLineData
+0069: ldloc.0        
+006A: ldfld          <>c__DisplayClass22_0::LastLineData
+006F: ldnull         
+0070: ceq            
+0072: stloc.3        
+0073: ldloc.3        
+0074: brfalse        -> 007E
+0079: br             -> 00A1
+007E: ldarg.0        
+007F: ldfld          THUMBNAIL::DeviceInfo
+0084: ldarg.1        
+0085: callvirt       Dictionary`2::get_Item
+008A: ldfld          THUMBNAIL_Device::RTP_Data
+008F: ldloc.0        
+0090: ldftn          <>c__DisplayClass22_0::<Clear_RTPDATA>b__1
+0096: newobj         Predicate`1::.ctor
+009B: callvirt       List`1::RemoveAll
+00A0: stloc.1        
+00A1: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::YUV422ToRGB ===
+  Locals:
+    [0] System.Double
+    [1] System.Double
+    [2] System.Double
+    [3] System.Byte
+    [4] System.Byte
+    [5] System.Byte
+    [6] System.Boolean
+    [7] System.Boolean
+    [8] System.Boolean
+    [9] System.Boolean
+    [10] System.Boolean
+    [11] System.Boolean
+    [12] VOIPS_LIB.THUMBNAIL+RGB
+0000: br.s           -> 0007
+0002: call           mtd_0x611489F5
+0007: nop            
+0008: ldarga.s       V_1
+000A: call           YUV::get_Y
+000F: ldc.r8         1.40649998188019
+0018: ldarga.s       V_1
+001A: call           YUV::get_U
+001F: ldc.r8         128
+0028: sub            
+0029: mul            
+002A: add            
+002B: stloc.0        
+002C: ldarga.s       V_1
+002E: call           YUV::get_Y
+0033: ldc.r8         0.345499992370605
+003C: ldarga.s       V_1
+003E: call           YUV::get_V
+0043: ldc.r8         128
+004C: sub            
+004D: mul            
+004E: sub            
+004F: ldc.r8         0.716899991035461
+0058: ldarga.s       V_1
+005A: call           YUV::get_U
+005F: ldc.r8         128
+0068: sub            
+0069: mul            
+006A: sub            
+006B: stloc.1        
+006C: ldarga.s       V_1
+006E: call           YUV::get_Y
+0073: ldc.r8         1.77900004386902
+007C: ldarga.s       V_1
+007E: call           YUV::get_V
+0083: ldc.r8         128
+008C: sub            
+008D: mul            
+008E: add            
+008F: stloc.2        
+0090: ldloc.0        
+0091: ldc.r8         0
+009A: clt            
+009C: stloc.s        V_6
+009E: ldloc.s        V_6
+00A0: brfalse        -> 00AC
+00A5: ldc.i4.0       
+00A6: stloc.3        
+00A7: br             -> 00D9
+00AC: ldloc.0        
+00AD: ldc.r8         255
+00B6: cgt            
+00B8: stloc.s        V_7
+00BA: ldloc.s        V_7
+00BC: brfalse        -> 00CC
+00C1: ldc.i4         255
+00C6: stloc.3        
+00C7: br             -> 00D9
+00CC: ldloc.0        
+00CD: ldc.r8         256
+00D6: rem            
+00D7: conv.u1        
+00D8: stloc.3        
+00D9: ldloc.1        
+00DA: ldc.r8         0
+00E3: clt            
+00E5: stloc.s        V_8
+00E7: ldloc.s        V_8
+00E9: brfalse        -> 00F6
+00EE: ldc.i4.0       
+00EF: stloc.s        V_4
+00F1: br             -> 0125
+00F6: ldloc.1        
+00F7: ldc.r8         255
+0100: cgt            
+0102: stloc.s        V_9
+0104: ldloc.s        V_9
+0106: brfalse        -> 0117
+010B: ldc.i4         255
+0110: stloc.s        V_4
+0112: br             -> 0125
+0117: ldloc.1        
+0118: ldc.r8         256
+0121: rem            
+0122: conv.u1        
+0123: stloc.s        V_4
+0125: ldloc.2        
+0126: ldc.r8         0
+012F: clt            
+0131: stloc.s        V_10
+0133: ldloc.s        V_10
+0135: brfalse        -> 0142
+013A: ldc.i4.0       
+013B: stloc.s        V_5
+013D: br             -> 0171
+0142: ldloc.2        
+0143: ldc.r8         255
+014C: cgt            
+014E: stloc.s        V_11
+0150: ldloc.s        V_11
+0152: brfalse        -> 0163
+0157: ldc.i4         255
+015C: stloc.s        V_5
+015E: br             -> 0171
+0163: ldloc.2        
+0164: ldc.r8         256
+016D: rem            
+016E: conv.u1        
+016F: stloc.s        V_5
+0171: ldloc.3        
+0172: ldloc.s        V_4
+0174: ldloc.s        V_5
+0176: newobj         RGB::.ctor
+017B: stloc.s        V_12
+017D: br             -> 0182
+0182: ldloc.s        V_12
+0184: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::BytesToBitmap ===
+  Locals:
+    [0] System.Drawing.Bitmap
+    [1] System.Drawing.Imaging.BitmapData
+    [2] System.IntPtr
+    [3] System.Drawing.Bitmap
+0000: br.s           -> 0007
+0002: call           mtd_0x405D4E69
+0007: nop            
+0008: ldarg.1        
+0009: ldarg.2        
+000A: ldc.i4         137224
+000F: newobj         Bitmap::.ctor
+0014: stloc.0        
+0015: ldloc.0        
+0016: ldc.i4.0       
+0017: ldc.i4.0       
+0018: ldloc.0        
+0019: callvirt       Image::get_Width
+001E: ldloc.0        
+001F: callvirt       Image::get_Height
+0024: newobj         Rectangle::.ctor
+0029: ldc.i4.2       
+002A: ldloc.0        
+002B: callvirt       Image::get_PixelFormat
+0030: callvirt       Bitmap::LockBits
+0035: stloc.1        
+0036: ldloc.1        
+0037: callvirt       BitmapData::get_Scan0
+003C: stloc.2        
+003D: ldarg.3        
+003E: ldc.i4.0       
+003F: ldloc.2        
+0040: ldarg.3        
+0041: ldlen          
+0042: conv.i4        
+0043: call           Marshal::Copy
+0048: nop            
+0049: ldloc.0        
+004A: ldloc.1        
+004B: callvirt       Bitmap::UnlockBits
+0050: nop            
+0051: ldloc.0        
+0052: stloc.3        
+0053: br             -> 0058
+0058: ldloc.3        
+0059: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::RawYUV422_To_Bitmap ===
+  Locals:
+    [0] VOIPS_LIB.THUMBNAIL+<>c__DisplayClass28_0
+    [1] System.Int32
+    [2] System.Int32
+    [3] System.Int32
+    [4] VOIPS_LIB.THUMBNAIL+YUV
+    [5] RTPLib.RtpPacket
+    [6] System.Int32
+    [7] System.Int32
+    [8] System.Collections.Generic.List`1[[RTPLib.RtpPacket, SDVoE_Tester, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
+    [9] System.Drawing.Bitmap
+    [10] System.Byte[]
+    [11] RTPLib.RtpPacket[]
+    [12] System.Boolean
+    [13] System.Drawing.Bitmap
+    [14] System.Boolean
+    [15] System.Boolean
+    [16] VOIPS_LIB.THUMBNAIL+RGB
+    [17] System.Boolean
+    [18] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x6A2C92BF
+0007: newobj         <>c__DisplayClass28_0::.ctor
+000C: stloc.0        
+000D: nop            
+000E: ldloca.s       V_4
+0010: initobj        VOIPS_LIB.THUMBNAIL+YUV
+0016: ldarg.1        
+0017: callvirt       List`1::get_Count
+001C: ldc.i4.0       
+001D: cgt            
+001F: ldc.i4.0       
+0020: ceq            
+0022: stloc.s        V_12
+0024: ldloc.s        V_12
+0026: brfalse        -> 0033
+002B: ldnull         
+002C: stloc.s        V_13
+002E: br             -> 0242
+0033: ldarg.1        
+0034: ldsfld         <>c::<>9__28_0
+0039: dup            
+003A: brtrue         -> 0056
+003F: pop            
+0040: ldsfld         <>c::<>9
+0045: ldftn          <>c::<RawYUV422_To_Bitmap>b__28_0
+004B: newobj         Predicate`1::.ctor
+0050: dup            
+0051: stsfld         <>c::<>9__28_0
+0056: callvirt       List`1::FindLast
+005B: stloc.s        V_5
+005D: ldloc.s        V_5
+005F: ldnull         
+0060: ceq            
+0062: stloc.s        V_14
+0064: ldloc.s        V_14
+0066: brfalse        -> 0073
+006B: ldnull         
+006C: stloc.s        V_13
+006E: br             -> 0242
+0073: ldloc.s        V_5
+0075: callvirt       RtpPacket::get_LineNo
+007A: ldc.i4.1       
+007B: add            
+007C: stloc.s        V_6
+007E: ldloc.s        V_5
+0080: callvirt       RtpPacket::get_PayloadData
+0085: ldlen          
+0086: conv.i4        
+0087: ldc.i4.2       
+0088: div            
+0089: stloc.s        V_7
+008B: ldloc.0        
+008C: ldloc.s        V_5
+008E: callvirt       RtpPacket::get_SequenceNumber
+0093: stfld          <>c__DisplayClass28_0::SN_END
+0098: ldloc.0        
+0099: ldloc.0        
+009A: ldfld          <>c__DisplayClass28_0::SN_END
+009F: ldloc.s        V_5
+00A1: callvirt       RtpPacket::get_LineNo
+00A6: sub            
+00A7: stfld          <>c__DisplayClass28_0::SN_START
+00AC: ldarg.1        
+00AD: ldloc.0        
+00AE: ldftn          <>c__DisplayClass28_0::<RawYUV422_To_Bitmap>b__1
+00B4: newobj         Predicate`1::.ctor
+00B9: callvirt       List`1::FindAll
+00BE: stloc.s        V_8
+00C0: ldloc.s        V_8
+00C2: callvirt       List`1::get_Count
+00C7: ldloc.s        V_6
+00C9: clt            
+00CB: stloc.s        V_15
+00CD: ldloc.s        V_15
+00CF: brfalse        -> 00DC
+00D4: ldnull         
+00D5: stloc.s        V_13
+00D7: br             -> 0242
+00DC: ldloc.s        V_7
+00DE: ldloc.s        V_6
+00E0: newobj         Bitmap::.ctor
+00E5: stloc.s        V_9
+00E7: ldloc.s        V_6
+00E9: ldloc.s        V_7
+00EB: mul            
+00EC: ldc.i4.3       
+00ED: mul            
+00EE: newarr         System.Byte
+00F3: stloc.s        V_10
+00F5: ldloc.s        V_8
+00F7: ldsfld         <>c::<>9__28_2
+00FC: dup            
+00FD: brtrue         -> 0119
+0102: pop            
+0103: ldsfld         <>c::<>9
+0108: ldftn          <>c::<RawYUV422_To_Bitmap>b__28_2
+010E: newobj         Func`2::.ctor
+0113: dup            
+0114: stsfld         <>c::<>9__28_2
+0119: call           Enumerable::OrderBy
+011E: call           Enumerable::ToArray
+0123: stloc.s        V_11
+0125: ldc.i4.0       
+0126: stloc.3        
+0127: ldc.i4.0       
+0128: stloc.1        
+0129: br             -> 0221
+012E: nop            
+012F: ldc.i4.0       
+0130: stloc.2        
+0131: br             -> 020C
+0136: nop            
+0137: ldloca.s       V_4
+0139: ldloc.s        V_11
+013B: ldloc.1        
+013C: ldelem.ref     
+013D: callvirt       RtpPacket::get_PayloadData
+0142: ldloc.2        
+0143: ldc.i4.1       
+0144: add            
+0145: ldelem.u1      
+0146: conv.r8        
+0147: ldloc.s        V_11
+0149: ldloc.1        
+014A: ldelem.ref     
+014B: callvirt       RtpPacket::get_PayloadData
+0150: ldloc.2        
+0151: ldelem.u1      
+0152: conv.r8        
+0153: ldloc.s        V_11
+0155: ldloc.1        
+0156: ldelem.ref     
+0157: callvirt       RtpPacket::get_PayloadData
+015C: ldloc.2        
+015D: ldc.i4.2       
+015E: add            
+015F: ldelem.u1      
+0160: conv.r8        
+0161: call           YUV::.ctor
+0166: ldarg.0        
+0167: ldloc.s        V_4
+0169: call           THUMBNAIL::YUV422ToRGB
+016E: stloc.s        V_16
+0170: ldloc.s        V_10
+0172: ldloc.3        
+0173: ldc.i4.3       
+0174: mul            
+0175: ldloca.s       V_16
+0177: call           RGB::get_R
+017C: stelem.i1      
+017D: ldloc.s        V_10
+017F: ldloc.3        
+0180: ldc.i4.3       
+0181: mul            
+0182: ldc.i4.1       
+0183: add            
+0184: ldloca.s       V_16
+0186: call           RGB::get_G
+018B: stelem.i1      
+018C: ldloc.s        V_10
+018E: ldloc.3        
+018F: ldc.i4.3       
+0190: mul            
+0191: ldc.i4.2       
+0192: add            
+0193: ldloca.s       V_16
+0195: call           RGB::get_B
+019A: stelem.i1      
+019B: ldloc.3        
+019C: ldc.i4.1       
+019D: add            
+019E: stloc.3        
+019F: ldloca.s       V_4
+01A1: ldloc.s        V_11
+01A3: ldloc.1        
+01A4: ldelem.ref     
+01A5: callvirt       RtpPacket::get_PayloadData
+01AA: ldloc.2        
+01AB: ldc.i4.3       
+01AC: add            
+01AD: ldelem.u1      
+01AE: conv.r8        
+01AF: ldloc.s        V_11
+01B1: ldloc.1        
+01B2: ldelem.ref     
+01B3: callvirt       RtpPacket::get_PayloadData
+01B8: ldloc.2        
+01B9: ldelem.u1      
+01BA: conv.r8        
+01BB: ldloc.s        V_11
+01BD: ldloc.1        
+01BE: ldelem.ref     
+01BF: callvirt       RtpPacket::get_PayloadData
+01C4: ldloc.2        
+01C5: ldc.i4.2       
+01C6: add            
+01C7: ldelem.u1      
+01C8: conv.r8        
+01C9: call           YUV::.ctor
+01CE: ldarg.0        
+01CF: ldloc.s        V_4
+01D1: call           THUMBNAIL::YUV422ToRGB
+01D6: stloc.s        V_16
+01D8: ldloc.s        V_10
+01DA: ldloc.3        
+01DB: ldc.i4.3       
+01DC: mul            
+01DD: ldloca.s       V_16
+01DF: call           RGB::get_R
+01E4: stelem.i1      
+01E5: ldloc.s        V_10
+01E7: ldloc.3        
+01E8: ldc.i4.3       
+01E9: mul            
+01EA: ldc.i4.1       
+01EB: add            
+01EC: ldloca.s       V_16
+01EE: call           RGB::get_G
+01F3: stelem.i1      
+01F4: ldloc.s        V_10
+01F6: ldloc.3        
+01F7: ldc.i4.3       
+01F8: mul            
+01F9: ldc.i4.2       
+01FA: add            
+01FB: ldloca.s       V_16
+01FD: call           RGB::get_B
+0202: stelem.i1      
+0203: ldloc.3        
+0204: ldc.i4.1       
+0205: add            
+0206: stloc.3        
+0207: nop            
+0208: ldloc.2        
+0209: ldc.i4.4       
+020A: add            
+020B: stloc.2        
+020C: ldloc.2        
+020D: ldloc.s        V_7
+020F: ldc.i4.2       
+0210: mul            
+0211: clt            
+0213: stloc.s        V_17
+0215: ldloc.s        V_17
+0217: brtrue         -> 0136
+021C: nop            
+021D: ldloc.1        
+021E: ldc.i4.1       
+021F: add            
+0220: stloc.1        
+0221: ldloc.1        
+0222: ldloc.s        V_6
+0224: clt            
+0226: stloc.s        V_18
+0228: ldloc.s        V_18
+022A: brtrue         -> 012E
+022F: ldarg.0        
+0230: ldloc.s        V_7
+0232: ldloc.s        V_6
+0234: ldloc.s        V_10
+0236: call           THUMBNAIL::BytesToBitmap
+023B: stloc.s        V_13
+023D: br             -> 0242
+0242: ldloc.s        V_13
+0244: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::.ctor ===
+  Locals:
+    [0] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x4307C6B6
+0007: call           MBiHIp97M4MqqbtZOh::EiJs304o7
+000C: ldarg.0        
+000D: ldnull         
+000E: stfld          THUMBNAIL::ar_
+0013: ldarg.0        
+0014: newobj         Dictionary`2::.ctor
+0019: stfld          THUMBNAIL::DeviceInfo
+001E: ldarg.0        
+001F: call           Object::.ctor
+0024: nop            
+0025: nop            
+0026: ldarg.0        
+0027: ldc.i4.0       
+0028: stfld          THUMBNAIL::IsStart
+002D: ldarg.0        
+002E: ldarg.2        
+002F: call           IPAddress::Parse
+0034: stfld          THUMBNAIL::IPA_MulticastAddress
+0039: ldarg.0        
+003A: ldarg.1        
+003B: call           IPAddress::Parse
+0040: stfld          THUMBNAIL::IPA_PCAddress
+0045: ldarg.0        
+0046: ldarg.3        
+0047: stfld          THUMBNAIL::IPA_MulticastPort
+004C: ldarg.s        V_4
+004E: ldnull         
+004F: cgt.un         
+0051: stloc.0        
+0052: ldloc.0        
+0053: brfalse        -> 006B
+0058: ldarg.0        
+0059: ldarg.s        V_4
+005B: ldftn          Action`2::Invoke
+0061: newobj         OnDwawPicDelegate::.ctor
+0066: stfld          THUMBNAIL::OnDraw
+006B: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::.cctor ===
+0000: call           EwV3ECxYhIse1SOarW::K3vHtAjho
+0005: ret            
+
+--- Nested Type: VOIPS_LIB.THUMBNAIL+OnDwawPicDelegate ---
+=== Method: VOIPS_LIB.THUMBNAIL+OnDwawPicDelegate::Invoke ===
+[No body]
+
+=== Method: VOIPS_LIB.THUMBNAIL+OnDwawPicDelegate::BeginInvoke ===
+[No body]
+
+=== Method: VOIPS_LIB.THUMBNAIL+OnDwawPicDelegate::EndInvoke ===
+[No body]
+
+--- Nested Type: VOIPS_LIB.THUMBNAIL+THUMBNAIL_Device ---
+--- Nested Type: VOIPS_LIB.THUMBNAIL+RGB ---
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::get_R ===
+  Locals:
+    [0] System.Byte
+0000: br.s           -> 0007
+0002: call           mtd_0x3C2F355E
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          RGB::_r
+000E: stloc.0        
+000F: br             -> 0014
+0014: ldloc.0        
+0015: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::set_R ===
+0000: br.s           -> 0007
+0002: call           mtd_0x630D0811
+0007: nop            
+0008: ldarg.0        
+0009: ldarg.1        
+000A: stfld          RGB::_r
+000F: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::get_G ===
+  Locals:
+    [0] System.Byte
+0000: br.s           -> 0007
+0002: call           mtd_0x4123CECF
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          RGB::_g
+000E: stloc.0        
+000F: br             -> 0014
+0014: ldloc.0        
+0015: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::set_G ===
+0000: br.s           -> 0007
+0002: call           mtd_0x3D52A5A7
+0007: nop            
+0008: ldarg.0        
+0009: ldarg.1        
+000A: stfld          RGB::_g
+000F: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::get_B ===
+  Locals:
+    [0] System.Byte
+0000: br.s           -> 0007
+0002: call           mtd_0x4F1498B0
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          RGB::_b
+000E: stloc.0        
+000F: br             -> 0014
+0014: ldloc.0        
+0015: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::set_B ===
+0000: br.s           -> 0007
+0002: call           mtd_0x562FA389
+0007: nop            
+0008: ldarg.0        
+0009: ldarg.1        
+000A: stfld          RGB::_b
+000F: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::Equals ===
+  Locals:
+    [0] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x3F734194
+0007: nop            
+0008: ldarg.0        
+0009: call           RGB::get_R
+000E: ldarga.s       V_1
+0010: call           RGB::get_R
+0015: bne.un         -> 0040
+001A: ldarg.0        
+001B: call           RGB::get_G
+0020: ldarga.s       V_1
+0022: call           RGB::get_G
+0027: bne.un         -> 0040
+002C: ldarg.0        
+002D: call           RGB::get_B
+0032: ldarga.s       V_1
+0034: call           RGB::get_B
+0039: ceq            
+003B: br             -> 0041
+0040: ldc.i4.0       
+0041: stloc.0        
+0042: br             -> 0047
+0047: ldloc.0        
+0048: ret            
+
+--- Nested Type: VOIPS_LIB.THUMBNAIL+YUV ---
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::get_Y ===
+  Locals:
+    [0] System.Double
+0000: br.s           -> 0007
+0002: call           mtd_0x4940C4A2
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          YUV::_y
+000E: stloc.0        
+000F: br             -> 0014
+0014: ldloc.0        
+0015: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::set_Y ===
+0000: br.s           -> 0007
+0002: call           mtd_0x58195916
+0007: nop            
+0008: ldarg.0        
+0009: ldarg.1        
+000A: stfld          YUV::_y
+000F: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::get_U ===
+  Locals:
+    [0] System.Double
+0000: br.s           -> 0007
+0002: call           mtd_0x4B5C4F11
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          YUV::_u
+000E: stloc.0        
+000F: br             -> 0014
+0014: ldloc.0        
+0015: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::set_U ===
+0000: br.s           -> 0007
+0002: call           mtd_0x541A08E6
+0007: nop            
+0008: ldarg.0        
+0009: ldarg.1        
+000A: stfld          YUV::_u
+000F: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::get_V ===
+  Locals:
+    [0] System.Double
+0000: br.s           -> 0007
+0002: call           mtd_0x634D9B61
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          YUV::_v
+000E: stloc.0        
+000F: br             -> 0014
+0014: ldloc.0        
+0015: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::set_V ===
+0000: br.s           -> 0007
+0002: call           mtd_0x3F7CC6A0
+0007: nop            
+0008: ldarg.0        
+0009: ldarg.1        
+000A: stfld          YUV::_v
+000F: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::Equals ===
+  Locals:
+    [0] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x657A4618
+0007: nop            
+0008: ldarg.0        
+0009: call           YUV::get_Y
+000E: ldarga.s       V_1
+0010: call           YUV::get_Y
+0015: bne.un         -> 0040
+001A: ldarg.0        
+001B: call           YUV::get_U
+0020: ldarga.s       V_1
+0022: call           YUV::get_U
+0027: bne.un         -> 0040
+002C: ldarg.0        
+002D: call           YUV::get_V
+0032: ldarga.s       V_1
+0034: call           YUV::get_V
+0039: ceq            
+003B: br             -> 0041
+0040: ldc.i4.0       
+0041: stloc.0        
+0042: br             -> 0047
+0047: ldloc.0        
+0048: ret            
+
+--- Nested Type: VOIPS_LIB.THUMBNAIL+<>c ---
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<Sort_RTPDATA>b__21_0 ===
+0000: br.s           -> 0007
+0002: call           mtd_0x4348E704
+0007: ldarg.1        
+0008: callvirt       RtpPacket::get_LineNo
+000D: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<Sort_RTPDATA>b__21_1 ===
+0000: br.s           -> 0007
+0002: call           mtd_0x312DDBC2
+0007: ldarg.1        
+0008: callvirt       RtpPacket::get_Marker
+000D: ldc.i4.1       
+000E: ceq            
+0010: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<Clear_RTPDATA>b__22_0 ===
+0000: br.s           -> 0007
+0002: call           mtd_0x57226588
+0007: ldarg.1        
+0008: callvirt       RtpPacket::get_Marker
+000D: ldc.i4.1       
+000E: ceq            
+0010: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<RawYUV422_To_Bitmap>b__28_0 ===
+0000: br.s           -> 0007
+0002: call           mtd_0x4F31172D
+0007: ldarg.1        
+0008: callvirt       RtpPacket::get_Marker
+000D: ldc.i4.1       
+000E: ceq            
+0010: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<RawYUV422_To_Bitmap>b__28_2 ===
+0000: br.s           -> 0007
+0002: call           mtd_0x371CA493
+0007: ldarg.1        
+0008: callvirt       RtpPacket::get_LineNo
+000D: ret            
+
+--- Nested Type: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass14_0 ---
+=== Method: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass14_0::<GET_THUMBNAIL>b__0 ===
+  Locals:
+    [0] System.Boolean
+    [1] System.Drawing.Bitmap
+0000: br.s           -> 0007
+0002: call           mtd_0x4C0D9289
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          <>c__DisplayClass14_0::<>4__this
+000E: ldfld          THUMBNAIL::DeviceInfo
+0013: ldarg.0        
+0014: ldfld          <>c__DisplayClass14_0::DeviceIP
+0019: callvirt       Dictionary`2::ContainsKey
+001E: stloc.0        
+001F: ldloc.0        
+0020: brfalse        -> 0047
+0025: nop            
+0026: ldarg.0        
+0027: ldfld          <>c__DisplayClass14_0::<>4__this
+002C: ldfld          THUMBNAIL::DeviceInfo
+0031: ldarg.0        
+0032: ldfld          <>c__DisplayClass14_0::DeviceIP
+0037: callvirt       Dictionary`2::get_Item
+003C: ldfld          THUMBNAIL_Device::BMP_Thum
+0041: stloc.1        
+0042: br             -> 004F
+0047: nop            
+0048: ldnull         
+0049: stloc.1        
+004A: br             -> 004F
+004F: ldloc.1        
+0050: ret            
+
+--- Nested Type: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass21_0 ---
+=== Method: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass21_0::<Sort_RTPDATA>b__2 ===
+0000: br.s           -> 0007
+0002: call           mtd_0x3073C575
+0007: ldarg.1        
+0008: callvirt       RtpPacket::get_SequenceNumber
+000D: ldarg.0        
+000E: ldfld          <>c__DisplayClass21_0::SN_END
+0013: bgt            -> 002E
+0018: ldarg.1        
+0019: callvirt       RtpPacket::get_SequenceNumber
+001E: ldarg.0        
+001F: ldfld          <>c__DisplayClass21_0::SN_START
+0024: clt            
+0026: ldc.i4.0       
+0027: ceq            
+0029: br             -> 002F
+002E: ldc.i4.0       
+002F: ret            
+
+--- Nested Type: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass22_0 ---
+=== Method: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass22_0::<Clear_RTPDATA>b__1 ===
+0000: br.s           -> 0007
+0002: call           mtd_0x5058CCC5
+0007: ldarg.1        
+0008: callvirt       RtpPacket::get_SequenceNumber
+000D: ldarg.0        
+000E: ldfld          <>c__DisplayClass22_0::LastLineData
+0013: callvirt       RtpPacket::get_SequenceNumber
+0018: ble            -> 0038
+001D: ldarg.1        
+001E: callvirt       RtpPacket::get_Timestamp
+0023: ldarg.0        
+0024: ldfld          <>c__DisplayClass22_0::LastLineData
+0029: callvirt       RtpPacket::get_Timestamp
+002E: cgt.un         
+0030: ldc.i4.0       
+0031: ceq            
+0033: br             -> 0039
+0038: ldc.i4.1       
+0039: ret            
+
+--- Nested Type: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass28_0 ---
+=== Method: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass28_0::<RawYUV422_To_Bitmap>b__1 ===
+0000: br.s           -> 0007
+0002: call           mtd_0x3A1FA2E0
+0007: ldarg.1        
+0008: callvirt       RtpPacket::get_SequenceNumber
+000D: ldarg.0        
+000E: ldfld          <>c__DisplayClass28_0::SN_END
+0013: bgt            -> 002E
+0018: ldarg.1        
+0019: callvirt       RtpPacket::get_SequenceNumber
+001E: ldarg.0        
+001F: ldfld          <>c__DisplayClass28_0::SN_START
+0024: clt            
+0026: ldc.i4.0       
+0027: ceq            
+0029: br             -> 002F
+002E: ldc.i4.0       
+002F: ret            
+
+--- Nested Type: VOIPS_LIB.THUMBNAIL+<GET_THUMBNAIL>d__14 ---
+=== Method: VOIPS_LIB.THUMBNAIL+<GET_THUMBNAIL>d__14::MoveNext ===
+  Locals:
+    [0] System.Int32
+    [1] System.Drawing.Bitmap
+    [2] System.Runtime.CompilerServices.TaskAwaiter`1[[System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]]
+    [3] VOIPS_LIB.THUMBNAIL+<GET_THUMBNAIL>d__14
+    [4] System.Exception
+0000: br.s           -> 0007
+0002: call           mtd_0x3B7E9D16
+0007: ldarg.0        
+0008: ldfld          <GET_THUMBNAIL>d__14::<>1__state
+000D: stloc.0        
+000E: ldloc.0        
+000F: brfalse        -> 0019
+0014: br             -> 001E
+0019: br             -> 00A0
+001E: ldarg.0        
+001F: newobj         <>c__DisplayClass14_0::.ctor
+0024: stfld          <GET_THUMBNAIL>d__14::<>8__1
+0029: ldarg.0        
+002A: ldfld          <GET_THUMBNAIL>d__14::<>8__1
+002F: ldarg.0        
+0030: ldfld          <GET_THUMBNAIL>d__14::<>4__this
+0035: stfld          <>c__DisplayClass14_0::<>4__this
+003A: ldarg.0        
+003B: ldfld          <GET_THUMBNAIL>d__14::<>8__1
+0040: ldarg.0        
+0041: ldfld          <GET_THUMBNAIL>d__14::DeviceIP
+0046: stfld          <>c__DisplayClass14_0::DeviceIP
+004B: nop            
+004C: call           Task`1::get_Factory
+0051: ldarg.0        
+0052: ldfld          <GET_THUMBNAIL>d__14::<>8__1
+0057: ldftn          <>c__DisplayClass14_0::<GET_THUMBNAIL>b__0
+005D: newobj         Func`1::.ctor
+0062: callvirt       TaskFactory`1::StartNew
+0067: callvirt       Task`1::GetAwaiter
+006C: stloc.2        
+006D: ldloca.s       V_2
+006F: call           TaskAwaiter`1::get_IsCompleted
+0074: brtrue         -> 00BC
+0079: ldarg.0        
+007A: ldc.i4.0       
+007B: dup            
+007C: stloc.0        
+007D: stfld          <GET_THUMBNAIL>d__14::<>1__state
+0082: ldarg.0        
+0083: ldloc.2        
+0084: stfld          <GET_THUMBNAIL>d__14::<>u__1
+0089: ldarg.0        
+008A: stloc.3        
+008B: ldarg.0        
+008C: ldflda         <GET_THUMBNAIL>d__14::<>t__builder
+0091: ldloca.s       V_2
+0093: ldloca.s       V_3
+0095: call           AsyncTaskMethodBuilder`1::AwaitUnsafeOnCompleted
+009A: nop            
+009B: leave          -> 0136
+00A0: ldarg.0        
+00A1: ldfld          <GET_THUMBNAIL>d__14::<>u__1
+00A6: stloc.2        
+00A7: ldarg.0        
+00A8: ldflda         <GET_THUMBNAIL>d__14::<>u__1
+00AD: initobj        System.Runtime.CompilerServices.TaskAwaiter`1[[System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a]]
+00B3: ldarg.0        
+00B4: ldc.i4.m1      
+00B5: dup            
+00B6: stloc.0        
+00B7: stfld          <GET_THUMBNAIL>d__14::<>1__state
+00BC: ldarg.0        
+00BD: ldloca.s       V_2
+00BF: call           TaskAwaiter`1::GetResult
+00C4: stfld          <GET_THUMBNAIL>d__14::<>s__3
+00C9: ldarg.0        
+00CA: ldarg.0        
+00CB: ldfld          <GET_THUMBNAIL>d__14::<>s__3
+00D0: stfld          <GET_THUMBNAIL>d__14::<bmp>5__2
+00D5: ldarg.0        
+00D6: ldnull         
+00D7: stfld          <GET_THUMBNAIL>d__14::<>s__3
+00DC: ldarg.0        
+00DD: ldfld          <GET_THUMBNAIL>d__14::<bmp>5__2
+00E2: stloc.1        
+00E3: leave          -> 0113
+00E8: stloc.s        V_4
+00EA: ldarg.0        
+00EB: ldc.i4.s       -2
+00ED: stfld          <GET_THUMBNAIL>d__14::<>1__state
+00F2: ldarg.0        
+00F3: ldnull         
+00F4: stfld          <GET_THUMBNAIL>d__14::<>8__1
+00F9: ldarg.0        
+00FA: ldnull         
+00FB: stfld          <GET_THUMBNAIL>d__14::<bmp>5__2
+0100: ldarg.0        
+0101: ldflda         <GET_THUMBNAIL>d__14::<>t__builder
+0106: ldloc.s        V_4
+0108: call           AsyncTaskMethodBuilder`1::SetException
+010D: nop            
+010E: leave          -> 0136
+0113: ldarg.0        
+0114: ldc.i4.s       -2
+0116: stfld          <GET_THUMBNAIL>d__14::<>1__state
+011B: ldarg.0        
+011C: ldnull         
+011D: stfld          <GET_THUMBNAIL>d__14::<>8__1
+0122: ldarg.0        
+0123: ldnull         
+0124: stfld          <GET_THUMBNAIL>d__14::<bmp>5__2
+0129: ldarg.0        
+012A: ldflda         <GET_THUMBNAIL>d__14::<>t__builder
+012F: ldloc.1        
+0130: call           AsyncTaskMethodBuilder`1::SetResult
+0135: nop            
+0136: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL+<GET_THUMBNAIL>d__14::SetStateMachine ===
+0000: br.s           -> 0007
+0002: call           mtd_0x481B6A63
+0007: ret            
+
+--- Type: RTPLib.RtpPacket ---
+=== Method: RTPLib.RtpPacket::get_Version ===
+0000: br.s           -> 0007
+0002: call           mtd_0x392FE1A5
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<Version>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_Version ===
+0000: br.s           -> 0007
+0002: call           mtd_0x401636C9
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<Version>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_Padding ===
+0000: br.s           -> 0007
+0002: call           mtd_0x3027F9B8
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<Padding>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_Padding ===
+0000: br.s           -> 0007
+0002: call           mtd_0x4C1BC866
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<Padding>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_Extension ===
+0000: br.s           -> 0007
+0002: call           mtd_0x414DFA84
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<Extension>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_Extension ===
+0000: br.s           -> 0007
+0002: call           mtd_0x5608B437
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<Extension>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_CC ===
+0000: br.s           -> 0007
+0002: call           mtd_0x57487B18
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<CC>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_CC ===
+0000: br.s           -> 0007
+0002: call           mtd_0x6D55A470
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<CC>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_Marker ===
+0000: br.s           -> 0007
+0002: call           mtd_0x3804819A
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<Marker>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_Marker ===
+0000: br.s           -> 0007
+0002: call           mtd_0x6B0FC192
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<Marker>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_PayloadType ===
+0000: br.s           -> 0007
+0002: call           mtd_0x697C2B4A
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<PayloadType>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_PayloadType ===
+0000: br.s           -> 0007
+0002: call           mtd_0x6B7A4777
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<PayloadType>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_SequenceNumber ===
+0000: br.s           -> 0007
+0002: call           mtd_0x3C3B7077
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<SequenceNumber>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_SequenceNumber ===
+0000: br.s           -> 0007
+0002: call           mtd_0x446A525C
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<SequenceNumber>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_Timestamp ===
+0000: br.s           -> 0007
+0002: call           mtd_0x6E461730
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<Timestamp>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_Timestamp ===
+0000: br.s           -> 0007
+0002: call           mtd_0x494EB40F
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<Timestamp>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_SSRC ===
+0000: br.s           -> 0007
+0002: call           mtd_0x5531FFB4
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<SSRC>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_SSRC ===
+0000: br.s           -> 0007
+0002: call           mtd_0x5326DEE9
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<SSRC>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_ExtendedSequenceNumber ===
+0000: br.s           -> 0007
+0002: call           mtd_0x6521FB68
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<ExtendedSequenceNumber>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_ExtendedSequenceNumber ===
+0000: br.s           -> 0007
+0002: call           mtd_0x41747167
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<ExtendedSequenceNumber>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_Length ===
+0000: br.s           -> 0007
+0002: call           mtd_0x690F81C7
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<Length>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_Length ===
+0000: br.s           -> 0007
+0002: call           mtd_0x5C24F686
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<Length>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_LineNo ===
+0000: br.s           -> 0007
+0002: call           mtd_0x554F6D64
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<LineNo>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_LineNo ===
+0000: br.s           -> 0007
+0002: call           mtd_0x6D6D3E2C
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<LineNo>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_Offset ===
+0000: br.s           -> 0007
+0002: call           mtd_0x536EFF82
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<Offset>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_Offset ===
+0000: br.s           -> 0007
+0002: call           mtd_0x565372A2
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<Offset>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_FieldIdentification ===
+0000: br.s           -> 0007
+0002: call           mtd_0x6A65F79D
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<FieldIdentification>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_FieldIdentification ===
+0000: br.s           -> 0007
+0002: call           mtd_0x5B1EE444
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<FieldIdentification>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_Continuation ===
+0000: br.s           -> 0007
+0002: call           mtd_0x6D253B1F
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<Continuation>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_Continuation ===
+0000: br.s           -> 0007
+0002: call           mtd_0x3B25A297
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<Continuation>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::get_PayloadData ===
+0000: br.s           -> 0007
+0002: call           mtd_0x6C07617A
+0007: ldarg.0        
+0008: ldfld          RtpPacket::<PayloadData>k__BackingField
+000D: ret            
+
+=== Method: RTPLib.RtpPacket::set_PayloadData ===
+0000: br.s           -> 0007
+0002: call           mtd_0x31363A32
+0007: ldarg.0        
+0008: ldarg.1        
+0009: stfld          RtpPacket::<PayloadData>k__BackingField
+000E: ret            
+
+=== Method: RTPLib.RtpPacket::.ctor ===
+  Locals:
+    [0] System.Int32
+    [1] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x3E787827
+0007: call           MBiHIp97M4MqqbtZOh::EiJs304o7
+000C: ldarg.0        
+000D: call           Object::.ctor
+0012: nop            
+0013: nop            
+0014: ldarg.1        
+0015: ldlen          
+0016: conv.i4        
+0017: stloc.0        
+0018: ldloc.0        
+0019: ldc.i4.s       20
+001B: clt            
+001D: ldc.i4.0       
+001E: ceq            
+0020: stloc.1        
+0021: ldloc.1        
+0022: brfalse        -> 017C
+0027: nop            
+0028: ldarg.0        
+0029: ldarg.1        
+002A: ldc.i4.0       
+002B: ldelem.u1      
+002C: ldc.i4.6       
+002D: shr            
+002E: call           RtpPacket::set_Version
+0033: nop            
+0034: ldarg.0        
+0035: ldc.i4.1       
+0036: ldarg.1        
+0037: ldc.i4.0       
+0038: ldelem.u1      
+0039: ldc.i4.5       
+003A: shr            
+003B: and            
+003C: conv.u1        
+003D: call           RtpPacket::set_Padding
+0042: nop            
+0043: ldarg.0        
+0044: ldc.i4.1       
+0045: ldarg.1        
+0046: ldc.i4.0       
+0047: ldelem.u1      
+0048: ldc.i4.4       
+0049: shr            
+004A: and            
+004B: conv.u1        
+004C: call           RtpPacket::set_Extension
+0051: nop            
+0052: ldarg.0        
+0053: ldc.i4.s       31
+0055: ldarg.1        
+0056: ldc.i4.0       
+0057: ldelem.u1      
+0058: and            
+0059: call           RtpPacket::set_CC
+005E: nop            
+005F: ldarg.0        
+0060: ldarg.1        
+0061: ldc.i4.1       
+0062: ldelem.u1      
+0063: ldc.i4.7       
+0064: shr            
+0065: call           RtpPacket::set_Marker
+006A: nop            
+006B: ldarg.0        
+006C: ldarg.1        
+006D: ldc.i4.1       
+006E: ldelem.u1      
+006F: ldc.i4.s       127
+0071: and            
+0072: call           RtpPacket::set_PayloadType
+0077: nop            
+0078: ldarg.0        
+0079: ldc.i4         256
+007E: ldarg.1        
+007F: ldc.i4.2       
+0080: ldelem.u1      
+0081: mul            
+0082: ldarg.1        
+0083: ldc.i4.3       
+0084: ldelem.u1      
+0085: add            
+0086: call           RtpPacket::set_SequenceNumber
+008B: nop            
+008C: ldarg.0        
+008D: ldc.i4         16777216
+0092: ldarg.1        
+0093: ldc.i4.4       
+0094: ldelem.u1      
+0095: mul            
+0096: ldc.i4         65536
+009B: ldarg.1        
+009C: ldc.i4.5       
+009D: ldelem.u1      
+009E: mul            
+009F: add            
+00A0: ldc.i4         256
+00A5: ldarg.1        
+00A6: ldc.i4.6       
+00A7: ldelem.u1      
+00A8: mul            
+00A9: add            
+00AA: ldarg.1        
+00AB: ldc.i4.7       
+00AC: ldelem.u1      
+00AD: add            
+00AE: conv.i8        
+00AF: call           RtpPacket::set_Timestamp
+00B4: nop            
+00B5: ldarg.0        
+00B6: ldc.i4         16777216
+00BB: ldarg.1        
+00BC: ldc.i4.8       
+00BD: ldelem.u1      
+00BE: mul            
+00BF: ldc.i4         65536
+00C4: ldarg.1        
+00C5: ldc.i4.s       9
+00C7: ldelem.u1      
+00C8: mul            
+00C9: add            
+00CA: ldc.i4         256
+00CF: ldarg.1        
+00D0: ldc.i4.s       10
+00D2: ldelem.u1      
+00D3: mul            
+00D4: add            
+00D5: ldarg.1        
+00D6: ldc.i4.s       11
+00D8: ldelem.u1      
+00D9: add            
+00DA: conv.i8        
+00DB: call           RtpPacket::set_SSRC
+00E0: nop            
+00E1: ldarg.0        
+00E2: ldc.i4         256
+00E7: ldarg.1        
+00E8: ldc.i4.s       12
+00EA: ldelem.u1      
+00EB: mul            
+00EC: ldarg.1        
+00ED: ldc.i4.s       13
+00EF: ldelem.u1      
+00F0: add            
+00F1: call           RtpPacket::set_ExtendedSequenceNumber
+00F6: nop            
+00F7: ldarg.0        
+00F8: ldc.i4         256
+00FD: ldarg.1        
+00FE: ldc.i4.s       14
+0100: ldelem.u1      
+0101: mul            
+0102: ldarg.1        
+0103: ldc.i4.s       15
+0105: ldelem.u1      
+0106: add            
+0107: call           RtpPacket::set_Length
+010C: nop            
+010D: ldarg.0        
+010E: ldc.i4         256
+0113: ldarg.1        
+0114: ldc.i4.s       16
+0116: ldelem.u1      
+0117: mul            
+0118: ldarg.1        
+0119: ldc.i4.s       17
+011B: ldelem.u1      
+011C: add            
+011D: call           RtpPacket::set_LineNo
+0122: nop            
+0123: ldarg.0        
+0124: ldc.i4         256
+0129: ldarg.1        
+012A: ldc.i4.s       18
+012C: ldelem.u1      
+012D: mul            
+012E: ldarg.1        
+012F: ldc.i4.s       19
+0131: ldelem.u1      
+0132: add            
+0133: call           RtpPacket::set_Offset
+0138: nop            
+0139: ldarg.0        
+013A: ldarg.1        
+013B: ldc.i4.s       16
+013D: ldelem.u1      
+013E: ldc.i4.7       
+013F: shr            
+0140: call           RtpPacket::set_FieldIdentification
+0145: nop            
+0146: ldarg.0        
+0147: ldarg.1        
+0148: ldc.i4.s       18
+014A: ldelem.u1      
+014B: ldc.i4.7       
+014C: shr            
+014D: call           RtpPacket::set_Continuation
+0152: nop            
+0153: ldarg.0        
+0154: ldarg.1        
+0155: ldlen          
+0156: conv.i4        
+0157: ldc.i4.s       20
+0159: sub            
+015A: newarr         System.Byte
+015F: call           RtpPacket::set_PayloadData
+0164: nop            
+0165: ldarg.1        
+0166: ldc.i4.s       20
+0168: ldarg.0        
+0169: call           RtpPacket::get_PayloadData
+016E: ldc.i4.0       
+016F: ldarg.1        
+0170: ldlen          
+0171: conv.i4        
+0172: ldc.i4.s       20
+0174: sub            
+0175: call           Array::Copy
+017A: nop            
+017B: nop            
+017C: ret            
+
+=== Method: RTPLib.RtpPacket::.cctor ===
+0000: call           EwV3ECxYhIse1SOarW::K3vHtAjho
+0005: ret            
+
+=== Method: SDVoE_Tester.Form1::Btn_PreviewStart_Click ===
+  Locals:
+    [0] System.Boolean
+    [1] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x3478191D
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          Form1::Btn_PreviewStart
+000E: callvirt       Control::get_Text
+0013: ldc.i4         117911089
+0018: ldc.i4         -118394735
+001D: xor            
+001E: ldc.i4         -1898252373
+0023: xor            
+0024: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+0029: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_5737dcf54ef8411881fbe22be831b417
+002E: xor            
+002F: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0034: call           String::op_Equality
+0039: stloc.0        
+003A: ldloc.0        
+003B: brfalse        -> 011A
+0040: nop            
+0041: ldarg.0        
+0042: ldfld          Form1::Text_MultiCastIP
+0047: callvirt       Control::get_Text
+004C: ldc.i4         -1222875791
+0051: ldc.i4         -1419087778
+0056: xor            
+0057: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+005C: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_ae558d1bc2a04f4c85a90fd556536453
+0061: xor            
+0062: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0067: call           String::op_Equality
+006C: brtrue         -> 00A7
+0071: ldarg.0        
+0072: ldfld          Form1::Text_MultiCastIP
+0077: callvirt       Control::get_Text
+007C: ldc.i4         714340573
+0081: ldc.i4         -2037090942
+0086: sub            
+0087: ldc.i4         -1041624513
+008C: xor            
+008D: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+0092: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_1bf9ba0d72bb424ead7696aa1a6f4c54
+0097: xor            
+0098: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+009D: call           String::op_Equality
+00A2: br             -> 00A8
+00A7: ldc.i4.1       
+00A8: stloc.1        
+00A9: ldloc.1        
+00AA: brfalse        -> 010D
+00AF: nop            
+00B0: ldc.i4         -1015681720
+00B5: ldc.i4         1806171428
+00BA: add            
+00BB: ldc.i4         1399877578
+00C0: xor            
+00C1: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+00C6: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_6e5fb5e3ed1d445e9341d237eb07d573
+00CB: xor            
+00CC: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+00D1: ldarg.0        
+00D2: ldfld          Form1::Text_MultiCastIP
+00D7: callvirt       Control::get_Text
+00DC: ldc.i4         -67674140
+00E1: ldc.i4         5
+00E6: shl            
+00E7: ldc.i4         1540991961
+00EC: xor            
+00ED: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+00F2: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_b5ffae87637a4b308db0aec4edc9465b
+00F7: xor            
+00F8: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+00FD: call           String::Concat
+0102: call           MessageBox::Show
+0107: pop            
+0108: br             -> 0123
+010D: ldarg.0        
+010E: call           Form1::ThumbNail_Start
+0113: nop            
+0114: nop            
+0115: br             -> 0123
+011A: nop            
+011B: ldarg.0        
+011C: call           Form1::ThumbNail_Stop
+0121: nop            
+0122: nop            
+0123: ret            
+
+=== Method: SDVoE_Tester.Form1::Btn_Preview_Recive_Click ===
+0000: br.s           -> 0007
+0002: call           mtd_0x351F5F18
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          Form1::ThumbNail
+000E: callvirt       THUMBNAIL::Set_StartListening
+0013: nop            
+0014: ret            
+
+=== Method: SDVoE_Tester.Form1::Btn_ActivePreviewAD_Click ===
+0000: br.s           -> 0007
+0002: call           mtd_0x512CC985
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          Form1::Btn_Preview_Recive
+000E: ldc.i4.1       
+000F: callvirt       Control::set_Enabled
+0014: nop            
+0015: ldarg.0        
+0016: ldfld          Form1::Btn_Preview_Recive
+001B: ldc.i4.1       
+001C: callvirt       Control::set_Visible
+0021: nop            
+0022: ldarg.0        
+0023: ldfld          Form1::Btn_SendMsg
+0028: ldc.i4.1       
+0029: callvirt       Control::set_Enabled
+002E: nop            
+002F: ldarg.0        
+0030: ldfld          Form1::Btn_SendMsg
+0035: ldc.i4.1       
+0036: callvirt       Control::set_Visible
+003B: nop            
+003C: ldarg.0        
+003D: ldfld          Form1::Btn_ReconnectView
+0042: ldc.i4.1       
+0043: callvirt       Control::set_Enabled
+0048: nop            
+0049: ldarg.0        
+004A: ldfld          Form1::Btn_ReconnectView
+004F: ldc.i4.1       
+0050: callvirt       Control::set_Visible
+0055: nop            
+0056: ret            
+
+=== Method: SDVoE_Tester.Form1::CheckCanPreView ===
+  Locals:
+    [0] System.Boolean
+    [1] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x3D2756FC
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          Form1::CYPTools_
+000E: ldarg.0        
+000F: ldfld          Form1::Text_MultiCastIP
+0014: callvirt       Control::get_Text
+0019: callvirt       CYPTools::TextCheck_IsMultiCastIP
+001E: brfalse        -> 0041
+0023: ldarg.0        
+0024: ldfld          Form1::CYPTools_
+0029: ldarg.0        
+002A: ldfld          Form1::Text_PreViewIP
+002F: callvirt       Control::get_Text
+0034: callvirt       CYPTools::TextCheck_IsIP
+0039: ldc.i4.0       
+003A: ceq            
+003C: br             -> 0042
+0041: ldc.i4.1       
+0042: stloc.0        
+0043: ldloc.0        
+0044: brfalse        -> 0051
+0049: nop            
+004A: ldc.i4.0       
+004B: stloc.1        
+004C: br             -> 0058
+0051: ldc.i4.1       
+0052: stloc.1        
+0053: br             -> 0058
+0058: ldloc.1        
+0059: ret            
+
+=== Method: SDVoE_Tester.Form1::GetMultiCastIP ===
+  Locals:
+    [0] System.Boolean
+    [1] Newtonsoft.Json.Linq.JArray
+    [2] System.Boolean
+    [3] System.String
+    [4] System.Int32
+    [5] System.Object
+    [6] System.Boolean
+    [7] Newtonsoft.Json.Linq.JArray
+    [8] System.Int32
+    [9] System.Object
+    [10] System.Boolean
+    [11] System.Boolean
+    [12] System.Boolean
+    [13] System.Boolean
+    [14] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x403A0DE6
+0007: nop            
+0008: ldsfld         <>o__153::<>p__1
+000D: brfalse        -> 0017
+0012: br             -> 003C
+0017: ldc.i4.s       16
+0019: ldtoken        ::String
+001E: call           Type::GetTypeFromHandle
+0023: ldtoken        ::Form1
+0028: call           Type::GetTypeFromHandle
+002D: call           Binder::Convert
+0032: call           CallSite`1::Create
+0037: stsfld         <>o__153::<>p__1
+003C: ldsfld         <>o__153::<>p__1
+0041: ldfld          CallSite`1::Target
+0046: ldsfld         <>o__153::<>p__1
+004B: ldsfld         <>o__153::<>p__0
+0050: brfalse        -> 005A
+0055: br             -> 009F
+005A: ldc.i4.0       
+005B: ldc.i4         -113182678
+0060: ldc.i4         -1652966538
+0065: xor            
+0066: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+006B: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_2fe5770b86df47f8a1742f6317540308
+0070: xor            
+0071: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0076: ldtoken        ::Form1
+007B: call           Type::GetTypeFromHandle
+0080: ldc.i4.1       
+0081: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+0086: dup            
+0087: ldc.i4.0       
+0088: ldc.i4.0       
+0089: ldnull         
+008A: call           CSharpArgumentInfo::Create
+008F: stelem.ref     
+0090: call           Binder::GetMember
+0095: call           CallSite`1::Create
+009A: stsfld         <>o__153::<>p__0
+009F: ldsfld         <>o__153::<>p__0
+00A4: ldfld          CallSite`1::Target
+00A9: ldsfld         <>o__153::<>p__0
+00AE: ldarg.1        
+00AF: callvirt       Func`3::Invoke
+00B4: callvirt       Func`3::Invoke
+00B9: ldc.i4         843532755
+00BE: ldc.i4         1478782985
+00C3: add            
+00C4: ldc.i4         -1782106424
+00C9: xor            
+00CA: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+00CF: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_934bf4fe98804d1c8c4862b60159c852
+00D4: xor            
+00D5: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+00DA: call           String::op_Equality
+00DF: stloc.0        
+00E0: ldloc.0        
+00E1: brfalse        -> 0AFD
+00E6: nop            
+00E7: newobj         JArray::.ctor
+00EC: stloc.1        
+00ED: ldsfld         <>o__153::<>p__4
+00F2: brfalse        -> 00FC
+00F7: br             -> 0120
+00FC: ldc.i4.0       
+00FD: ldtoken        ::JArray
+0102: call           Type::GetTypeFromHandle
+0107: ldtoken        ::Form1
+010C: call           Type::GetTypeFromHandle
+0111: call           Binder::Convert
+0116: call           CallSite`1::Create
+011B: stsfld         <>o__153::<>p__4
+0120: ldsfld         <>o__153::<>p__4
+0125: ldfld          CallSite`1::Target
+012A: ldsfld         <>o__153::<>p__4
+012F: ldsfld         <>o__153::<>p__3
+0134: brfalse        -> 013E
+0139: br             -> 0183
+013E: ldc.i4.0       
+013F: ldc.i4         867396220
+0144: ldc.i4         2042846514
+0149: xor            
+014A: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+014F: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_f4956451723947f986376b94d0e00240
+0154: xor            
+0155: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+015A: ldtoken        ::Form1
+015F: call           Type::GetTypeFromHandle
+0164: ldc.i4.1       
+0165: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+016A: dup            
+016B: ldc.i4.0       
+016C: ldc.i4.0       
+016D: ldnull         
+016E: call           CSharpArgumentInfo::Create
+0173: stelem.ref     
+0174: call           Binder::GetMember
+0179: call           CallSite`1::Create
+017E: stsfld         <>o__153::<>p__3
+0183: ldsfld         <>o__153::<>p__3
+0188: ldfld          CallSite`1::Target
+018D: ldsfld         <>o__153::<>p__3
+0192: ldsfld         <>o__153::<>p__2
+0197: brfalse        -> 01A1
+019C: br             -> 01E7
+01A1: ldc.i4.0       
+01A2: ldc.i4         -323366137
+01A7: not            
+01A8: ldc.i4         1355139968
+01AD: xor            
+01AE: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+01B3: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_04b471ea5443445cba3072a141f9a441
+01B8: xor            
+01B9: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+01BE: ldtoken        ::Form1
+01C3: call           Type::GetTypeFromHandle
+01C8: ldc.i4.1       
+01C9: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+01CE: dup            
+01CF: ldc.i4.0       
+01D0: ldc.i4.0       
+01D1: ldnull         
+01D2: call           CSharpArgumentInfo::Create
+01D7: stelem.ref     
+01D8: call           Binder::GetMember
+01DD: call           CallSite`1::Create
+01E2: stsfld         <>o__153::<>p__2
+01E7: ldsfld         <>o__153::<>p__2
+01EC: ldfld          CallSite`1::Target
+01F1: ldsfld         <>o__153::<>p__2
+01F6: ldarg.1        
+01F7: callvirt       Func`3::Invoke
+01FC: callvirt       Func`3::Invoke
+0201: callvirt       Func`3::Invoke
+0206: stloc.1        
+0207: ldloc.1        
+0208: ldnull         
+0209: ceq            
+020B: stloc.2        
+020C: ldloc.2        
+020D: brfalse        -> 021D
+0212: ldstr          `"`"
+0217: stloc.3        
+0218: br             -> 0B08
+021D: ldc.i4.0       
+021E: stloc.s        V_4
+0220: br             -> 0AE9
+0225: nop            
+0226: ldloc.1        
+0227: ldloc.s        V_4
+0229: callvirt       JArray::get_Item
+022E: stloc.s        V_5
+0230: ldsfld         <>o__153::<>p__7
+0235: brfalse        -> 023F
+023A: br             -> 026B
+023F: ldc.i4.0       
+0240: ldc.i4.s       83
+0242: ldtoken        ::Form1
+0247: call           Type::GetTypeFromHandle
+024C: ldc.i4.1       
+024D: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+0252: dup            
+0253: ldc.i4.0       
+0254: ldc.i4.0       
+0255: ldnull         
+0256: call           CSharpArgumentInfo::Create
+025B: stelem.ref     
+025C: call           Binder::UnaryOperation
+0261: call           CallSite`1::Create
+0266: stsfld         <>o__153::<>p__7
+026B: ldsfld         <>o__153::<>p__7
+0270: ldfld          CallSite`1::Target
+0275: ldsfld         <>o__153::<>p__7
+027A: ldsfld         <>o__153::<>p__6
+027F: brfalse        -> 0289
+0284: br             -> 02BF
+0289: ldc.i4.0       
+028A: ldc.i4.s       13
+028C: ldtoken        ::Form1
+0291: call           Type::GetTypeFromHandle
+0296: ldc.i4.2       
+0297: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+029C: dup            
+029D: ldc.i4.0       
+029E: ldc.i4.0       
+029F: ldnull         
+02A0: call           CSharpArgumentInfo::Create
+02A5: stelem.ref     
+02A6: dup            
+02A7: ldc.i4.1       
+02A8: ldc.i4.1       
+02A9: ldnull         
+02AA: call           CSharpArgumentInfo::Create
+02AF: stelem.ref     
+02B0: call           Binder::BinaryOperation
+02B5: call           CallSite`1::Create
+02BA: stsfld         <>o__153::<>p__6
+02BF: ldsfld         <>o__153::<>p__6
+02C4: ldfld          CallSite`1::Target
+02C9: ldsfld         <>o__153::<>p__6
+02CE: ldsfld         <>o__153::<>p__5
+02D3: brfalse        -> 02DD
+02D8: br             -> 0328
+02DD: ldc.i4.0       
+02DE: ldc.i4         -1420477537
+02E3: ldc.i4         919685411
+02E8: sub            
+02E9: ldc.i4         570036073
+02EE: xor            
+02EF: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+02F4: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_20d7f3251c334a99bf5c6cd6a3a9ee78
+02F9: xor            
+02FA: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+02FF: ldtoken        ::Form1
+0304: call           Type::GetTypeFromHandle
+0309: ldc.i4.1       
+030A: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+030F: dup            
+0310: ldc.i4.0       
+0311: ldc.i4.0       
+0312: ldnull         
+0313: call           CSharpArgumentInfo::Create
+0318: stelem.ref     
+0319: call           Binder::GetMember
+031E: call           CallSite`1::Create
+0323: stsfld         <>o__153::<>p__5
+0328: ldsfld         <>o__153::<>p__5
+032D: ldfld          CallSite`1::Target
+0332: ldsfld         <>o__153::<>p__5
+0337: ldloc.s        V_5
+0339: callvirt       Func`3::Invoke
+033E: ldarg.2        
+033F: callvirt       Func`4::Invoke
+0344: callvirt       Func`3::Invoke
+0349: stloc.s        V_6
+034B: ldloc.s        V_6
+034D: brfalse        -> 0AE2
+0352: nop            
+0353: newobj         JArray::.ctor
+0358: stloc.s        V_7
+035A: ldsfld         <>o__153::<>p__9
+035F: brfalse        -> 0369
+0364: br             -> 038D
+0369: ldc.i4.0       
+036A: ldtoken        ::JArray
+036F: call           Type::GetTypeFromHandle
+0374: ldtoken        ::Form1
+0379: call           Type::GetTypeFromHandle
+037E: call           Binder::Convert
+0383: call           CallSite`1::Create
+0388: stsfld         <>o__153::<>p__9
+038D: ldsfld         <>o__153::<>p__9
+0392: ldfld          CallSite`1::Target
+0397: ldsfld         <>o__153::<>p__9
+039C: ldsfld         <>o__153::<>p__8
+03A1: brfalse        -> 03AB
+03A6: br             -> 03F1
+03AB: ldc.i4.0       
+03AC: ldc.i4         -1241440857
+03B1: neg            
+03B2: ldc.i4         898856465
+03B7: xor            
+03B8: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+03BD: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_6e5fb5e3ed1d445e9341d237eb07d573
+03C2: xor            
+03C3: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+03C8: ldtoken        ::Form1
+03CD: call           Type::GetTypeFromHandle
+03D2: ldc.i4.1       
+03D3: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+03D8: dup            
+03D9: ldc.i4.0       
+03DA: ldc.i4.0       
+03DB: ldnull         
+03DC: call           CSharpArgumentInfo::Create
+03E1: stelem.ref     
+03E2: call           Binder::GetMember
+03E7: call           CallSite`1::Create
+03EC: stsfld         <>o__153::<>p__8
+03F1: ldsfld         <>o__153::<>p__8
+03F6: ldfld          CallSite`1::Target
+03FB: ldsfld         <>o__153::<>p__8
+0400: ldloc.s        V_5
+0402: callvirt       Func`3::Invoke
+0407: callvirt       Func`3::Invoke
+040C: stloc.s        V_7
+040E: ldc.i4.0       
+040F: stloc.s        V_8
+0411: br             -> 0A79
+0416: nop            
+0417: ldloc.s        V_7
+0419: ldloc.s        V_8
+041B: callvirt       JArray::get_Item
+0420: stloc.s        V_9
+0422: ldsfld         <>o__153::<>p__11
+0427: brfalse        -> 0431
+042C: br             -> 0456
+0431: ldc.i4.s       16
+0433: ldtoken        ::String
+0438: call           Type::GetTypeFromHandle
+043D: ldtoken        ::Form1
+0442: call           Type::GetTypeFromHandle
+0447: call           Binder::Convert
+044C: call           CallSite`1::Create
+0451: stsfld         <>o__153::<>p__11
+0456: ldsfld         <>o__153::<>p__11
+045B: ldfld          CallSite`1::Target
+0460: ldsfld         <>o__153::<>p__11
+0465: ldsfld         <>o__153::<>p__10
+046A: brfalse        -> 0474
+046F: br             -> 04B9
+0474: ldc.i4.0       
+0475: ldc.i4         1533718956
+047A: ldc.i4         310773555
+047F: xor            
+0480: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+0485: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_35502dd194fa4b4c9d12a1eb7b85aa17
+048A: xor            
+048B: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0490: ldtoken        ::Form1
+0495: call           Type::GetTypeFromHandle
+049A: ldc.i4.1       
+049B: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+04A0: dup            
+04A1: ldc.i4.0       
+04A2: ldc.i4.0       
+04A3: ldnull         
+04A4: call           CSharpArgumentInfo::Create
+04A9: stelem.ref     
+04AA: call           Binder::GetMember
+04AF: call           CallSite`1::Create
+04B4: stsfld         <>o__153::<>p__10
+04B9: ldsfld         <>o__153::<>p__10
+04BE: ldfld          CallSite`1::Target
+04C3: ldsfld         <>o__153::<>p__10
+04C8: ldloc.s        V_9
+04CA: callvirt       Func`3::Invoke
+04CF: callvirt       Func`3::Invoke
+04D4: ldc.i4         -165219667
+04D9: ldc.i4         333038701
+04DE: xor            
+04DF: ldc.i4         -1691503185
+04E4: xor            
+04E5: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+04EA: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_832152c07f034ba4b2945febd30337b0
+04EF: xor            
+04F0: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+04F5: call           String::op_Equality
+04FA: stloc.s        V_10
+04FC: ldloc.s        V_10
+04FE: brfalse        -> 0A72
+0503: nop            
+0504: ldsfld         <>o__153::<>p__15
+0509: brfalse        -> 0513
+050E: br             -> 053F
+0513: ldc.i4.0       
+0514: ldc.i4.s       83
+0516: ldtoken        ::Form1
+051B: call           Type::GetTypeFromHandle
+0520: ldc.i4.1       
+0521: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+0526: dup            
+0527: ldc.i4.0       
+0528: ldc.i4.0       
+0529: ldnull         
+052A: call           CSharpArgumentInfo::Create
+052F: stelem.ref     
+0530: call           Binder::UnaryOperation
+0535: call           CallSite`1::Create
+053A: stsfld         <>o__153::<>p__15
+053F: ldsfld         <>o__153::<>p__15
+0544: ldfld          CallSite`1::Target
+0549: ldsfld         <>o__153::<>p__15
+054E: ldsfld         <>o__153::<>p__14
+0553: brfalse        -> 055D
+0558: br             -> 0593
+055D: ldc.i4.0       
+055E: ldc.i4.s       35
+0560: ldtoken        ::Form1
+0565: call           Type::GetTypeFromHandle
+056A: ldc.i4.2       
+056B: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+0570: dup            
+0571: ldc.i4.0       
+0572: ldc.i4.0       
+0573: ldnull         
+0574: call           CSharpArgumentInfo::Create
+0579: stelem.ref     
+057A: dup            
+057B: ldc.i4.1       
+057C: ldc.i4.2       
+057D: ldnull         
+057E: call           CSharpArgumentInfo::Create
+0583: stelem.ref     
+0584: call           Binder::BinaryOperation
+0589: call           CallSite`1::Create
+058E: stsfld         <>o__153::<>p__14
+0593: ldsfld         <>o__153::<>p__14
+0598: ldfld          CallSite`1::Target
+059D: ldsfld         <>o__153::<>p__14
+05A2: ldsfld         <>o__153::<>p__13
+05A7: brfalse        -> 05B1
+05AC: br             -> 05FC
+05B1: ldc.i4.0       
+05B2: ldc.i4         -1953557122
+05B7: ldc.i4         1621233121
+05BC: sub            
+05BD: ldc.i4         818713458
+05C2: xor            
+05C3: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+05C8: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_10e51e048a1340089ed9fd78b7b7302c
+05CD: xor            
+05CE: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+05D3: ldtoken        ::Form1
+05D8: call           Type::GetTypeFromHandle
+05DD: ldc.i4.1       
+05DE: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+05E3: dup            
+05E4: ldc.i4.0       
+05E5: ldc.i4.0       
+05E6: ldnull         
+05E7: call           CSharpArgumentInfo::Create
+05EC: stelem.ref     
+05ED: call           Binder::GetMember
+05F2: call           CallSite`1::Create
+05F7: stsfld         <>o__153::<>p__13
+05FC: ldsfld         <>o__153::<>p__13
+0601: ldfld          CallSite`1::Target
+0606: ldsfld         <>o__153::<>p__13
+060B: ldsfld         <>o__153::<>p__12
+0610: brfalse        -> 061A
+0615: br             -> 0665
+061A: ldc.i4.0       
+061B: ldc.i4         427332523
+0620: ldc.i4         6
+0625: shr            
+0626: ldc.i4         1683792146
+062B: xor            
+062C: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+0631: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_2fe5770b86df47f8a1742f6317540308
+0636: xor            
+0637: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+063C: ldtoken        ::Form1
+0641: call           Type::GetTypeFromHandle
+0646: ldc.i4.1       
+0647: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+064C: dup            
+064D: ldc.i4.0       
+064E: ldc.i4.0       
+064F: ldnull         
+0650: call           CSharpArgumentInfo::Create
+0655: stelem.ref     
+0656: call           Binder::GetMember
+065B: call           CallSite`1::Create
+0660: stsfld         <>o__153::<>p__12
+0665: ldsfld         <>o__153::<>p__12
+066A: ldfld          CallSite`1::Target
+066F: ldsfld         <>o__153::<>p__12
+0674: ldloc.s        V_9
+0676: callvirt       Func`3::Invoke
+067B: callvirt       Func`3::Invoke
+0680: ldnull         
+0681: callvirt       Func`4::Invoke
+0686: callvirt       Func`3::Invoke
+068B: stloc.s        V_11
+068D: ldloc.s        V_11
+068F: brfalse        -> 07B4
+0694: ldarg.0        
+0695: ldsfld         <>o__153::<>p__18
+069A: brfalse        -> 06A4
+069F: br             -> 06C9
+06A4: ldc.i4.s       16
+06A6: ldtoken        ::String
+06AB: call           Type::GetTypeFromHandle
+06B0: ldtoken        ::Form1
+06B5: call           Type::GetTypeFromHandle
+06BA: call           Binder::Convert
+06BF: call           CallSite`1::Create
+06C4: stsfld         <>o__153::<>p__18
+06C9: ldsfld         <>o__153::<>p__18
+06CE: ldfld          CallSite`1::Target
+06D3: ldsfld         <>o__153::<>p__18
+06D8: ldsfld         <>o__153::<>p__17
+06DD: brfalse        -> 06E7
+06E2: br             -> 072C
+06E7: ldc.i4.0       
+06E8: ldc.i4         -1096166125
+06ED: ldc.i4         -551961414
+06F2: xor            
+06F3: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+06F8: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_7da2240f20164bddbff8f463d36a0512
+06FD: xor            
+06FE: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0703: ldtoken        ::Form1
+0708: call           Type::GetTypeFromHandle
+070D: ldc.i4.1       
+070E: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+0713: dup            
+0714: ldc.i4.0       
+0715: ldc.i4.0       
+0716: ldnull         
+0717: call           CSharpArgumentInfo::Create
+071C: stelem.ref     
+071D: call           Binder::GetMember
+0722: call           CallSite`1::Create
+0727: stsfld         <>o__153::<>p__17
+072C: ldsfld         <>o__153::<>p__17
+0731: ldfld          CallSite`1::Target
+0736: ldsfld         <>o__153::<>p__17
+073B: ldsfld         <>o__153::<>p__16
+0740: brfalse        -> 074A
+0745: br             -> 078F
+074A: ldc.i4.0       
+074B: ldc.i4         -86335403
+0750: ldc.i4         -164127545
+0755: xor            
+0756: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+075B: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_7d2e3470aa004073a89300e87662ab36
+0760: xor            
+0761: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0766: ldtoken        ::Form1
+076B: call           Type::GetTypeFromHandle
+0770: ldc.i4.1       
+0771: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+0776: dup            
+0777: ldc.i4.0       
+0778: ldc.i4.0       
+0779: ldnull         
+077A: call           CSharpArgumentInfo::Create
+077F: stelem.ref     
+0780: call           Binder::GetMember
+0785: call           CallSite`1::Create
+078A: stsfld         <>o__153::<>p__16
+078F: ldsfld         <>o__153::<>p__16
+0794: ldfld          CallSite`1::Target
+0799: ldsfld         <>o__153::<>p__16
+079E: ldloc.s        V_9
+07A0: callvirt       Func`3::Invoke
+07A5: callvirt       Func`3::Invoke
+07AA: callvirt       Func`3::Invoke
+07AF: stfld          Form1::ThumbNail_State
+07B4: ldsfld         <>o__153::<>p__22
+07B9: brfalse        -> 07C3
+07BE: br             -> 07EF
+07C3: ldc.i4.0       
+07C4: ldc.i4.s       83
+07C6: ldtoken        ::Form1
+07CB: call           Type::GetTypeFromHandle
+07D0: ldc.i4.1       
+07D1: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+07D6: dup            
+07D7: ldc.i4.0       
+07D8: ldc.i4.0       
+07D9: ldnull         
+07DA: call           CSharpArgumentInfo::Create
+07DF: stelem.ref     
+07E0: call           Binder::UnaryOperation
+07E5: call           CallSite`1::Create
+07EA: stsfld         <>o__153::<>p__22
+07EF: ldsfld         <>o__153::<>p__22
+07F4: ldfld          CallSite`1::Target
+07F9: ldsfld         <>o__153::<>p__22
+07FE: ldsfld         <>o__153::<>p__21
+0803: brfalse        -> 080D
+0808: br             -> 0843
+080D: ldc.i4.0       
+080E: ldc.i4.s       35
+0810: ldtoken        ::Form1
+0815: call           Type::GetTypeFromHandle
+081A: ldc.i4.2       
+081B: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+0820: dup            
+0821: ldc.i4.0       
+0822: ldc.i4.0       
+0823: ldnull         
+0824: call           CSharpArgumentInfo::Create
+0829: stelem.ref     
+082A: dup            
+082B: ldc.i4.1       
+082C: ldc.i4.2       
+082D: ldnull         
+082E: call           CSharpArgumentInfo::Create
+0833: stelem.ref     
+0834: call           Binder::BinaryOperation
+0839: call           CallSite`1::Create
+083E: stsfld         <>o__153::<>p__21
+0843: ldsfld         <>o__153::<>p__21
+0848: ldfld          CallSite`1::Target
+084D: ldsfld         <>o__153::<>p__21
+0852: ldsfld         <>o__153::<>p__20
+0857: brfalse        -> 0861
+085C: br             -> 08A6
+0861: ldc.i4.0       
+0862: ldc.i4         321799454
+0867: ldc.i4         1910169994
+086C: xor            
+086D: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+0872: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_d58ca259b0f4460fa293ce623f682bec
+0877: xor            
+0878: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+087D: ldtoken        ::Form1
+0882: call           Type::GetTypeFromHandle
+0887: ldc.i4.1       
+0888: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+088D: dup            
+088E: ldc.i4.0       
+088F: ldc.i4.0       
+0890: ldnull         
+0891: call           CSharpArgumentInfo::Create
+0896: stelem.ref     
+0897: call           Binder::GetMember
+089C: call           CallSite`1::Create
+08A1: stsfld         <>o__153::<>p__20
+08A6: ldsfld         <>o__153::<>p__20
+08AB: ldfld          CallSite`1::Target
+08B0: ldsfld         <>o__153::<>p__20
+08B5: ldsfld         <>o__153::<>p__19
+08BA: brfalse        -> 08C4
+08BF: br             -> 090F
+08C4: ldc.i4.0       
+08C5: ldc.i4         -1180889846
+08CA: ldc.i4         1130644576
+08CF: xor            
+08D0: ldc.i4         -649013716
+08D5: xor            
+08D6: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+08DB: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_1f70aa2aab484bdc9918d54309bde23e
+08E0: xor            
+08E1: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+08E6: ldtoken        ::Form1
+08EB: call           Type::GetTypeFromHandle
+08F0: ldc.i4.1       
+08F1: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+08F6: dup            
+08F7: ldc.i4.0       
+08F8: ldc.i4.0       
+08F9: ldnull         
+08FA: call           CSharpArgumentInfo::Create
+08FF: stelem.ref     
+0900: call           Binder::GetMember
+0905: call           CallSite`1::Create
+090A: stsfld         <>o__153::<>p__19
+090F: ldsfld         <>o__153::<>p__19
+0914: ldfld          CallSite`1::Target
+0919: ldsfld         <>o__153::<>p__19
+091E: ldloc.s        V_9
+0920: callvirt       Func`3::Invoke
+0925: callvirt       Func`3::Invoke
+092A: ldnull         
+092B: callvirt       Func`4::Invoke
+0930: callvirt       Func`3::Invoke
+0935: stloc.s        V_12
+0937: ldloc.s        V_12
+0939: brfalse        -> 0A71
+093E: nop            
+093F: ldarg.0        
+0940: ldsfld         <>o__153::<>p__25
+0945: brfalse        -> 094F
+094A: br             -> 0974
+094F: ldc.i4.s       16
+0951: ldtoken        ::String
+0956: call           Type::GetTypeFromHandle
+095B: ldtoken        ::Form1
+0960: call           Type::GetTypeFromHandle
+0965: call           Binder::Convert
+096A: call           CallSite`1::Create
+096F: stsfld         <>o__153::<>p__25
+0974: ldsfld         <>o__153::<>p__25
+0979: ldfld          CallSite`1::Target
+097E: ldsfld         <>o__153::<>p__25
+0983: ldsfld         <>o__153::<>p__24
+0988: brfalse        -> 0992
+098D: br             -> 09D7
+0992: ldc.i4.0       
+0993: ldc.i4         -1096166125
+0998: ldc.i4         -1492284321
+099D: xor            
+099E: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+09A3: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_aeb546970b294cb9a124c338020fcd0b
+09A8: xor            
+09A9: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+09AE: ldtoken        ::Form1
+09B3: call           Type::GetTypeFromHandle
+09B8: ldc.i4.1       
+09B9: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+09BE: dup            
+09BF: ldc.i4.0       
+09C0: ldc.i4.0       
+09C1: ldnull         
+09C2: call           CSharpArgumentInfo::Create
+09C7: stelem.ref     
+09C8: call           Binder::GetMember
+09CD: call           CallSite`1::Create
+09D2: stsfld         <>o__153::<>p__24
+09D7: ldsfld         <>o__153::<>p__24
+09DC: ldfld          CallSite`1::Target
+09E1: ldsfld         <>o__153::<>p__24
+09E6: ldsfld         <>o__153::<>p__23
+09EB: brfalse        -> 09F5
+09F0: br             -> 0A40
+09F5: ldc.i4.0       
+09F6: ldc.i4         1606751705
+09FB: ldc.i4         3
+0A00: shr            
+0A01: ldc.i4         341054887
+0A06: xor            
+0A07: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+0A0C: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_934bf4fe98804d1c8c4862b60159c852
+0A11: xor            
+0A12: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0A17: ldtoken        ::Form1
+0A1C: call           Type::GetTypeFromHandle
+0A21: ldc.i4.1       
+0A22: newarr         Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo
+0A27: dup            
+0A28: ldc.i4.0       
+0A29: ldc.i4.0       
+0A2A: ldnull         
+0A2B: call           CSharpArgumentInfo::Create
+0A30: stelem.ref     
+0A31: call           Binder::GetMember
+0A36: call           CallSite`1::Create
+0A3B: stsfld         <>o__153::<>p__23
+0A40: ldsfld         <>o__153::<>p__23
+0A45: ldfld          CallSite`1::Target
+0A4A: ldsfld         <>o__153::<>p__23
+0A4F: ldloc.s        V_9
+0A51: callvirt       Func`3::Invoke
+0A56: callvirt       Func`3::Invoke
+0A5B: callvirt       Func`3::Invoke
+0A60: stfld          Form1::MultiCast
+0A65: ldarg.0        
+0A66: ldfld          Form1::MultiCast
+0A6B: stloc.3        
+0A6C: br             -> 0B08
+0A71: nop            
+0A72: nop            
+0A73: ldloc.s        V_8
+0A75: ldc.i4.1       
+0A76: add            
+0A77: stloc.s        V_8
+0A79: ldloc.s        V_8
+0A7B: ldloc.s        V_7
+0A7D: callvirt       JContainer::get_Count
+0A82: clt            
+0A84: stloc.s        V_13
+0A86: ldloc.s        V_13
+0A88: brtrue         -> 0416
+0A8D: ldarg.0        
+0A8E: ldc.i4         -618532430
+0A93: ldc.i4         1148405376
+0A98: sub            
+0A99: ldc.i4         -1725742120
+0A9E: xor            
+0A9F: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+0AA4: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_1b3c6bd176cf496ab40cd9c5f4f3537b
+0AA9: xor            
+0AAA: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0AAF: stfld          Form1::ThumbNail_State
+0AB4: ldarg.0        
+0AB5: ldc.i4         1611791123
+0ABA: not            
+0ABB: ldc.i4         -1090010754
+0AC0: xor            
+0AC1: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+0AC6: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_7f82c3b1f351404da7cc6d8e05de8eaf
+0ACB: xor            
+0ACC: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0AD1: stfld          Form1::MultiCast
+0AD6: ldarg.0        
+0AD7: ldfld          Form1::MultiCast
+0ADC: stloc.3        
+0ADD: br             -> 0B08
+0AE2: nop            
+0AE3: ldloc.s        V_4
+0AE5: ldc.i4.1       
+0AE6: add            
+0AE7: stloc.s        V_4
+0AE9: ldloc.s        V_4
+0AEB: ldloc.1        
+0AEC: callvirt       JContainer::get_Count
+0AF1: clt            
+0AF3: stloc.s        V_14
+0AF5: ldloc.s        V_14
+0AF7: brtrue         -> 0225
+0AFC: nop            
+0AFD: ldstr          `"`"
+0B02: stloc.3        
+0B03: br             -> 0B08
+0B08: ldloc.3        
+0B09: ret            
+

@@ -57,13 +57,21 @@ namespace E2ETests.Harness
             if (IPAddress.TryParse(multicastIp, out var mcastAddr) &&
                 mcastAddr.GetAddressBytes()[0] >= 224 && mcastAddr.GetAddressBytes()[0] <= 239)
             {
-                if (!string.IsNullOrEmpty(localInterfaceIp) && IPAddress.TryParse(localInterfaceIp, out var localNic))
+                try
                 {
-                    _udpClient.JoinMulticastGroup(mcastAddr, localNic);
+                    if (!string.IsNullOrEmpty(localInterfaceIp) && IPAddress.TryParse(localInterfaceIp, out var localNic))
+                    {
+                        _udpClient.JoinMulticastGroup(mcastAddr, localNic);
+                    }
+                    else
+                    {
+                        _udpClient.JoinMulticastGroup(mcastAddr);
+                    }
                 }
-                else
+                catch (SocketException)
                 {
-                    _udpClient.JoinMulticastGroup(mcastAddr);
+                    // In virtualized CI, offline, or loopback environments without multicast routing table entry,
+                    // allow socket to remain bound and listening for datagrams directly.
                 }
             }
 

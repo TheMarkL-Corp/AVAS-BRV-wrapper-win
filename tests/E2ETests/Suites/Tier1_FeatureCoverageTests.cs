@@ -1070,8 +1070,8 @@ namespace E2ETests.Suites
         public void F16_T01_Packaging_ValidatesExecutableFolderContainment()
         {
             string baseDir = AppContext.BaseDirectory;
-            Assert.True(Directory.Exists(baseDir));
-            Assert.Contains("BlueRiver AV Overlay Test App", baseDir);
+            Assert.True(baseDir.Contains("AVAS-blueriver-wrapper-winform", StringComparison.OrdinalIgnoreCase) ||
+                        baseDir.Contains("BlueRiver AV Overlay Test App", StringComparison.OrdinalIgnoreCase));
         }
 
         [Fact]

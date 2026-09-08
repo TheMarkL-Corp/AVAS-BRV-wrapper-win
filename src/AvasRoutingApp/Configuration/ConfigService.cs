@@ -68,14 +68,35 @@ namespace AvasRoutingApp.Configuration
                 }
 
                 string tmpFile = _filePath + ".tmp." + Guid.NewGuid().ToString("N");
-                string json = JsonSerializer.Serialize(config, _jsonOptions);
+                try
+                {
+                    string json = JsonSerializer.Serialize(config, _jsonOptions);
+                    File.WriteAllText(tmpFile, json);
 
-                File.WriteAllText(tmpFile, json);
+                    // Atomic move / replace with retry for transient reader locks
+                    int retries = 5;
+                    while (true)
+                    {
+                        try
+                        {
+                            File.Move(tmpFile, _filePath, overwrite: true);
+                            break;
+                        }
+                        catch (Exception ex) when ((ex is IOException || ex is UnauthorizedAccessException) && retries-- > 0)
+                        {
+                            Thread.Sleep(15);
+                        }
+                    }
 
-                // Atomic move / replace
-                File.Move(tmpFile, _filePath, overwrite: true);
-
-                _current = config.Clone();
+                    _current = config.Clone();
+                }
+                finally
+                {
+                    if (File.Exists(tmpFile))
+                    {
+                        try { File.Delete(tmpFile); } catch { }
+                    }
+                }
             }
 
             // Raise change event outside lock

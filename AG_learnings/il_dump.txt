@@ -1,0 +1,289 @@
+=== Method: VOIPS_LIB.THUMBNAIL::SetIPandPort ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 17 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::Start ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::Stop ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::Close ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::GET_THUMBNAIL ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 14 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::SendMesage ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::GetByteArray ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 14 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::Set_StartListening ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::StartListening ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::Receive ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::CheckIP_IsExist ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::Sort_RTPDATA ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 17 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::Clear_RTPDATA ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::YUV422ToRGB ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 8 bytes
+IL Hex: 00 14 A5 06 00 00 02 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::BytesToBitmap ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 14 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL::RawYUV422_To_Bitmap ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 14 2A
+
+=== Method: SDVoE_Tester.Form1::Btn_PreviewStart_Click ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: SDVoE_Tester.Form1::Btn_Preview_Recive_Click ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: SDVoE_Tester.Form1::Btn_ActivePreviewAD_Click ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: SDVoE_Tester.Form1::CheckCanPreView ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 17 2A
+
+=== Method: SDVoE_Tester.Form1::GetMultiCastIP ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 14 2A
+
+Nested Type: VOIPS_LIB.THUMBNAIL+OnDwawPicDelegate
+No method body (abstract or pinvoke)
+No method body (abstract or pinvoke)
+No method body (abstract or pinvoke)
+Nested Type: VOIPS_LIB.THUMBNAIL+THUMBNAIL_Device
+Nested Type: VOIPS_LIB.THUMBNAIL+RGB
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::get_R ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 16 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::set_R ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::get_G ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 16 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::set_G ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::get_B ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 16 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::set_B ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::Equals ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 17 2A
+
+Nested Type: VOIPS_LIB.THUMBNAIL+YUV
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::get_Y ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 16 6C 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::set_Y ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::get_U ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 16 6C 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::set_U ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::get_V ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 16 6C 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::set_V ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::Equals ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 17 2A
+
+Nested Type: VOIPS_LIB.THUMBNAIL+<>c
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<Sort_RTPDATA>b__21_0 ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 16 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<Sort_RTPDATA>b__21_1 ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 17 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<Clear_RTPDATA>b__22_0 ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 17 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<RawYUV422_To_Bitmap>b__28_0 ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 17 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<RawYUV422_To_Bitmap>b__28_2 ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 16 2A
+
+Nested Type: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass14_0
+=== Method: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass14_0::<GET_THUMBNAIL>b__0 ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 14 2A
+
+Nested Type: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass21_0
+=== Method: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass21_0::<Sort_RTPDATA>b__2 ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 17 2A
+
+Nested Type: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass22_0
+=== Method: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass22_0::<Clear_RTPDATA>b__1 ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 17 2A
+
+Nested Type: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass28_0
+=== Method: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass28_0::<RawYUV422_To_Bitmap>b__1 ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 17 2A
+
+Nested Type: VOIPS_LIB.THUMBNAIL+<GET_THUMBNAIL>d__14
+=== Method: VOIPS_LIB.THUMBNAIL+<GET_THUMBNAIL>d__14::MoveNext ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+
+=== Method: VOIPS_LIB.THUMBNAIL+<GET_THUMBNAIL>d__14::SetStateMachine ===
+MaxStack: 8
+Local Variables: 0
+IL Length: 4 bytes
+IL Hex: 00 00 00 2A
+

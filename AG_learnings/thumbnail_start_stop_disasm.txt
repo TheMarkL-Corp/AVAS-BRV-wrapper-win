@@ -1,0 +1,337 @@
+﻿=== Method: SDVoE_Tester.Form1::ThumbNail_Start ===
+  Locals:
+    [0] System.Boolean
+    [1] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x60649B98
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          Form1::Btn_PreviewStart
+000E: ldc.i4         361442277
+0013: ldc.i4         536882927
+0018: xor            
+0019: ldc.i4         2042874306
+001E: xor            
+001F: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+0024: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_e37da5704d70417c95bdd4d73e5d8217
+0029: xor            
+002A: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+002F: callvirt       Control::set_Text
+0034: nop            
+0035: ldarg.0        
+0036: ldc.i4.1       
+0037: stfld          Form1::IsThumbNail
+003C: ldarg.0        
+003D: ldfld          Form1::MyDevice
+0042: ldfld          DeviceInfo::Chip_id
+0047: ldarg.0        
+0048: ldfld          Form1::DataGridView_NowRow
+004D: ldelem.ref     
+004E: ldc.i4         1103951767
+0053: ldc.i4         1033985239
+0058: xor            
+0059: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+005E: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_6e5fb5e3ed1d445e9341d237eb07d573
+0063: xor            
+0064: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0069: call           String::op_Equality
+006E: stloc.0        
+006F: ldloc.0        
+0070: brfalse        -> 0134
+0075: nop            
+0076: ldarg.0        
+0077: ldc.i4.1       
+0078: stfld          Form1::IsThumbNail_SendBlueRiver
+007D: ldarg.0        
+007E: ldc.i4         -1858374058
+0083: ldc.i4         -1298990326
+0088: xor            
+0089: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+008E: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_1f70aa2aab484bdc9918d54309bde23e
+0093: xor            
+0094: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0099: ldarg.0        
+009A: ldfld          Form1::Text_PreViewMAC
+009F: callvirt       Control::get_Text
+00A4: ldc.i4         2112113784
+00A9: ldc.i4         306949607
+00AE: xor            
+00AF: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+00B4: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_a3a42aa719114b1095499a7603c99e5c
+00B9: xor            
+00BA: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+00BF: ldarg.0        
+00C0: ldfld          Form1::Text_MultiCastPort
+00C5: callvirt       Control::get_Text
+00CA: call           String::Concat
+00CF: call           Form1::Buffer_Pull
+00D4: nop            
+00D5: ldarg.0        
+00D6: ldc.i4         703807056
+00DB: not            
+00DC: ldc.i4         -863492721
+00E1: xor            
+00E2: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+00E7: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_dc1c717042f243fe925e860c6a15ae7a
+00EC: xor            
+00ED: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+00F2: ldarg.0        
+00F3: ldfld          Form1::Text_PreViewMAC
+00F8: callvirt       Control::get_Text
+00FD: ldc.i4         -987020264
+0102: ldc.i4         -738002380
+0107: xor            
+0108: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+010D: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_a08a257f548b4e75bc689e4401f2cf62
+0112: xor            
+0113: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0118: ldarg.0        
+0119: ldfld          Form1::Text_MultiCastIP
+011E: callvirt       Control::get_Text
+0123: call           String::Concat
+0128: call           Form1::Buffer_Pull
+012D: nop            
+012E: nop            
+012F: br             -> 01FE
+0134: nop            
+0135: ldarg.0        
+0136: ldc.i4.0       
+0137: stfld          Form1::IsThumbNail_SendBlueRiver
+013C: ldarg.0        
+013D: ldc.i4.5       
+013E: newarr         System.String
+0143: dup            
+0144: ldc.i4.0       
+0145: ldc.i4         -1408706735
+014A: ldc.i4         -709501610
+014F: xor            
+0150: ldc.i4         751101828
+0155: xor            
+0156: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+015B: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_20d7f3251c334a99bf5c6cd6a3a9ee78
+0160: xor            
+0161: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0166: stelem.ref     
+0167: dup            
+0168: ldc.i4.1       
+0169: ldarg.0        
+016A: ldfld          Form1::MyDevice
+016F: ldfld          DeviceInfo::SelectedMacAddr
+0174: stelem.ref     
+0175: dup            
+0176: ldc.i4.2       
+0177: ldc.i4         892612813
+017C: ldc.i4         379436397
+0181: xor            
+0182: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+0187: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_1f70aa2aab484bdc9918d54309bde23e
+018C: xor            
+018D: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0192: stelem.ref     
+0193: dup            
+0194: ldc.i4.3       
+0195: ldarg.0        
+0196: ldfld          Form1::Text_MultiCastIP
+019B: callvirt       Control::get_Text
+01A0: stelem.ref     
+01A1: dup            
+01A2: ldc.i4.4       
+01A3: ldc.i4         -354975726
+01A8: ldc.i4         -1956133131
+01AD: xor            
+01AE: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+01B3: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_7da2240f20164bddbff8f463d36a0512
+01B8: xor            
+01B9: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+01BE: stelem.ref     
+01BF: call           String::Concat
+01C4: call           Form1::Buffer_Pull
+01C9: nop            
+01CA: ldarg.0        
+01CB: ldfld          Form1::CYPTools_
+01D0: ldc.i4         1000
+01D5: callvirt       CYPTools::While_delay
+01DA: nop            
+01DB: ldarg.0        
+01DC: ldc.i4         -633105108
+01E1: ldc.i4         -179782142
+01E6: xor            
+01E7: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+01EC: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_5f09664d7509401f9c8b47ba94533a6b
+01F1: xor            
+01F2: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+01F7: call           Form1::Send_Command
+01FC: nop            
+01FD: nop            
+01FE: ldarg.0        
+01FF: ldfld          Form1::ThumbNail
+0204: ldnull         
+0205: ceq            
+0207: stloc.1        
+0208: ldloc.1        
+0209: brfalse        -> 0250
+020E: ldarg.0        
+020F: ldarg.0        
+0210: ldfld          Form1::MyHostIp
+0215: ldfld          IpInfo::SelectedIpAddr
+021A: ldarg.0        
+021B: ldfld          Form1::Text_MultiCastIP
+0220: callvirt       Control::get_Text
+0225: ldarg.0        
+0226: ldfld          Form1::Text_MultiCastPort
+022B: callvirt       Control::get_Text
+0230: call           Convert::ToInt32
+0235: ldarg.0        
+0236: ldftn          Form1::OnDraw_Event
+023C: newobj         Action`2::.ctor
+0241: newobj         THUMBNAIL::.ctor
+0246: stfld          Form1::ThumbNail
+024B: br             -> 0282
+0250: ldarg.0        
+0251: ldfld          Form1::ThumbNail
+0256: ldarg.0        
+0257: ldfld          Form1::MyHostIp
+025C: ldfld          IpInfo::SelectedIpAddr
+0261: ldarg.0        
+0262: ldfld          Form1::Text_MultiCastIP
+0267: callvirt       Control::get_Text
+026C: ldarg.0        
+026D: ldfld          Form1::Text_MultiCastPort
+0272: callvirt       Control::get_Text
+0277: call           Convert::ToInt32
+027C: callvirt       THUMBNAIL::SetIPandPort
+0281: pop            
+0282: ldarg.0        
+0283: ldfld          Form1::ThumbNail
+0288: callvirt       THUMBNAIL::Start
+028D: nop            
+028E: ldarg.0        
+028F: ldfld          Form1::Lab_PreViewIP
+0294: ldc.i4         -1355909127
+0299: ldc.i4         -1348062856
+029E: sub            
+029F: ldc.i4         -256378294
+02A4: xor            
+02A5: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+02AA: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_4be683af3d3f4f0595343780639082cb
+02AF: xor            
+02B0: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+02B5: ldarg.0        
+02B6: ldfld          Form1::Text_MultiCastIP
+02BB: callvirt       Control::get_Text
+02C0: call           String::Concat
+02C5: callvirt       Control::set_Text
+02CA: nop            
+02CB: ldarg.0        
+02CC: ldfld          Form1::Text_MultiCastIP
+02D1: ldc.i4.1       
+02D2: callvirt       TextBoxBase::set_ReadOnly
+02D7: nop            
+02D8: ret            
+
+=== Method: SDVoE_Tester.Form1::ThumbNail_Stop ===
+  Locals:
+    [0] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x3D0C4F28
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          Form1::Btn_PreviewStart
+000E: ldc.i4         -469801156
+0013: ldc.i4         2
+0018: shr            
+0019: ldc.i4         -1053030551
+001E: xor            
+001F: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+0024: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_d81b9fe87646496485362f0dbc57ac1c
+0029: xor            
+002A: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+002F: callvirt       Control::set_Text
+0034: nop            
+0035: ldarg.0        
+0036: ldc.i4.0       
+0037: stfld          Form1::IsThumbNail
+003C: ldarg.0        
+003D: ldfld          Form1::ThumbNail
+0042: callvirt       THUMBNAIL::Close
+0047: nop            
+0048: ldarg.0        
+0049: ldfld          Form1::IsThumbNail_SendBlueRiver
+004E: stloc.0        
+004F: ldloc.0        
+0050: brfalse        -> 00B5
+0055: nop            
+0056: ldarg.0        
+0057: ldc.i4         117911089
+005C: ldc.i4         -118394735
+0061: xor            
+0062: ldc.i4         -805202446
+0067: xor            
+0068: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+006D: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_a65a2c9138674d48a12e7e2721319ca2
+0072: xor            
+0073: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+0078: ldarg.0        
+0079: ldfld          Form1::Text_PreViewMAC
+007E: callvirt       Control::get_Text
+0083: ldc.i4         990351087
+0088: ldc.i4         51874772
+008D: xor            
+008E: ldc.i4         1524928199
+0093: xor            
+0094: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+0099: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_d58ca259b0f4460fa293ce623f682bec
+009E: xor            
+009F: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+00A4: call           String::Concat
+00A9: call           Form1::Buffer_Pull
+00AE: nop            
+00AF: nop            
+00B0: br             -> 00D9
+00B5: nop            
+00B6: ldarg.0        
+00B7: ldc.i4         1207663981
+00BC: ldc.i4         1566732472
+00C1: xor            
+00C2: ldsfld         <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_18db629865b24d9ebad0f344d2704765
+00C7: ldfld          <Module>{d4ad9ac0-3c8f-4334-8dd6-2fa3c7e8e18f}::m_e78219e5a653435fbcc2682f86114021
+00CC: xor            
+00CD: call           EwV3ECxYhIse1SOarW::d3CQMGKmK
+00D2: call           Form1::Send_Command
+00D7: nop            
+00D8: nop            
+00D9: ldarg.0        
+00DA: ldfld          Form1::Text_MultiCastIP
+00DF: ldc.i4.0       
+00E0: callvirt       TextBoxBase::set_ReadOnly
+00E5: nop            
+00E6: ret            
+
+=== Method: SDVoE_Tester.Form1::OnDraw_Event ===
+  Locals:
+    [0] System.Boolean
+0000: br.s           -> 0007
+0002: call           mtd_0x45025380
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          Form1::Text_PreViewIP
+000E: callvirt       Control::get_Text
+0013: ldarg.2        
+0014: call           String::op_Equality
+0019: stloc.0        
+001A: ldloc.0        
+001B: brfalse        -> 003C
+0020: nop            
+0021: ldarg.0        
+0022: ldfld          Form1::Pic_AutoUpdate
+0027: ldarg.1        
+0028: callvirt       PictureBox::set_Image
+002D: nop            
+002E: ldarg.0        
+002F: ldfld          Form1::Pic_AutoUpdate
+0034: ldc.i4.4       
+0035: callvirt       PictureBox::set_SizeMode
+003A: nop            
+003B: nop            
+003C: ret            
+

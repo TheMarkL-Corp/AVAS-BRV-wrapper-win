@@ -1,0 +1,72 @@
+﻿=== Method: VOIPS_LIB.VOIPS::TX_SET_THUMBNAIL ===
+0000: nop            
+0001: nop            
+0002: ldnull         
+0003: ret            
+
+=== Method: VOIPS_LIB.VOIPS::TX_START_THUMBNAIL ===
+0000: nop            
+0001: nop            
+0002: ldnull         
+0003: ret            
+
+=== Method: VOIPS_LIB.VOIPS::TX_STOP_THUMBNAIL ===
+0000: nop            
+0001: nop            
+0002: ldnull         
+0003: ret            
+
+=== Method: VOIPS_LIB.VOIPS::TX_AVP_SET_THUMBNAIL ===
+0000: nop            
+0001: nop            
+0002: ldnull         
+0003: ret            
+
+=== Method: VOIPS_LIB.VOIPS::TX_AVP_START_THUMBNAIL ===
+0000: nop            
+0001: nop            
+0002: ldnull         
+0003: ret            
+
+=== Method: VOIPS_LIB.VOIPS::TX_AVP_STOP_THUMBNAIL ===
+0000: nop            
+0001: nop            
+0002: ldnull         
+0003: ret            
+
+=== Method: VOIPS_LIB.VOIPS+DEVICE_CAPABILITIES::get_thumbnail ===
+0000: nop            
+0001: nop            
+0002: ldc.i4.1       
+0003: ret            
+
+=== Method: VOIPS_LIB.VOIPS+DEVICE_CAPABILITIES::set_thumbnail ===
+0000: nop            
+0001: nop            
+0002: nop            
+0003: ret            
+
+=== Method: VOIPS_LIB.VOIPS+CMD_START_THUMBNAIL::get_hdcp_thumbnail ===
+0000: nop            
+0001: nop            
+0002: ldc.i4.1       
+0003: ret            
+
+=== Method: VOIPS_LIB.VOIPS+CMD_START_THUMBNAIL::set_hdcp_thumbnail ===
+0000: nop            
+0001: nop            
+0002: nop            
+0003: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL::GET_THUMBNAIL ===
+0000: nop            
+0001: nop            
+0002: ldnull         
+0003: ret            
+
+=== Method: VOIPS_LIB.THUMBNAIL_AVP::GET_THUMBNAIL ===
+0000: nop            
+0001: nop            
+0002: ldnull         
+0003: ret            
+

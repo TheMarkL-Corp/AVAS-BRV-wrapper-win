@@ -1,0 +1,178 @@
+=== VOIPS_LIB.THUMBNAIL Fields ===
+System.Net.Sockets.UdpClient UDP
+System.Net.IPAddress IPA_MulticastAddress
+System.Net.IPAddress IPA_PCAddress
+System.Int32 IPA_MulticastPort
+System.IAsyncResult ar_
+System.Collections.Generic.Dictionary`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[VOIPS_LIB.THUMBNAIL+THUMBNAIL_Device, SDVoE_Tester, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]] DeviceInfo
+System.Boolean IsStart
+VOIPS_LIB.THUMBNAIL+OnDwawPicDelegate OnDraw
+=== VOIPS_LIB.THUMBNAIL Properties ===
+=== THUMBNAIL_Device Fields ===
+System.String IPAddr
+System.Boolean Is_Marker
+System.Collections.Generic.List`1[[RTPLib.RtpPacket, SDVoE_Tester, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]] RTP_Data
+System.Drawing.Bitmap BMP_Thum
+=== CYP_TOOLS.CYPTools Methods ===
+System.String StrLeft(String s, Int32 length)
+System.String StrRigth(String s, Int32 length)
+System.String StrMid(String s, Int32 start, Int32 length)
+System.Void While_delay(Int32 DelayMS)
+System.Boolean TextBoxChange_Check_OnlyNumber_Positive(TextBox Check_Str)
+System.Boolean TextBoxChange_Check_OnlyNumber(TextBox Check_Str)
+System.Boolean TextBoxChange_Check_OnlyNumberFloat(TextBox Check_Str)
+System.Boolean TextBoxChange_CheckNumberRange(TextBox Check_Str, Single Start, Single End)
+System.Boolean TextCheck_IsIP(String Check_Str)
+System.Boolean TextCheck_IsMultiCastIP(String Check_Str)
+System.Boolean TextCheck_IsMAC(String Check_Str)
+System.Boolean TextCheck_IsMAC_NoSign(String Check_Str)
+System.Void Wrong_Notice_Add(ListBox listBox, String Add_Str)
+System.Boolean Wrong_Notice_IsFind(ListBox listBox, String Compare_Str)
+System.Void Wrong_Notice_Remove(ListBox listBox, String Remove_Str)
+System.Boolean Equals(Object obj)
+System.Int32 GetHashCode()
+System.Void Finalize()
+System.Type GetType()
+System.Object MemberwiseClone()
+System.String ToString()
+=== Type: RTPLib.RtpPayloadType ===
+  Method: GetValue
+  Method: GetHashCode
+  Method: ToString
+  Method: ToString
+  Method: CompareTo
+  Method: ToString
+  Method: HasFlag
+  Method: GetTypeCode
+  Method: System.IConvertible.ToBoolean
+  Method: System.IConvertible.ToChar
+  Method: System.IConvertible.ToSByte
+  Method: System.IConvertible.ToByte
+  Method: System.IConvertible.ToInt16
+  Method: System.IConvertible.ToUInt16
+  Method: System.IConvertible.ToInt32
+  Method: System.IConvertible.ToUInt32
+  Method: System.IConvertible.ToInt64
+  Method: System.IConvertible.ToUInt64
+  Method: System.IConvertible.ToSingle
+  Method: System.IConvertible.ToDouble
+  Method: System.IConvertible.ToDecimal
+  Method: System.IConvertible.ToDateTime
+  Method: System.IConvertible.ToType
+  Method: Equals
+  Method: ToString
+  Method: Finalize
+  Method: GetType
+  Method: MemberwiseClone
+  Field: value__
+  Field: Pcmu
+  Field: Reserved1
+  Field: Reserved2
+  Field: Gsm
+  Field: G723
+  Field: Dvi41
+  Field: Dvi42
+  Field: Lpc
+  Field: Pama
+  Field: G722
+  Field: L161
+  Field: L162
+  Field: Qcelp
+  Field: Cn
+  Field: Mpa
+  Field: G728
+  Field: Dvi43
+  Field: Dvi44
+  Field: G729
+  Field: Reserved3
+  Field: Unassigned1
+  Field: Unassigned2
+  Field: Unassigned3
+  Field: Unassigned4
+  Field: Unassigned5
+  Field: Celb
+  Field: Jpeg
+  Field: Unassigned6
+  Field: Nv
+  Field: Unassigned7
+  Field: Unassigned8
+  Field: H261
+  Field: Mpv
+  Field: Mp2t
+  Field: H263
+  Field: MpegPs
+  Field: SDVoE
+=== Type: RTPLib.RtpPacket ===
+  Method: get_Version
+  Method: set_Version
+  Method: get_Padding
+  Method: set_Padding
+  Method: get_Extension
+  Method: set_Extension
+  Method: get_CC
+  Method: set_CC
+  Method: get_Marker
+  Method: set_Marker
+  Method: get_PayloadType
+  Method: set_PayloadType
+  Method: get_SequenceNumber
+  Method: set_SequenceNumber
+  Method: get_Timestamp
+  Method: set_Timestamp
+  Method: get_SSRC
+  Method: set_SSRC
+  Method: get_ExtendedSequenceNumber
+  Method: set_ExtendedSequenceNumber
+  Method: get_Length
+  Method: set_Length
+  Method: get_LineNo
+  Method: set_LineNo
+  Method: get_Offset
+  Method: set_Offset
+  Method: get_FieldIdentification
+  Method: set_FieldIdentification
+  Method: get_Continuation
+  Method: set_Continuation
+  Method: get_PayloadData
+  Method: set_PayloadData
+  Method: Equals
+  Method: GetHashCode
+  Method: Finalize
+  Method: GetType
+  Method: MemberwiseClone
+  Method: ToString
+  Constructor: .ctor
+  Constructor: .cctor
+  Property: Version
+  Property: Padding
+  Property: Extension
+  Property: CC
+  Property: Marker
+  Property: PayloadType
+  Property: SequenceNumber
+  Property: Timestamp
+  Property: SSRC
+  Property: ExtendedSequenceNumber
+  Property: Length
+  Property: LineNo
+  Property: Offset
+  Property: FieldIdentification
+  Property: Continuation
+  Property: PayloadData
+  Field: <Version>k__BackingField
+  Field: <Padding>k__BackingField
+  Field: <Extension>k__BackingField
+  Field: <CC>k__BackingField
+  Field: <Marker>k__BackingField
+  Field: <PayloadType>k__BackingField
+  Field: <SequenceNumber>k__BackingField
+  Field: <Timestamp>k__BackingField
+  Field: <SSRC>k__BackingField
+  Field: <ExtendedSequenceNumber>k__BackingField
+  Field: <Length>k__BackingField
+  Field: <LineNo>k__BackingField
+  Field: <Offset>k__BackingField
+  Field: <FieldIdentification>k__BackingField
+  Field: <Continuation>k__BackingField
+  Field: <PayloadData>k__BackingField
+  Field: HeaderSize

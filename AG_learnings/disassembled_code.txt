@@ -1,0 +1,299 @@
+﻿=== Method: VOIPS_LIB.THUMBNAIL::SetIPandPort ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.1     
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::Start ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::Stop ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::Close ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::GET_THUMBNAIL ===
+0000: nop          
+0001: nop          
+0002: ldnull       
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::SendMesage ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::GetByteArray ===
+0000: nop          
+0001: nop          
+0002: ldnull       
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::Set_StartListening ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::StartListening ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::Receive ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::CheckIP_IsExist ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::Sort_RTPDATA ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.1     
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::Clear_RTPDATA ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::YUV422ToRGB ===
+0000: nop          
+0001: ldnull       
+0002: unbox.any    VOIPS_LIB.THUMBNAIL+RGB
+0007: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::BytesToBitmap ===
+0000: nop          
+0001: nop          
+0002: ldnull       
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::RawYUV422_To_Bitmap ===
+0000: nop          
+0001: nop          
+0002: ldnull       
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::.ctor ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL::.cctor ===
+0000: call         EwV3ECxYhIse1SOarW::K3vHtAjho
+0005: ret          
+
+Nested Type: VOIPS_LIB.THUMBNAIL+OnDwawPicDelegate
+No body
+No body
+No body
+Nested Type: VOIPS_LIB.THUMBNAIL+THUMBNAIL_Device
+Nested Type: VOIPS_LIB.THUMBNAIL+RGB
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::get_R ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.0     
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::set_R ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::get_G ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.0     
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::set_G ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::get_B ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.0     
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::set_B ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+RGB::Equals ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.1     
+0003: ret          
+
+Nested Type: VOIPS_LIB.THUMBNAIL+YUV
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::get_Y ===
+0000: nop          
+0001: ldc.i4.0     
+0002: conv.r8      
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::set_Y ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::get_U ===
+0000: nop          
+0001: ldc.i4.0     
+0002: conv.r8      
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::set_U ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::get_V ===
+0000: nop          
+0001: ldc.i4.0     
+0002: conv.r8      
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::set_V ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+YUV::Equals ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.1     
+0003: ret          
+
+Nested Type: VOIPS_LIB.THUMBNAIL+<>c
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<Sort_RTPDATA>b__21_0 ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.0     
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<Sort_RTPDATA>b__21_1 ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.1     
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<Clear_RTPDATA>b__22_0 ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.1     
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<RawYUV422_To_Bitmap>b__28_0 ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.1     
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+<>c::<RawYUV422_To_Bitmap>b__28_2 ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.0     
+0003: ret          
+
+Nested Type: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass14_0
+=== Method: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass14_0::<GET_THUMBNAIL>b__0 ===
+0000: nop          
+0001: nop          
+0002: ldnull       
+0003: ret          
+
+Nested Type: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass21_0
+=== Method: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass21_0::<Sort_RTPDATA>b__2 ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.1     
+0003: ret          
+
+Nested Type: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass22_0
+=== Method: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass22_0::<Clear_RTPDATA>b__1 ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.1     
+0003: ret          
+
+Nested Type: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass28_0
+=== Method: VOIPS_LIB.THUMBNAIL+<>c__DisplayClass28_0::<RawYUV422_To_Bitmap>b__1 ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.1     
+0003: ret          
+
+Nested Type: VOIPS_LIB.THUMBNAIL+<GET_THUMBNAIL>d__14
+=== Method: VOIPS_LIB.THUMBNAIL+<GET_THUMBNAIL>d__14::MoveNext ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: VOIPS_LIB.THUMBNAIL+<GET_THUMBNAIL>d__14::SetStateMachine ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: SDVoE_Tester.Form1::Btn_PreviewStart_Click ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: SDVoE_Tester.Form1::Btn_Preview_Recive_Click ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: SDVoE_Tester.Form1::Btn_ActivePreviewAD_Click ===
+0000: nop          
+0001: nop          
+0002: nop          
+0003: ret          
+
+=== Method: SDVoE_Tester.Form1::CheckCanPreView ===
+0000: nop          
+0001: nop          
+0002: ldc.i4.1     
+0003: ret          
+
+=== Method: SDVoE_Tester.Form1::GetMultiCastIP ===
+0000: nop          
+0001: nop          
+0002: ldnull       
+0003: ret          
+

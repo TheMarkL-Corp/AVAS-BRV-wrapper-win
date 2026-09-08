@@ -1,0 +1,26 @@
+﻿=== Method: SDVoE_Tester.Form1::Buffer_Pull ===
+0000: br.s           -> 7
+0002: call           mtd_0x4E2BE198
+0007: nop            
+0008: ldarg.0        
+0009: ldfld          write_buffer_Queue
+000E: ldarg.1        
+000F: callvirt       Queue`1::Enqueue
+0014: nop            
+0015: ret            
+
+=== Method: SDVoE_Tester.Form1::Send_Command ===
+0000: br.s           -> 7
+0002: call           mtd_0x5B4B8B1D
+0007: nop            
+0008: ldarg.0        
+0009: ldarg.1        
+000A: call           Form1::Record_Cmd
+000F: nop            
+0010: ldarg.0        
+0011: ldc.i4.s       19
+0013: ldc.i4.0       
+0014: call           Form1::PressButton_Handler
+0019: nop            
+001A: ret            
+

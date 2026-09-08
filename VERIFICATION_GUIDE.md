@@ -5,7 +5,7 @@
 
 All project deliverables, source code, tests, and build artifacts are self-contained within:
 ```
-d:\AVAS-SDVoE Related\Dual Link SDVoE TesterV1.16-20230824\Dual Link SDVoE TesterV1.16-20230824\BlueRiver AV Overlay Test App
+d:\AVAS-SDVoE Related\Dual Link SDVoE TesterV1.16-20230824\Dual Link SDVoE TesterV1.16-20230824\AVAS-blueriver-wrapper-winform
 ```
 
 ---
@@ -13,7 +13,7 @@ d:\AVAS-SDVoE Related\Dual Link SDVoE TesterV1.16-20230824\Dual Link SDVoE Teste
 ## 1. Project Deliverables Directory Structure
 
 ```
-BlueRiver AV Overlay Test App/
+AVAS-blueriver-wrapper-winform/
 ├── AvasRoutingApp.sln                         # Solution file
 ├── src/
 │   └── AvasRoutingApp/
@@ -67,7 +67,7 @@ BlueRiver AV Overlay Test App/
 ### Automated Test Suite Execution
 The complete 184-test suite was executed against the production codebase:
 ```powershell
-dotnet test "BlueRiver AV Overlay Test App\tests\E2ETests\E2ETests.csproj"
+dotnet test "AVAS-blueriver-wrapper-winform\tests\E2ETests\E2ETests.csproj"
 ```
 **Results:**
 - Total Tests: **184**
@@ -93,12 +93,12 @@ dotnet test "BlueRiver AV Overlay Test App\tests\E2ETests\E2ETests.csproj"
 ### Option A: Launch Pre-Built Portable Executable
 Run the pre-published standalone application directly:
 ```powershell
-& "d:\AVAS-SDVoE Related\Dual Link SDVoE TesterV1.16-20230824\Dual Link SDVoE TesterV1.16-20230824\BlueRiver AV Overlay Test App\src\AvasRoutingApp\publish\AvasRoutingApp.exe"
+& "d:\AVAS-SDVoE Related\Dual Link SDVoE TesterV1.16-20230824\Dual Link SDVoE TesterV1.16-20230824\AVAS-blueriver-wrapper-winform\src\AvasRoutingApp\publish\AvasRoutingApp.exe"
 ```
 
 ### Option B: Build and Run from Source
 ```powershell
-cd "d:\AVAS-SDVoE Related\Dual Link SDVoE TesterV1.16-20230824\Dual Link SDVoE TesterV1.16-20230824\BlueRiver AV Overlay Test App\src\AvasRoutingApp"
+cd "d:\AVAS-SDVoE Related\Dual Link SDVoE TesterV1.16-20230824\Dual Link SDVoE TesterV1.16-20230824\AVAS-blueriver-wrapper-winform\src\AvasRoutingApp"
 C:\Users\mark.leorna\.dotnet\dotnet.exe run
 ```
 
