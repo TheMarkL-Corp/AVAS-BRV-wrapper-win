@@ -58,9 +58,17 @@ A high-performance, portable native Windows desktop application that wraps the *
 
 ---
 
+## Quick Start & Releases
+
+- **[Quickstart Guide](./QUICKSTART.md)**: 3-step zero-install run guide, QA audit findings, and troubleshooting.
+- **[Download v1.0.0 Release Zip](./releases/AVAS-Routing-SW-v1.0.0-win-x64.zip)**: Standalone portable application bundle (647 KB).
+
+---
+
 ## Documentation
 
-- **[User Manual](./USER_MANUAL.md)**: Full operator guide, configuration reference, and troubleshooting.
+- **[Quickstart Guide](./QUICKSTART.md)**: Operator onboarding, QA audit breakdown, and quickstart steps.
+- **[User Manual](./USER_MANUAL.md)**: Full operator guide, UI diagrams, configuration reference, and troubleshooting.
 - **[Verification Guide](./VERIFICATION_GUIDE.md)**: Test harness architecture, end-to-end verification steps, and empirical benchmarks.
 - **[Loop Test Results](./LOOP_TEST_RESULTS.md)**: Comprehensive report of 4,005 test executions across all stress tiers.
 
