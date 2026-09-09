@@ -44,4 +44,14 @@
     <SolidColorBrush x:Key="ThemeInputBorderBrush" Color="#3D405B" />
     <SolidColorBrush x:Key="ThemeInputForegroundBrush" Color="#F1F5F9" />
 
+    <!-- Tabs & Multi-Link Brushes -->
+    <SolidColorBrush x:Key="ThemeTabActiveBackgroundBrush" Color="#2F3242" />
+    <SolidColorBrush x:Key="ThemeTabInactiveBackgroundBrush" Color="#1A1B23" />
+    <SolidColorBrush x:Key="ThemeTabActiveForegroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ThemeTabInactiveForegroundBrush" Color="#94A3B8" />
+    <SolidColorBrush x:Key="ThemeBadgeDualBackgroundBrush" Color="#2563EB" />
+    <SolidColorBrush x:Key="ThemeBadgeSingleBackgroundBrush" Color="#475569" />
+    <SolidColorBrush x:Key="ThemeStatusOnlineBrush" Color="#10B981" />
+    <SolidColorBrush x:Key="ThemeStatusOfflineBrush" Color="#EF4444" />
+
 </ResourceDictionary>

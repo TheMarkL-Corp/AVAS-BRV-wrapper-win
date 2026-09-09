@@ -5,11 +5,11 @@ namespace E2ETests.Harness
 {
     public class AppConfig
     {
-        public string BlueRiverUrl { get; set; } = "http://localhost:3000";
+        public string BlueRiverUrl { get; set; } = "http://localhost:80";
         public string ControlServerIp { get; set; } = "127.0.0.1";
-        public int RestPort { get; set; } = 8080;
+        public int RestPort { get; set; } = 8090;
         public int TelnetPort { get; set; } = 6970;
-        public string MulticastStartIp { get; set; } = "224.1.1.1";
+        public string MulticastStartIp { get; set; } = "224.1.3.1";
         public string MulticastEndIp { get; set; } = "224.1.3.225";
         public int BasePort { get; set; } = 6792;
         public string LocalNetworkInterfaceIp { get; set; } = "";

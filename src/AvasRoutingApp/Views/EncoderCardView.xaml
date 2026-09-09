@@ -23,9 +23,14 @@
                     <TextBlock Text="●" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,6,0" VerticalAlignment="Center" FontSize="10" />
                     <TextBlock Text="{Binding DeviceName}" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="280" />
                 </StackPanel>
-                <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="3" Padding="6,2">
-                    <TextBlock Text="chip_0 (TX)" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" FontWeight="SemiBold" />
-                </Border>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Border Background="{Binding LinkModeBrush}" CornerRadius="3" Padding="5,2" Margin="0,0,6,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding LinkModeBadgeText}" Foreground="White" FontSize="10" FontWeight="Bold" />
+                    </Border>
+                    <Border Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="3" Padding="6,2" VerticalAlignment="Center">
+                        <TextBlock Text="chip_0 (TX)" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" FontWeight="SemiBold" />
+                    </Border>
+                </StackPanel>
             </DockPanel>
 
             <!-- Video Viewport: Image bound to WriteableBitmap with 16:9 proportional scaling -->
@@ -52,7 +57,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: Telemetry Details (MAC, Multicast IP:Port, Unicast IP, Resolution) -->
+                <!-- Left: Telemetry Details (MAC, Multicast IP:Port, Unicast IP, Resolution, Companion) -->
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" TextTrimming="CharacterEllipsis">
                         <Run Text="MAC: " FontWeight="SemiBold" /><Run Text="{Binding MacAddress, Mode=OneWay}" Foreground="{DynamicResource ThemeTextPrimaryBrush}" />

@@ -16,7 +16,7 @@ namespace AvasRoutingApp
             base.OnStartup(e);
 
             AppLogger.Initialize();
-            AppLogger.Info("App", $"AVAS Routing Software starting up | OS: {Environment.OSVersion} | .NET: {Environment.Version}");
+            AppLogger.Info("App", $"{AppInfo.AppName} {AppInfo.VersionString} starting up | OS: {Environment.OSVersion} | .NET: {Environment.Version}");
 
             var configService = new Configuration.ConfigService();
             ApplyTheme(configService.Current.Theme);

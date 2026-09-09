@@ -46,13 +46,13 @@
                     <Image x:Name="ImgAppLogo" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
                     <TextBlock Text="AVAS ROUTING SOFTWARE" FontWeight="Bold" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="14" VerticalAlignment="Center" />
                     <Border Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="3" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="v1.0.0" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="10" FontWeight="Bold" />
+                        <TextBlock x:Name="TxtAppVersion" Text="v1.1.0" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="10" FontWeight="Bold" />
                     </Border>
                     <TextBlock Text=" | SDVoE Preview Controller" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="12" VerticalAlignment="Center" Margin="6,0,0,0" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtCurrentUrlDisplay" Text="URL: http://localhost:3000" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="11" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <TextBlock x:Name="TxtCurrentUrlDisplay" Text="URL: http://localhost:80" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="11" VerticalAlignment="Center" Margin="0,0,12,0" />
                     <Button Content="🔄 Reload" Click="BtnReload_Click" Style="{StaticResource ToolbarButtonStyle}" />
                     <Button Content="⚙ Settings" Click="BtnSettings_Click" Style="{StaticResource ToolbarButtonStyle}" />
                 </StackPanel>
@@ -136,7 +136,7 @@
         <Border Grid.Row="2" Background="{DynamicResource ThemeStatusBarBackgroundBrush}" BorderBrush="{DynamicResource ThemeStatusBarBorderBrush}" BorderThickness="0,1,0,0" Padding="8,4">
             <DockPanel>
                 <TextBlock x:Name="TxtStatus" Text="Ready | Portable WebView2 UserData: .\WebView2_UserData" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="11" VerticalAlignment="Center" />
-                <TextBlock x:Name="TxtServerStatus" Text="SDVoE Server: 127.0.0.1:8080" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                <TextBlock x:Name="TxtServerStatus" Text="SDVoE Server: 127.0.0.1:8090" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" />
             </DockPanel>
         </Border>
     </Grid>

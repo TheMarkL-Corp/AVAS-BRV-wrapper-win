@@ -36,15 +36,15 @@ namespace AvasRoutingApp.Tests
         {
             var config = new AppConfig();
 
-            Assert.Equal("http://localhost:3000", config.BlueRiverUrl);
+            Assert.Equal("http://localhost:80", config.BlueRiverUrl);
             Assert.Equal("127.0.0.1", config.ControlServerIp);
-            Assert.Equal(8080, config.RestPort);
+            Assert.Equal(8090, config.RestPort);
             Assert.Equal(6970, config.TelnetPort);
-            Assert.Equal("224.1.1.1", config.MulticastStartIp);
+            Assert.Equal("224.1.3.1", config.MulticastStartIp);
             Assert.Equal("224.1.3.225", config.MulticastEndIp);
             Assert.Equal(5000, config.BasePort);
             Assert.Equal("", config.LocalNetworkInterfaceIp);
-            Assert.Equal("Dark", config.Theme);
+            Assert.Equal("Light", config.Theme);
             Assert.Equal(400.0, config.SidebarWidth);
         }
 
@@ -132,7 +132,7 @@ namespace AvasRoutingApp.Tests
             var current = service.Current;
 
             Assert.NotNull(current);
-            Assert.Equal("http://localhost:3000", current.BlueRiverUrl);
+            Assert.Equal("http://localhost:80", current.BlueRiverUrl);
             Assert.True(File.Exists(configPath), "Config file should be created on initialization if missing.");
         }
 
@@ -183,7 +183,7 @@ namespace AvasRoutingApp.Tests
             var current = service.Current;
 
             Assert.NotNull(current);
-            Assert.Equal("http://localhost:3000", current.BlueRiverUrl);
+            Assert.Equal("http://localhost:80", current.BlueRiverUrl);
             Assert.Equal("127.0.0.1", current.ControlServerIp);
         }
 

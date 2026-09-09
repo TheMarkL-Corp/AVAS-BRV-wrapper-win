@@ -24,6 +24,7 @@ namespace AvasRoutingApp.Sdvoe
         private readonly int _telnetPort;
         private int _restPort;
         private readonly MulticastIpManager _ipManager;
+        private readonly IMultiLinkService? _multiLinkService;
         private readonly HttpClient _httpClient;
         private TcpClient? _telnetClient;
         private StreamReader? _telnetReader;
@@ -36,6 +37,7 @@ namespace AvasRoutingApp.Sdvoe
         public int TelnetPort => _telnetPort;
         public int RestPort => _restPort;
         public MulticastIpManager IpManager => _ipManager;
+        public IMultiLinkService? MultiLinkService => _multiLinkService;
         public bool IsTelnetConnected => _telnetClient != null && _telnetClient.Connected;
         public bool IsTelnetAuthenticated => _isTelnetAuthenticated && IsTelnetConnected;
 
@@ -45,16 +47,18 @@ namespace AvasRoutingApp.Sdvoe
             string serverIp = "127.0.0.1",
             int telnetPort = 6970,
             int restPort = 8080,
-            MulticastIpManager? ipManager = null)
+            MulticastIpManager? ipManager = null,
+            IMultiLinkService? multiLinkService = null)
         {
             _serverIp = string.IsNullOrWhiteSpace(serverIp) ? "127.0.0.1" : serverIp;
             _telnetPort = telnetPort > 0 ? telnetPort : 6970;
             _restPort = restPort > 0 ? restPort : 8080;
             _ipManager = ipManager ?? new MulticastIpManager();
+            _multiLinkService = multiLinkService;
             _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
         }
 
-        public SdvoeClient(AppConfig config, MulticastIpManager? ipManager = null)
+        public SdvoeClient(AppConfig config, MulticastIpManager? ipManager = null, IMultiLinkService? multiLinkService = null)
             : this(
                 config?.ControlServerIp ?? "127.0.0.1",
                 config?.TelnetPort ?? 6970,
@@ -62,7 +66,8 @@ namespace AvasRoutingApp.Sdvoe
                 ipManager ?? new MulticastIpManager(
                     config?.MulticastStartIp ?? "224.1.1.1",
                     config?.MulticastEndIp ?? "224.1.3.225",
-                    config?.BasePort ?? 6792))
+                    config?.BasePort ?? 6792),
+                multiLinkService)
         {
         }
 
@@ -209,6 +214,30 @@ namespace AvasRoutingApp.Sdvoe
                 {
                     dev.AllocatedMulticastIp = allocatedIp;
                     dev.IsStreaming = true;
+                }
+            }
+
+            // If multiLinkService is available, enrich devices with multi-link status
+            if (_multiLinkService != null)
+            {
+                try
+                {
+                    var pairs = await _multiLinkService.QueryMultiLinkPairsAsync(ct);
+                    var pairDict = pairs.ToDictionary(p => p.PrimaryMac, StringComparer.OrdinalIgnoreCase);
+                    foreach (var dev in filtered)
+                    {
+                        if (pairDict.TryGetValue(dev.MacAddress, out var pair))
+                        {
+                            dev.LinkMode = pair.LinkMode;
+                            dev.CompanionMac = pair.CompanionMac;
+                            dev.CompanionName = pair.CompanionName;
+                            dev.CompanionIsActive = pair.CompanionIsActive;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppLogger.Debug("SdvoeClient", $"Multi-link enrichment skipped/failed: {ex.Message}");
                 }
             }
 
@@ -398,7 +427,7 @@ namespace AvasRoutingApp.Sdvoe
                     port_index = 1,
                     data_string = $"set rtp igmp {multicastIp}\r\n"
                 };
-                var setResp = await PostDeviceRestAsync(path, setPayload, ct);
+                using var setResp = await PostDeviceRestAsync(path, setPayload, ct);
                 if (setResp == null || !setResp.IsSuccessStatusCode)
                 {
                     AppLogger.Warn("SdvoeClient", $"RS-232 'set rtp igmp' HTTP request failed or timed out for {normMac}");
@@ -419,7 +448,7 @@ namespace AvasRoutingApp.Sdvoe
                     port_index = 1,
                     data_string = "set rtp ON\r\n"
                 };
-                var onResp = await PostDeviceRestAsync(path, onPayload, ct);
+                using var onResp = await PostDeviceRestAsync(path, onPayload, ct);
                 if (onResp == null || !onResp.IsSuccessStatusCode)
                 {
                     AppLogger.Warn("SdvoeClient", $"RS-232 'set rtp ON' HTTP request failed or timed out for {normMac}");
@@ -453,7 +482,7 @@ namespace AvasRoutingApp.Sdvoe
                     port_index = 1,
                     data_string = "set rtp OFF\r\n"
                 };
-                var resp = await PostDeviceRestAsync(path, offPayload, ct);
+                using var resp = await PostDeviceRestAsync(path, offPayload, ct);
                 if (resp == null || !resp.IsSuccessStatusCode) return false;
 
                 string body = await resp.Content.ReadAsStringAsync(ct);
@@ -643,8 +672,8 @@ namespace AvasRoutingApp.Sdvoe
                     ssrc = ssrc,
                     udp = udpPort
                 };
-                var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-                var resp = await _httpClient.PostAsync(url, content, ct);
+                using var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                using var resp = await _httpClient.PostAsync(url, content, ct);
                 if (!resp.IsSuccessStatusCode) return false;
 
                 string body = await resp.Content.ReadAsStringAsync(ct);
@@ -668,8 +697,8 @@ namespace AvasRoutingApp.Sdvoe
                     stream_index = 0,
                     dest_address = multicastIp
                 };
-                var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-                var resp = await _httpClient.PostAsync(url, content, ct);
+                using var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                using var resp = await _httpClient.PostAsync(url, content, ct);
                 if (!resp.IsSuccessStatusCode) return false;
 
                 string body = await resp.Content.ReadAsStringAsync(ct);
@@ -694,8 +723,8 @@ namespace AvasRoutingApp.Sdvoe
                     stream_index = 0,
                     free = free
                 };
-                var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-                var resp = await _httpClient.PostAsync(url, content, ct);
+                using var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                using var resp = await _httpClient.PostAsync(url, content, ct);
                 if (!resp.IsSuccessStatusCode) return false;
 
                 string body = await resp.Content.ReadAsStringAsync(ct);
@@ -713,7 +742,7 @@ namespace AvasRoutingApp.Sdvoe
             try
             {
                 string url = $"http://{_serverIp}:{_restPort}/api/multicast";
-                var resp = await _httpClient.GetAsync(url, ct);
+                using var resp = await _httpClient.GetAsync(url, ct);
                 resp.EnsureSuccessStatusCode();
                 string json = await resp.Content.ReadAsStringAsync(ct);
                 return ParseMulticastListJson(json);

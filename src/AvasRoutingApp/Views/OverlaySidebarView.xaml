@@ -27,73 +27,214 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Sidebar Header: Title, Controls, Telemetry Summary -->
+        <!-- Sidebar Header: Segmented Tabs, Title, Controls, Telemetry Summary -->
         <Border Grid.Row="0" Background="{DynamicResource ThemeHeaderBackgroundBrush}" BorderBrush="{DynamicResource ThemeHeaderBorderBrush}" BorderThickness="0,0,0,1" Padding="14,12">
             <StackPanel>
-                <DockPanel>
-                    <TextBlock Text="AVAS-223 TX PREVIEWS" FontWeight="Bold" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="14" VerticalAlignment="Center" />
-                    <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="4" Padding="6,2">
-                        <TextBlock Text="chip_0 only" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="11" FontWeight="SemiBold" />
+                <!-- Top Navigation Segmented Tabs (Live Previews vs Multi-Link) -->
+                <Border Background="{DynamicResource ThemePillBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="7" Padding="2" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Tab 1: Live Previews -->
+                        <Button Grid.Column="0" 
+                                Content="📺 Live Previews" 
+                                Command="{Binding SelectPreviewsTabCommand}"
+                                Height="28" 
+                                FontSize="11" 
+                                FontWeight="Bold" 
+                                Cursor="Hand"
+                                BorderThickness="0">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="Foreground" Value="{DynamicResource ThemeTabInactiveForegroundBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsPreviewsTabSelected}" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource ThemeTabActiveBackgroundBrush}" />
+                                            <Setter Property="Foreground" Value="{DynamicResource ThemeTabActiveForegroundBrush}" />
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Opacity" Value="0.9" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- Tab 2: Multi-Link Manager -->
+                        <Button Grid.Column="1" 
+                                Content="🔗 Multi-Link" 
+                                Command="{Binding SelectMultiLinkTabCommand}"
+                                Height="28" 
+                                FontSize="11" 
+                                FontWeight="Bold" 
+                                Cursor="Hand"
+                                BorderThickness="0">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="Foreground" Value="{DynamicResource ThemeTabInactiveForegroundBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsMultiLinkTabSelected}" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource ThemeTabActiveBackgroundBrush}" />
+                                            <Setter Property="Foreground" Value="{DynamicResource ThemeTabActiveForegroundBrush}" />
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Opacity" Value="0.9" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Header Content for Previews Tab -->
+                <StackPanel Visibility="{Binding IsPreviewsTabSelected, Converter={StaticResource BoolToVisConverter}}">
+                    <DockPanel>
+                        <TextBlock Text="AVAS-223 TX PREVIEWS" FontWeight="Bold" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="13" VerticalAlignment="Center" />
+                        <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="4" Padding="6,2">
+                            <TextBlock Text="chip_0 only" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" FontWeight="SemiBold" />
+                        </Border>
+                    </DockPanel>
+
+                    <TextBlock Text="Strict Filter: VID 105, PID 81, chip_0" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="10" Margin="0,2,0,8" />
+
+                    <!-- Action Toolbar: Discover / Refresh, Start All, Stop All -->
+                    <WrapPanel Margin="0,0,0,6">
+                        <Button Content="🔄 Discover" Command="{Binding RefreshDevicesCommand}" Style="{StaticResource SidebarActionButtonStyle}" ToolTip="Discover and restart encoder preview streams" />
+                        <Button Content="⏹ Stop All" Command="{Binding StopAllStreamsCommand}" Style="{StaticResource SidebarActionButtonStyle}" ToolTip="Stop all active preview streams" />
+                        <Button Content="▶ Start All" Command="{Binding StartAllStreamsCommand}" Style="{StaticResource SidebarActionButtonStyle}" ToolTip="Start streaming all discovered encoders" />
+                    </WrapPanel>
+
+                    <!-- Stream & Multicast Telemetry Summary -->
+                    <Border Background="{DynamicResource ThemeCardHeaderBackgroundBrush}" CornerRadius="4" Padding="8,5" Margin="0,2,0,0" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}">
+                        <StackPanel>
+                            <DockPanel>
+                                <TextBlock Text="Active Encoders:" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="11" />
+                                <TextBlock HorizontalAlignment="Right" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontWeight="SemiBold" FontSize="11">
+                                    <Run Text="{Binding ActiveStreamCount, Mode=OneWay}" Foreground="#4CAF50" />
+                                    <Run Text=" / " />
+                                    <Run Text="{Binding DiscoveredEncoderCount, Mode=OneWay}" />
+                                </TextBlock>
+                            </DockPanel>
+                            <TextBlock Text="{Binding MulticastPoolRangeText, Mode=OneWay}" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
                     </Border>
-                </DockPanel>
+                </StackPanel>
 
-                <TextBlock Text="Strict Filter: VID 105, PID 81, chip_0" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="11" Margin="0,3,0,10" />
+                <!-- Header Content for Multi-Link Tab -->
+                <StackPanel Visibility="{Binding IsMultiLinkTabSelected, Converter={StaticResource BoolToVisConverter}}">
+                    <DockPanel>
+                        <TextBlock Text="MULTI-LINK TOPOLOGY" FontWeight="Bold" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="13" VerticalAlignment="Center" />
+                        <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="4" Padding="6,2">
+                            <TextBlock Text="10G / 20G Mode" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" FontWeight="SemiBold" />
+                        </Border>
+                    </DockPanel>
 
-                <!-- Action Toolbar: Discover / Refresh, Start All, Stop All -->
-                <WrapPanel Margin="0,0,0,8">
-                    <Button Content="🔄 Discover" Command="{Binding RefreshDevicesCommand}" Style="{StaticResource SidebarActionButtonStyle}" ToolTip="Discover and restart encoder preview streams" />
-                    <Button Content="⏹ Stop All" Command="{Binding StopAllStreamsCommand}" Style="{StaticResource SidebarActionButtonStyle}" ToolTip="Stop all active preview streams" />
-                    <Button Content="▶ Start All" Command="{Binding StartAllStreamsCommand}" Style="{StaticResource SidebarActionButtonStyle}" ToolTip="Start streaming all discovered encoders" />
-                </WrapPanel>
+                    <TextBlock Text="Manage Single/Dual link and monitor companion chips" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="10" Margin="0,2,0,8" />
 
-                <!-- Stream & Multicast Telemetry Summary -->
-                <Border Background="{DynamicResource ThemeCardHeaderBackgroundBrush}" CornerRadius="4" Padding="8,6" Margin="0,4,0,0" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}">
-                    <StackPanel>
+                    <!-- Action Toolbar: Refresh MultiLink -->
+                    <WrapPanel Margin="0,0,0,6">
+                        <Button Content="🔄 Refresh Topology" Command="{Binding RefreshDevicesCommand}" Style="{StaticResource SidebarActionButtonStyle}" ToolTip="Re-query multi-link topology and companion status" />
+                    </WrapPanel>
+
+                    <!-- Multi-Link Telemetry Summary -->
+                    <Border Background="{DynamicResource ThemeCardHeaderBackgroundBrush}" CornerRadius="4" Padding="8,5" Margin="0,2,0,0" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}">
                         <DockPanel>
-                            <TextBlock Text="Active Encoders:" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="11" />
+                            <TextBlock Text="TX Pairs Configured:" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="11" />
                             <TextBlock HorizontalAlignment="Right" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontWeight="SemiBold" FontSize="11">
-                                <Run Text="{Binding ActiveStreamCount, Mode=OneWay}" Foreground="#4CAF50" />
-                                <Run Text=" / " />
-                                <Run Text="{Binding DiscoveredEncoderCount, Mode=OneWay}" />
+                                <Run Text="{Binding MultiLinkCards.Count, Mode=OneWay}" Foreground="{DynamicResource ThemeAccentBrush}" />
+                                <Run Text=" pair(s)" />
                             </TextBlock>
                         </DockPanel>
-                        <TextBlock Text="{Binding MulticastPoolRangeText, Mode=OneWay}" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="10" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
-                </Border>
+                    </Border>
+                </StackPanel>
             </StackPanel>
         </Border>
 
-        <!-- Sidebar Body: Scrollable Card List -->
+        <!-- Sidebar Body: Scrollable Content -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="12">
-            <StackPanel>
-                <!-- Empty State Notice -->
-                <Border Background="{DynamicResource ThemeCardBackgroundBrush}" CornerRadius="6" Padding="16" Margin="0,12,0,0" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding EncoderCards.Count}" Value="0">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="📡" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,8" />
-                        <TextBlock Text="No active AVAS-223 chip_0 streams" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontSize="12" HorizontalAlignment="Center" />
-                        <TextBlock Text="Click '🔄 Discover' to scan the SDVoE Control Server for connected encoders." Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="11" TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0" />
-                    </StackPanel>
-                </Border>
+            <Grid>
+                <!-- View 1: Previews Tab Content -->
+                <StackPanel Visibility="{Binding IsPreviewsTabSelected, Converter={StaticResource BoolToVisConverter}}">
+                    <!-- Empty State Notice for Previews -->
+                    <Border Background="{DynamicResource ThemeCardBackgroundBrush}" CornerRadius="6" Padding="16" Margin="0,12,0,0" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding EncoderCards.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="📡" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                            <TextBlock Text="No active AVAS-223 chip_0 streams" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontSize="12" HorizontalAlignment="Center" />
+                            <TextBlock Text="Click '🔄 Discover' to scan the SDVoE Control Server for connected encoders." Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="11" TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
 
-                <!-- Card Collection ItemsControl -->
-                <ItemsControl ItemsSource="{Binding EncoderCards}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <views:EncoderCardView />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+                    <!-- Preview Cards Collection -->
+                    <ItemsControl ItemsSource="{Binding EncoderCards}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <views:EncoderCardView />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- View 2: Multi-Link Tab Content -->
+                <StackPanel Visibility="{Binding IsMultiLinkTabSelected, Converter={StaticResource BoolToVisConverter}}">
+                    <!-- Empty State Notice for Multi-Link -->
+                    <Border Background="{DynamicResource ThemeCardBackgroundBrush}" CornerRadius="6" Padding="16" Margin="0,12,0,0" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding MultiLinkCards.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="🔗" FontSize="24" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                            <TextBlock Text="No AVAS-223 TX Encoders Detected" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontSize="12" HorizontalAlignment="Center" />
+                            <TextBlock Text="Click '🔄 Refresh Topology' to query device configurations." Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="11" TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Multi-Link Cards Collection -->
+                    <ItemsControl ItemsSource="{Binding MultiLinkCards}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <views:MultiLinkCardView />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Grid>
         </ScrollViewer>
 
         <!-- Sidebar Footer: Status bar -->

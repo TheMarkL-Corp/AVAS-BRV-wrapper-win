@@ -28,7 +28,7 @@ namespace AvasRoutingApp.Configuration
             else if (!Uri.TryCreate(config.BlueRiverUrl, UriKind.Absolute, out var uri) ||
                      (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             {
-                errors.Add("BlueRiver AV Manager URL must be a valid HTTP or HTTPS absolute URL (e.g., http://localhost:3000).");
+                errors.Add("BlueRiver AV Manager URL must be a valid HTTP or HTTPS absolute URL (e.g., http://localhost:80).");
             }
 
             // Control Server IP validation

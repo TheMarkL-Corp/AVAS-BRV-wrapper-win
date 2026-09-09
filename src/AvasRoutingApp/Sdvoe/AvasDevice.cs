@@ -23,5 +23,9 @@ namespace AvasRoutingApp.Sdvoe
         public double CurrentFps { get; set; } = 0.0;
         public string Resolution { get; set; } = "320x180";
         public uint Ssrc { get; set; } = 12345;
+        public string LinkMode { get; set; } = "UNKNOWN";
+        public string CompanionMac { get; set; } = "NONE";
+        public string CompanionName { get; set; } = "";
+        public bool CompanionIsActive { get; set; } = false;
     }
 }

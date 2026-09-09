@@ -13,11 +13,17 @@ namespace AvasRoutingApp.ViewModels
     {
         private static readonly SolidColorBrush GreenBrush = new(Color.FromRgb(0x4C, 0xAF, 0x50));
         private static readonly SolidColorBrush AmberBrush = new(Color.FromRgb(0xFF, 0xA0, 0x00));
+        private static readonly SolidColorBrush DualLinkBrush = new(Color.FromRgb(0x25, 0x63, 0xEB));
+        private static readonly SolidColorBrush SingleLinkBrush = new(Color.FromRgb(0x47, 0x55, 0x69));
+        private static readonly SolidColorBrush UnknownLinkBrush = new(Color.FromRgb(0x33, 0x41, 0x55));
 
         static EncoderCardViewModel()
         {
             GreenBrush.Freeze();
             AmberBrush.Freeze();
+            DualLinkBrush.Freeze();
+            SingleLinkBrush.Freeze();
+            UnknownLinkBrush.Freeze();
         }
 
         private string _macAddress = string.Empty;
@@ -34,6 +40,10 @@ namespace AvasRoutingApp.ViewModels
         private byte[]? _lastRenderedRgbFrame;
         private int _frameUpdateCount;
         private IRtpStreamReceiver? _receiver;
+        private string _linkMode = "UNKNOWN";
+        private string _companionMac = "NONE";
+        private string _companionName = string.Empty;
+        private bool _companionIsActive = false;
 
         public string MacAddress
         {
@@ -148,6 +158,54 @@ namespace AvasRoutingApp.ViewModels
         {
             get => _frameUpdateCount;
             set => SetProperty(ref _frameUpdateCount, value);
+        }
+
+        public string LinkMode
+        {
+            get => _linkMode;
+            set
+            {
+                if (SetProperty(ref _linkMode, value))
+                {
+                    OnPropertyChanged(nameof(LinkModeBadgeText));
+                    OnPropertyChanged(nameof(LinkModeBrush));
+                    OnPropertyChanged(nameof(IsDualLink));
+                }
+            }
+        }
+
+        public string LinkModeBadgeText => _linkMode.ToUpperInvariant() switch
+        {
+            "DUAL" => "DUAL",
+            "SINGLE" => "SINGLE",
+            _ => "---"
+        };
+
+        public SolidColorBrush LinkModeBrush => _linkMode.ToUpperInvariant() switch
+        {
+            "DUAL" => DualLinkBrush,
+            "SINGLE" => SingleLinkBrush,
+            _ => UnknownLinkBrush
+        };
+
+        public bool IsDualLink => string.Equals(_linkMode, "DUAL", StringComparison.OrdinalIgnoreCase);
+
+        public string CompanionMac
+        {
+            get => _companionMac;
+            set => SetProperty(ref _companionMac, value);
+        }
+
+        public string CompanionName
+        {
+            get => _companionName;
+            set => SetProperty(ref _companionName, value);
+        }
+
+        public bool CompanionIsActive
+        {
+            get => _companionIsActive;
+            set => SetProperty(ref _companionIsActive, value);
         }
 
         public IRtpStreamReceiver? Receiver

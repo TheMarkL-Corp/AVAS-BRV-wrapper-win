@@ -38,11 +38,13 @@ namespace AvasRoutingApp.Views
             {
                 ImgSettingsLogo.Visibility = Visibility.Collapsed;
             }
+
+            TxtSettingsAppVersion.Text = AppInfo.VersionString;
         }
 
         private void LoadConfigToUi(AppConfig config)
         {
-            if (string.Equals(config.Theme, "Light", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(config.Theme, "Dark", StringComparison.OrdinalIgnoreCase))
             {
                 CmbTheme.SelectedIndex = 1;
             }

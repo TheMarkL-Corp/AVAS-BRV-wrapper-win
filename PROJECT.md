@@ -64,6 +64,7 @@ AVAS Routing SW is a high-performance portable native Windows desktop applicatio
 | 14 | R5.3 YUV422 to RGB24 Rasterization | Q10 fixed-point fast conversion for `[U, Y0, V, Y1]` to RGB24 with 1024-byte clamp LUT | M5 | ORIGINAL_REQUEST §R5 |
 | 15 | R5.4 Zero-Leak WPF Rendering | Direct `WriteableBitmap.BackBuffer` updating at >= 1 FPS without GDI or memory leaks | M5 | ORIGINAL_REQUEST §R5 |
 | 16 | E2E.1 Automated Test Suite & Packaging | Full end-to-end testing (Tiers 1-5) and standalone portable package verification | M6 | ORIGINAL_REQUEST Acceptance |
+| 17 | R6.1 AVAS-223 Multi-Link Management | Check Single/Dual-link mode, companion online/offline status pill, mode toggle with non-blocking 20s countdown, automatic stream pause/reconnect | M7 | V1.1.0_GOAL |
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
@@ -75,6 +76,7 @@ AVAS Routing SW is a high-performance portable native Windows desktop applicatio
 | M4 | Native Overlay Sidebar UI | Expandable sidebar, collapsed default, preview cards list, teardown lifecycle | M1, M3 | DONE |
 | M5 | RTP Ingestion & Rasterizer | Async UDP multicast listener, RFC 3550/4175 parser, Q10 YUV422 rasterizer, WriteableBitmap | M4 | DONE |
 | M6 | Final Verification & Release | Run 388 tests (100% pass), 4,005 loop stress runs, GitHub release v1.0.0 | E2E, M5 | DONE (v1.0.0 Released) |
+| M7 | Multi-Link Management (v1.1.0) | Top segmented switcher tab, companion telemetry, mode toggle, safe reboot & preview co-existence | M4, M6 | DONE (v1.1.0 Ready) |
 
 ## Interface Contracts
 

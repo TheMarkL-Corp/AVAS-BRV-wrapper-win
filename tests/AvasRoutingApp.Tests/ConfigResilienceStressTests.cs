@@ -48,9 +48,9 @@ namespace AvasRoutingApp.Tests
             var current = service.Current;
 
             Assert.NotNull(current);
-            Assert.Equal("http://localhost:3000", current.BlueRiverUrl);
+            Assert.Equal("http://localhost:80", current.BlueRiverUrl);
             Assert.Equal("127.0.0.1", current.ControlServerIp);
-            Assert.Equal(8080, current.RestPort);
+            Assert.Equal(8090, current.RestPort);
         }
 
         [Fact]
@@ -63,8 +63,8 @@ namespace AvasRoutingApp.Tests
             var current = service.Current;
 
             Assert.NotNull(current);
-            Assert.Equal("http://localhost:3000", current.BlueRiverUrl);
-            Assert.Equal(8080, current.RestPort);
+            Assert.Equal("http://localhost:80", current.BlueRiverUrl);
+            Assert.Equal(8090, current.RestPort);
         }
 
         [Fact]
@@ -77,7 +77,7 @@ namespace AvasRoutingApp.Tests
             var current = service.Current;
 
             Assert.NotNull(current);
-            Assert.Equal("http://localhost:3000", current.BlueRiverUrl);
+            Assert.Equal("http://localhost:80", current.BlueRiverUrl);
         }
 
         [Fact]
@@ -91,7 +91,7 @@ namespace AvasRoutingApp.Tests
             var current = service.Current;
 
             Assert.NotNull(current);
-            Assert.Equal("http://localhost:3000", current.BlueRiverUrl);
+            Assert.Equal("http://localhost:80", current.BlueRiverUrl);
             Assert.Equal("127.0.0.1", current.ControlServerIp);
         }
 
@@ -105,8 +105,8 @@ namespace AvasRoutingApp.Tests
             var current = service.Current;
 
             Assert.NotNull(current);
-            Assert.Equal("http://localhost:3000", current.BlueRiverUrl);
-            Assert.Equal(8080, current.RestPort);
+            Assert.Equal("http://localhost:80", current.BlueRiverUrl);
+            Assert.Equal(8090, current.RestPort);
         }
 
         [Fact]
@@ -122,10 +122,10 @@ namespace AvasRoutingApp.Tests
             Assert.NotNull(current);
             Assert.Equal(7777, current.TelnetPort);
             // Missing fields must have their defaults
-            Assert.Equal("http://localhost:3000", current.BlueRiverUrl);
+            Assert.Equal("http://localhost:80", current.BlueRiverUrl);
             Assert.Equal("127.0.0.1", current.ControlServerIp);
-            Assert.Equal(8080, current.RestPort);
-            Assert.Equal("224.1.1.1", current.MulticastStartIp);
+            Assert.Equal(8090, current.RestPort);
+            Assert.Equal("224.1.3.1", current.MulticastStartIp);
             Assert.Equal("224.1.3.225", current.MulticastEndIp);
             Assert.Equal(5000, current.BasePort);
         }
@@ -141,7 +141,7 @@ namespace AvasRoutingApp.Tests
 
             Assert.NotNull(current);
             Assert.Equal("http://future-box:3000", current.BlueRiverUrl);
-            Assert.Equal(8080, current.RestPort);
+            Assert.Equal(8090, current.RestPort);
         }
 
         [Fact]

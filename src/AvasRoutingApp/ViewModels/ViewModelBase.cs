@@ -42,6 +42,9 @@ namespace AvasRoutingApp.ViewModels
 
         public RelayCommand(Action execute) : this(_ => execute(), null) { }
 
+        public RelayCommand(Action execute, Func<bool>? canExecute) 
+            : this(_ => execute(), canExecute != null ? _ => canExecute() : null) { }
+
         public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));

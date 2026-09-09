@@ -12,17 +12,25 @@ using AvasRoutingApp.Sdvoe;
 
 namespace AvasRoutingApp.ViewModels
 {
+    public enum SidebarTab
+    {
+        Previews,
+        MultiLink
+    }
+
     /// <summary>
     /// Root ViewModel coordinating the native overlay sidebar, SDVoE discovery,
-    /// dynamic multicast IP allocation, and live preview stream receivers.
+    /// dynamic multicast IP allocation, live preview stream receivers, and multi-link topology management.
     /// </summary>
     public class MainViewModel : ViewModelBase, IAsyncDisposable, IDisposable
     {
         private readonly ISdvoeDiscoveryService _discoveryService;
         private readonly IMulticastController _multicastController;
         private readonly IConfigService _configService;
+        private readonly IMultiLinkService _multiLinkService;
         private readonly SemaphoreSlim _actionLock = new(1, 1);
 
+        private SidebarTab _selectedTab = SidebarTab.Previews;
         private bool _isSidebarExpanded;
         private double _sidebarWidth;
         private string _statusText = "Ready";
@@ -34,6 +42,23 @@ namespace AvasRoutingApp.ViewModels
         private bool _disposed;
 
         public ObservableCollection<EncoderCardViewModel> EncoderCards { get; } = new();
+        public ObservableCollection<MultiLinkCardViewModel> MultiLinkCards { get; } = new();
+
+        public SidebarTab SelectedTab
+        {
+            get => _selectedTab;
+            set
+            {
+                if (SetProperty(ref _selectedTab, value))
+                {
+                    OnPropertyChanged(nameof(IsPreviewsTabSelected));
+                    OnPropertyChanged(nameof(IsMultiLinkTabSelected));
+                }
+            }
+        }
+
+        public bool IsPreviewsTabSelected => _selectedTab == SidebarTab.Previews;
+        public bool IsMultiLinkTabSelected => _selectedTab == SidebarTab.MultiLink;
 
         public bool IsSidebarExpanded
         {
@@ -99,18 +124,23 @@ namespace AvasRoutingApp.ViewModels
         public IConfigService ConfigService => _configService;
         public ISdvoeDiscoveryService DiscoveryService => _discoveryService;
         public IMulticastController MulticastController => _multicastController;
+        public IMultiLinkService MultiLinkService => _multiLinkService;
 
         public ICommand ToggleSidebarCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
         public ICommand StopAllStreamsCommand { get; }
         public ICommand StartAllStreamsCommand { get; }
+        public ICommand SelectPreviewsTabCommand { get; }
+        public ICommand SelectMultiLinkTabCommand { get; }
 
         public MainViewModel(
             ISdvoeDiscoveryService? discoveryService = null,
             IMulticastController? multicastController = null,
-            IConfigService? configService = null)
+            IConfigService? configService = null,
+            IMultiLinkService? multiLinkService = null)
         {
             _configService = configService ?? new ConfigService();
+            _multiLinkService = multiLinkService ?? (_discoveryService as SdvoeClient)?.MultiLinkService ?? new MultiLinkService(_configService);
 
             if (discoveryService != null && multicastController != null)
             {
@@ -121,7 +151,7 @@ namespace AvasRoutingApp.ViewModels
             {
                 var cfg = _configService.Current;
                 var ipManager = new MulticastIpManager(cfg.MulticastStartIp, cfg.MulticastEndIp, cfg.BasePort);
-                var client = new SdvoeClient(cfg.ControlServerIp, cfg.TelnetPort, cfg.RestPort, ipManager);
+                var client = new SdvoeClient(cfg.ControlServerIp, cfg.TelnetPort, cfg.RestPort, ipManager, _multiLinkService);
                 _discoveryService = discoveryService ?? client;
                 _multicastController = multicastController ?? client;
             }
@@ -136,6 +166,8 @@ namespace AvasRoutingApp.ViewModels
             RefreshDevicesCommand = new RelayCommand(async () => await RefreshDevicesAsync());
             StopAllStreamsCommand = new RelayCommand(async () => await StopAllStreamsAsync());
             StartAllStreamsCommand = new RelayCommand(async () => await StartAllStreamsAsync());
+            SelectPreviewsTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.Previews);
+            SelectMultiLinkTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.MultiLink);
         }
 
         private void UpdateConfigInfo(AppConfig config)
@@ -360,6 +392,51 @@ namespace AvasRoutingApp.ViewModels
             DiscoveredEncoderCount = filteredEncoders.Count;
             AppLogger.Info("Discovery", $"Filtered for AVAS-223 chip_0 TX encoders: {DiscoveredEncoderCount} matching device(s).");
 
+            // Query Multi-Link topology to populate MultiLinkCards and enrich preview cards
+            IReadOnlyList<MultiLinkInfo> multiLinkPairs = Array.Empty<MultiLinkInfo>();
+            try
+            {
+                multiLinkPairs = await _multiLinkService.QueryMultiLinkPairsAsync(ct);
+                AppLogger.Info("Discovery", $"Discovered {multiLinkPairs.Count} multi-link pair(s).");
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Warn("Discovery", $"Multi-link topology query failed: {ex.Message}");
+            }
+
+            var pairLookup = multiLinkPairs.ToDictionary(p => p.PrimaryMac, StringComparer.OrdinalIgnoreCase);
+
+            // Synchronize MultiLinkCards
+            foreach (var pair in multiLinkPairs)
+            {
+                var existingMlCard = MultiLinkCards.FirstOrDefault(c => c.PrimaryMac.Equals(pair.PrimaryMac, StringComparison.OrdinalIgnoreCase));
+                if (existingMlCard == null)
+                {
+                    var mlCard = new MultiLinkCardViewModel(_multiLinkService)
+                    {
+                        PrimaryMac = pair.PrimaryMac,
+                        PrimaryName = pair.PrimaryName,
+                        PrimaryIp = pair.PrimaryIp,
+                        LinkMode = pair.LinkMode,
+                        CompanionMac = pair.CompanionMac,
+                        CompanionName = pair.CompanionName,
+                        CompanionIsActive = pair.CompanionIsActive
+                    };
+                    mlCard.ModeSwitchStarted += OnCardModeSwitchStartedAsync;
+                    mlCard.ModeSwitchCompleted += OnCardModeSwitchCompletedAsync;
+                    MultiLinkCards.Add(mlCard);
+                }
+                else if (!existingMlCard.IsRebooting)
+                {
+                    existingMlCard.PrimaryName = pair.PrimaryName;
+                    existingMlCard.PrimaryIp = pair.PrimaryIp;
+                    existingMlCard.LinkMode = pair.LinkMode;
+                    existingMlCard.CompanionMac = pair.CompanionMac;
+                    existingMlCard.CompanionName = pair.CompanionName;
+                    existingMlCard.CompanionIsActive = pair.CompanionIsActive;
+                }
+            }
+
             int startedCount = 0;
             int basePort = _configService.Current.BasePort;
             string localNic = _configService.Current.LocalNetworkInterfaceIp;
@@ -368,9 +445,24 @@ namespace AvasRoutingApp.ViewModels
             {
                 if (ct.IsCancellationRequested || _disposed) break;
 
+                pairLookup.TryGetValue(dev.MacAddress, out var matchedPair);
+                string linkMode = !string.IsNullOrEmpty(dev.LinkMode) && dev.LinkMode != "UNKNOWN"
+                    ? dev.LinkMode
+                    : (matchedPair?.LinkMode ?? "UNKNOWN");
+                string companionMac = !string.IsNullOrEmpty(dev.CompanionMac) && dev.CompanionMac != "NONE"
+                    ? dev.CompanionMac
+                    : (matchedPair?.CompanionMac ?? "NONE");
+                bool compActive = dev.CompanionIsActive || (matchedPair?.CompanionIsActive ?? false);
+
                 // Check if card already exists for this MAC
                 var existingCard = EncoderCards.FirstOrDefault(c => c.MacAddress.Equals(dev.MacAddress, StringComparison.OrdinalIgnoreCase));
-                if (existingCard != null) continue;
+                if (existingCard != null)
+                {
+                    existingCard.LinkMode = linkMode;
+                    existingCard.CompanionMac = companionMac;
+                    existingCard.CompanionIsActive = compActive;
+                    continue;
+                }
 
                 string? mcastIp = _multicastController.AllocateMulticastIp(dev.MacAddress);
                 if (string.IsNullOrEmpty(mcastIp))
@@ -395,7 +487,10 @@ namespace AvasRoutingApp.ViewModels
                     Port = basePort,
                     Resolution = "320x180",
                     IsStreaming = started,
-                    StatusMessage = started ? "Streaming" : "Stream start request unacknowledged"
+                    StatusMessage = started ? "Streaming" : "Stream start request unacknowledged",
+                    LinkMode = linkMode,
+                    CompanionMac = companionMac,
+                    CompanionIsActive = compActive
                 };
 
                 // Create UDP Multicast Receiver and bind to card
@@ -422,8 +517,104 @@ namespace AvasRoutingApp.ViewModels
             AppLogger.Info("Sidebar", $"Sidebar update finished: {ActiveStreamCount} card(s) active.");
         }
 
+        private async Task OnCardModeSwitchStartedAsync(MultiLinkCardViewModel mlCard, string targetMode)
+        {
+            AppLogger.Info("MainViewModel", $"Mode switch initiated for {mlCard.PrimaryMac} -> {targetMode}. Gracefully pausing preview stream...");
+
+            var previewCard = EncoderCards.FirstOrDefault(c => c.MacAddress.Equals(mlCard.PrimaryMac, StringComparison.OrdinalIgnoreCase));
+            if (previewCard != null)
+            {
+                try
+                {
+                    if (previewCard.Receiver != null)
+                    {
+                        previewCard.Receiver.StopListening();
+                        previewCard.Receiver.Dispose();
+                        previewCard.DetachReceiver();
+                    }
+
+                    await _multicastController.StopPreviewStreamAsync(previewCard.MacAddress, CancellationToken.None);
+                    _multicastController.ReleaseMulticastIp(previewCard.MacAddress);
+
+                    previewCard.IsStreaming = false;
+                    previewCard.IsWaitingForStream = true;
+                    previewCard.StatusMessage = $"Hardware rebooting ({targetMode})...";
+                    previewCard.CurrentFps = 0.0;
+                    previewCard.LinkMode = targetMode;
+                }
+                catch (Exception ex)
+                {
+                    AppLogger.Warn("MainViewModel", $"Error pausing stream for {mlCard.PrimaryMac}: {ex.Message}");
+                }
+            }
+        }
+
+        private async Task OnCardModeSwitchCompletedAsync(MultiLinkCardViewModel mlCard)
+        {
+            AppLogger.Info("MainViewModel", $"Hardware reboot completed for {mlCard.PrimaryMac}. Resuming preview stream...");
+
+            try
+            {
+                var pairs = await _multiLinkService.QueryMultiLinkPairsAsync(CancellationToken.None);
+                var match = pairs.FirstOrDefault(p => p.PrimaryMac.Equals(mlCard.PrimaryMac, StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                {
+                    mlCard.LinkMode = match.LinkMode;
+                    mlCard.CompanionMac = match.CompanionMac;
+                    mlCard.CompanionName = match.CompanionName;
+                    mlCard.CompanionIsActive = match.CompanionIsActive;
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Warn("MainViewModel", $"Failed refreshing multi-link info post-reboot: {ex.Message}");
+            }
+
+            var previewCard = EncoderCards.FirstOrDefault(c => c.MacAddress.Equals(mlCard.PrimaryMac, StringComparison.OrdinalIgnoreCase));
+            if (previewCard != null)
+            {
+                previewCard.LinkMode = mlCard.LinkMode;
+                previewCard.CompanionMac = mlCard.CompanionMac;
+                previewCard.CompanionIsActive = mlCard.CompanionIsActive;
+
+                int basePort = _configService.Current.BasePort;
+                string localNic = _configService.Current.LocalNetworkInterfaceIp;
+
+                string? mcastIp = _multicastController.AllocateMulticastIp(previewCard.MacAddress);
+                if (!string.IsNullOrEmpty(mcastIp))
+                {
+                    previewCard.MulticastIp = mcastIp;
+                    previewCard.Port = basePort;
+
+                    bool started = await _multicastController.StartPreviewStreamAsync(previewCard.MacAddress, mcastIp, basePort, CancellationToken.None);
+                    previewCard.IsStreaming = started;
+                    previewCard.StatusMessage = started ? "Streaming" : "Stream restart pending";
+
+                    var receiver = new RtpMulticastReceiver();
+                    previewCard.AttachReceiver(receiver);
+                    try
+                    {
+                        receiver.StartListening(mcastIp, basePort, localNic);
+                    }
+                    catch (Exception ex)
+                    {
+                        AppLogger.Error("Multicast", $"Failed to re-bind socket for {mcastIp}:{basePort}", ex);
+                        previewCard.StatusMessage = $"Socket bind error: {ex.Message}";
+                    }
+                }
+            }
+        }
+
         private async Task StopAllStreamsInternalAsync(CancellationToken ct)
         {
+            foreach (var mlCard in MultiLinkCards.ToList())
+            {
+                mlCard.CancelCountdown();
+                mlCard.ModeSwitchStarted -= OnCardModeSwitchStartedAsync;
+                mlCard.ModeSwitchCompleted -= OnCardModeSwitchCompletedAsync;
+            }
+            MultiLinkCards.Clear();
+
             var cardsToStop = EncoderCards.ToList();
             AppLogger.Info("Sidebar", $"Stopping {cardsToStop.Count} active stream cards...");
 

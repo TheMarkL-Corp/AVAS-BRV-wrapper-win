@@ -195,7 +195,7 @@ namespace E2ETests.Suites
             {
                 File.WriteAllText(tempConfig, "{}");
                 var service = new ConfigServiceHelper(tempConfig);
-                Assert.Equal("224.1.1.1", service.Current.MulticastStartIp);
+                Assert.Equal("224.1.3.1", service.Current.MulticastStartIp);
             }
             finally
             {

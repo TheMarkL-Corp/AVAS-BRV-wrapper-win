@@ -109,7 +109,7 @@ namespace E2ETests.Suites
         public void F02_T03_WebView2_HandlesLocalhostDefaultUrlFallback()
         {
             var config = new AppConfig();
-            Assert.Equal("http://localhost:3000", config.BlueRiverUrl);
+            Assert.Equal("http://localhost:80", config.BlueRiverUrl);
         }
 
         [Fact]
@@ -140,7 +140,7 @@ namespace E2ETests.Suites
             {
                 var service = new ConfigServiceHelper(tempConfig);
                 Assert.NotNull(service.Current);
-                Assert.Equal("224.1.1.1", service.Current.MulticastStartIp);
+                Assert.Equal("224.1.3.1", service.Current.MulticastStartIp);
                 Assert.Equal("224.1.3.225", service.Current.MulticastEndIp);
                 Assert.Equal(6792, service.Current.BasePort);
             }

@@ -28,6 +28,8 @@ namespace E2ETests.Mocks
         public int UdpPort { get; set; } = 6792;
         public double Fps { get; set; } = 1.0;
         public uint Ssrc { get; set; } = 12345;
+        public string LinkMode { get; set; } = "SINGLE";
+        public string? CompanionMac { get; set; }
     }
 
     public class MockSdvoeServer : IDisposable, IAsyncDisposable
@@ -483,7 +485,14 @@ namespace E2ETests.Mocks
 
         private string SerializeDeviceJson(MockDevice dev)
         {
-            return $"{{\"device_id\":\"{dev.MacAddress}\",\"device_name\":\"{dev.DeviceName}\",\"identity\":{{\"chipset_type\":\"AVP2000T\",\"engine\":\"PLETHORA\",\"vendor_id\":{dev.VendorId},\"product_id\":{dev.ProductId},\"firmware_comment\":\"SDVoE v2.2.0.0\",\"firmware_version\":\"1.3.1.0\",\"firmware_rc\":0,\"is_receiver\":{dev.IsReceiver.ToString().ToLowerInvariant()},\"is_transmitter\":{dev.IsTransmitter.ToString().ToLowerInvariant()},\"chip_id\":{dev.ChipIndex}}},\"status\":{{\"active\":true}},\"nodes\":[{{\"type\":\"NETWORK_INTERFACE\",\"index\":0,\"configuration\":{{}},\"status\":{{\"mac_address\":\"{dev.MacAddress}\",\"ip\":{{\"address\":\"{dev.IpAddress}\"}}}}}}]}}";
+            string multiLinkNode = "";
+            if (dev.IsTransmitter && dev.ChipIndex == 0)
+            {
+                string companionMac = dev.CompanionMac ?? "f8228500bbbb";
+                multiLinkNode = $",{{\"type\":\"MULTI_LINK_TRANSMITTER\",\"configuration\":{{\"link_mode\":\"{dev.LinkMode}\"}},\"status\":{{\"companions\":[{{\"device_id\":\"{companionMac.ToUpperInvariant()}\"}}],\"link_capabilities\":[{{\"mode\":\"SINGLE\"}},{{\"mode\":\"DUAL\"}}]}}}}";
+            }
+
+            return $"{{\"device_id\":\"{dev.MacAddress}\",\"device_name\":\"{dev.DeviceName}\",\"identity\":{{\"chipset_type\":\"AVP2000T\",\"engine\":\"PLETHORA\",\"vendor_id\":{dev.VendorId},\"product_id\":{dev.ProductId},\"firmware_comment\":\"SDVoE v2.2.0.0\",\"firmware_version\":\"1.3.1.0\",\"firmware_rc\":0,\"is_receiver\":{dev.IsReceiver.ToString().ToLowerInvariant()},\"is_transmitter\":{dev.IsTransmitter.ToString().ToLowerInvariant()},\"chip_id\":{dev.ChipIndex}}},\"status\":{{\"active\":true}},\"nodes\":[{{\"type\":\"NETWORK_INTERFACE\",\"index\":0,\"configuration\":{{}},\"status\":{{\"mac_address\":\"{dev.MacAddress}\",\"ip\":{{\"address\":\"{dev.IpAddress}\"}}}}}}{multiLinkNode}]}}";
         }
 
         private string BuildListMulticastJson()
@@ -627,6 +636,32 @@ namespace E2ETests.Mocks
                                     _activeMulticastStreams.TryRemove(dev.MulticastIp, out _);
                                     dev.MulticastIp = null;
                                 }
+                                await WriteJsonResponseAsync(resp, 200, "{\"status\":\"SUCCESS\",\"result\":null}");
+                            }
+                            else
+                            {
+                                await WriteJsonResponseAsync(resp, 404, "{\"status\":\"ERROR\",\"error\":{\"reason\":\"NOT_FOUND\"}}");
+                            }
+                            return;
+                        }
+                        else if (op.Equals("set:multi_link", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string mode = root.TryGetProperty("mode", out var mElem) ? mElem.GetString() ?? "SINGLE" : "SINGLE";
+                            if (_devices.TryGetValue(mac, out var dev))
+                            {
+                                dev.LinkMode = mode;
+                                await WriteJsonResponseAsync(resp, 200, "{\"status\":\"SUCCESS\",\"result\":null}");
+                            }
+                            else
+                            {
+                                await WriteJsonResponseAsync(resp, 404, "{\"status\":\"ERROR\",\"error\":{\"reason\":\"NOT_FOUND\"}}");
+                            }
+                            return;
+                        }
+                        else if (op.Equals("reboot", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (_devices.TryGetValue(mac, out _))
+                            {
                                 await WriteJsonResponseAsync(resp, 200, "{\"status\":\"SUCCESS\",\"result\":null}");
                             }
                             else

@@ -84,6 +84,8 @@ namespace AvasRoutingApp
             {
                 ImgAppLogo.Visibility = Visibility.Collapsed;
             }
+
+            TxtAppVersion.Text = AppInfo.VersionString;
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
