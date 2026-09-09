@@ -9,37 +9,37 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
     </UserControl.Resources>
 
-    <Border Background="#2B2D42" BorderBrush="#3D405B" BorderThickness="1" CornerRadius="6" Margin="0,0,0,12" Padding="10">
+    <Border Background="{DynamicResource ThemeCardBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,12" Padding="10">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="180" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- Card Header: Device Name & Mode Badge -->
             <DockPanel Grid.Row="0" Margin="0,0,0,8">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                    <TextBlock Text="●" Foreground="#4895EF" Margin="0,0,6,0" VerticalAlignment="Center" FontSize="10" />
-                    <TextBlock Text="{Binding DeviceName}" FontWeight="Bold" Foreground="#EDF2F4" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="220" />
+                    <TextBlock Text="●" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,6,0" VerticalAlignment="Center" FontSize="10" />
+                    <TextBlock Text="{Binding DeviceName}" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="280" />
                 </StackPanel>
-                <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="#1E1E24" CornerRadius="3" Padding="6,2">
-                    <TextBlock Text="chip_0 (TX)" Foreground="#8D99AE" FontSize="10" FontWeight="SemiBold" />
+                <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="3" Padding="6,2">
+                    <TextBlock Text="chip_0 (TX)" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" FontWeight="SemiBold" />
                 </Border>
             </DockPanel>
 
-            <!-- Video Viewport: Image bound to WriteableBitmap -->
-            <Border Grid.Row="1" Background="#14151B" CornerRadius="4" ClipToBounds="True" BorderBrush="#3D405B" BorderThickness="1">
-                <Grid>
+            <!-- Video Viewport: Image bound to WriteableBitmap with 16:9 proportional scaling -->
+            <Border Grid.Row="1" Background="{DynamicResource ThemeVideoBackgroundBrush}" CornerRadius="4" ClipToBounds="True" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" MinHeight="180">
+                <Grid MinHeight="180">
                     <!-- Live Decoded Video Viewport -->
-                    <Image Source="{Binding PreviewBitmap}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Image Source="{Binding PreviewBitmap}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" MaxHeight="380" />
 
                     <!-- Waiting / Connecting Overlay -->
-                    <Border Background="#CC14151B" Visibility="{Binding IsWaitingForStream, Converter={StaticResource BoolToVisConverter}}"
+                    <Border Background="#B30B0C10" Visibility="{Binding IsWaitingForStream, Converter={StaticResource BoolToVisConverter}}"
                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <TextBlock Text="CONNECTING..." Foreground="#4895EF" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,4" />
-                            <TextBlock Text="{Binding StatusMessage}" Foreground="#8D99AE" FontSize="10" HorizontalAlignment="Center" />
+                            <TextBlock Text="CONNECTING..." Foreground="{DynamicResource ThemeAccentBrush}" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                            <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" HorizontalAlignment="Center" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -54,21 +54,21 @@
 
                 <!-- Left: Telemetry Details (MAC, Multicast IP:Port, Unicast IP, Resolution) -->
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Foreground="#8D99AE" FontSize="10" TextTrimming="CharacterEllipsis">
-                        <Run Text="MAC: " FontWeight="SemiBold" /><Run Text="{Binding MacAddress}" Foreground="#EDF2F4" />
+                    <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" TextTrimming="CharacterEllipsis">
+                        <Run Text="MAC: " FontWeight="SemiBold" /><Run Text="{Binding MacAddress, Mode=OneWay}" Foreground="{DynamicResource ThemeTextPrimaryBrush}" />
                     </TextBlock>
-                    <TextBlock Foreground="#8D99AE" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
-                        <Run Text="Mcast: " FontWeight="SemiBold" /><Run Text="{Binding MulticastEndpoint}" Foreground="#4895EF" />
+                    <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
+                        <Run Text="Mcast: " FontWeight="SemiBold" /><Run Text="{Binding MulticastEndpoint, Mode=OneWay}" Foreground="{DynamicResource ThemeAccentBrush}" />
                     </TextBlock>
-                    <TextBlock Foreground="#8D99AE" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
-                        <Run Text="IP: " FontWeight="SemiBold" /><Run Text="{Binding UnicastIp}" />
+                    <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
+                        <Run Text="IP: " FontWeight="SemiBold" /><Run Text="{Binding UnicastIp, Mode=OneWay}" />
                         <Run Text=" | " />
-                        <Run Text="{Binding Resolution}" Foreground="#EDF2F4" />
+                        <Run Text="{Binding Resolution, Mode=OneWay}" Foreground="{DynamicResource ThemeTextPrimaryBrush}" />
                     </TextBlock>
                 </StackPanel>
 
                 <!-- Right: Visual Color-Coded Live FPS Badge (Green >= 1.0, Amber < 1.0) -->
-                <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="4" Padding="8,4" Background="#1E1E24" BorderThickness="1" BorderBrush="#3D405B">
+                <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="4" Padding="8,4" Background="{DynamicResource ThemePillBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Ellipse Width="8" Height="8" Margin="0,0,6,0" VerticalAlignment="Center" Fill="{Binding FpsBrush}" />
                         <TextBlock Text="{Binding FpsDisplay}" Foreground="{Binding FpsBrush}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />

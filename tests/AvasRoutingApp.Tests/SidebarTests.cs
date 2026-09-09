@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -8,6 +9,7 @@ using AvasRoutingApp.Configuration;
 using AvasRoutingApp.Rtp;
 using AvasRoutingApp.Sdvoe;
 using AvasRoutingApp.ViewModels;
+using AvasRoutingApp.Views;
 
 namespace AvasRoutingApp.Tests
 {
@@ -156,13 +158,13 @@ namespace AvasRoutingApp.Tests
             Assert.Single(mockController.StartedStreams);
             Assert.Equal("00:0B:AB:AA:BB:CC", mockController.StartedStreams[0].mac);
             Assert.Equal("224.1.1.1", mockController.StartedStreams[0].mcastIp);
-            Assert.Equal(6792, mockController.StartedStreams[0].port);
+            Assert.Equal(5000, mockController.StartedStreams[0].port);
 
             var card = vm.EncoderCards[0];
             Assert.Equal("00:0B:AB:AA:BB:CC", card.MacAddress);
             Assert.Equal("224.1.1.1", card.MulticastIp);
-            Assert.Equal(6792, card.Port);
-            Assert.Equal("224.1.1.1:6792", card.MulticastEndpoint);
+            Assert.Equal(5000, card.Port);
+            Assert.Equal("224.1.1.1:5000", card.MulticastEndpoint);
             Assert.Equal("320x180", card.Resolution);
             Assert.NotNull(card.Receiver);
             Assert.True(card.Receiver.IsListening);
@@ -323,6 +325,42 @@ namespace AvasRoutingApp.Tests
             Assert.Empty(vm.EncoderCards);
             Assert.Equal(0, vm.ActiveStreamCount);
             Assert.Empty(mockController.StartedStreams);
+        }
+
+
+        [Fact]
+        public void Sidebar_InstantiateCardView_OnStaThread()
+        {
+            Exception? caughtEx = null;
+            var t = new Thread(() =>
+            {
+                try
+                {
+                    var card = new EncoderCardViewModel
+                    {
+                        DeviceName = "Test Card",
+                        MacAddress = "00:11:22:33:44:55",
+                        UnicastIp = "10.0.0.1",
+                        MulticastIp = "224.1.1.1",
+                        Port = 6792
+                    };
+                    var view = new EncoderCardView
+                    {
+                        DataContext = card
+                    };
+                    view.Measure(new System.Windows.Size(350, 260));
+                    view.Arrange(new System.Windows.Rect(0, 0, 350, 260));
+                    view.UpdateLayout();
+                }
+                catch (Exception ex)
+                {
+                    caughtEx = ex;
+                }
+            });
+            t.SetApartmentState(ApartmentState.STA);
+            t.Start();
+            t.Join();
+            Assert.Null(caughtEx);
         }
     }
 }

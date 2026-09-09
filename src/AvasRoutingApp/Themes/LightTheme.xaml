@@ -1,0 +1,47 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Advantech Corporate Blue Accent -->
+    <SolidColorBrush x:Key="ThemeAccentBrush" Color="#0055AF" />
+    <SolidColorBrush x:Key="ThemeAccentHoverBrush" Color="#00438C" />
+    <SolidColorBrush x:Key="ThemeAccentForegroundBrush" Color="#FFFFFF" />
+
+    <!-- Window & Base Backgrounds (Matches Semtech BlueRiver AV Manager #F4F6F9) -->
+    <SolidColorBrush x:Key="ThemeWindowBackgroundBrush" Color="#F4F6F9" />
+    <SolidColorBrush x:Key="ThemeHeaderBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ThemeHeaderBorderBrush" Color="#E2E8F0" />
+    <SolidColorBrush x:Key="ThemeSidebarBackgroundBrush" Color="#F8FAFC" />
+    <SolidColorBrush x:Key="ThemeSidebarBorderBrush" Color="#E2E8F0" />
+    <SolidColorBrush x:Key="ThemeStatusBarBackgroundBrush" Color="#E2E8F0" />
+    <SolidColorBrush x:Key="ThemeStatusBarBorderBrush" Color="#CBD5E1" />
+
+    <!-- Card Backgrounds & Borders -->
+    <SolidColorBrush x:Key="ThemeCardBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ThemeCardBorderBrush" Color="#E2E8F0" />
+    <SolidColorBrush x:Key="ThemeCardHeaderBackgroundBrush" Color="#F1F5F9" />
+    <SolidColorBrush x:Key="ThemePillBackgroundBrush" Color="#F1F5F9" />
+    <SolidColorBrush x:Key="ThemeVideoBackgroundBrush" Color="#0F172A" />
+
+    <!-- Typography -->
+    <SolidColorBrush x:Key="ThemeTextPrimaryBrush" Color="#0F172A" />
+    <SolidColorBrush x:Key="ThemeTextSecondaryBrush" Color="#475569" />
+    <SolidColorBrush x:Key="ThemeTextMutedBrush" Color="#64748B" />
+
+    <!-- Buttons & Interactive Elements -->
+    <SolidColorBrush x:Key="ThemeButtonBackgroundBrush" Color="#E2E8F0" />
+    <SolidColorBrush x:Key="ThemeButtonForegroundBrush" Color="#1E293B" />
+    <SolidColorBrush x:Key="ThemeButtonBorderBrush" Color="#CBD5E1" />
+    <SolidColorBrush x:Key="ThemeButtonHoverBackgroundBrush" Color="#CBD5E1" />
+
+    <!-- Toggle Strip & Splitter -->
+    <SolidColorBrush x:Key="ThemeToggleStripBackgroundBrush" Color="#E2E8F0" />
+    <SolidColorBrush x:Key="ThemeToggleStripForegroundBrush" Color="#1E293B" />
+    <SolidColorBrush x:Key="ThemeSplitterBrush" Color="#CBD5E1" />
+    <SolidColorBrush x:Key="ThemeSplitterHoverBrush" Color="#0055AF" />
+
+    <!-- Form Inputs -->
+    <SolidColorBrush x:Key="ThemeInputBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ThemeInputBorderBrush" Color="#CBD5E1" />
+    <SolidColorBrush x:Key="ThemeInputForegroundBrush" Color="#0F172A" />
+
+</ResourceDictionary>

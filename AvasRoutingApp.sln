@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{1B803CD7
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvasRoutingApp.Tests", "tests\AvasRoutingApp.Tests\AvasRoutingApp.Tests.csproj", "{D2DC4737-1DE5-4A7F-A716-2041E62ED649}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "E2ETests", "tests\E2ETests\E2ETests.csproj", "{6A5C9D0A-C76D-4D51-8ECE-503CFA676822}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,9 +30,14 @@ Global
 		{D2DC4737-1DE5-4A7F-A716-2041E62ED649}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2DC4737-1DE5-4A7F-A716-2041E62ED649}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2DC4737-1DE5-4A7F-A716-2041E62ED649}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A5C9D0A-C76D-4D51-8ECE-503CFA676822}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A5C9D0A-C76D-4D51-8ECE-503CFA676822}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A5C9D0A-C76D-4D51-8ECE-503CFA676822}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A5C9D0A-C76D-4D51-8ECE-503CFA676822}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D5845632-7759-4059-BEC1-E7B408DA1B33} = {68EDF8E0-F3BD-40AC-8D07-AF5F442295ED}
 		{D2DC4737-1DE5-4A7F-A716-2041E62ED649} = {1B803CD7-A09F-43E6-AE02-71E66373377E}
+		{6A5C9D0A-C76D-4D51-8ECE-503CFA676822} = {1B803CD7-A09F-43E6-AE02-71E66373377E}
 	EndGlobalSection
 EndGlobal

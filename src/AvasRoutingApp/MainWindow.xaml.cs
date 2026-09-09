@@ -3,8 +3,10 @@ using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 using Microsoft.Web.WebView2.Core;
 using AvasRoutingApp.Configuration;
+using AvasRoutingApp.Logging;
 using AvasRoutingApp.ViewModels;
 using AvasRoutingApp.Views;
 
@@ -19,6 +21,7 @@ namespace AvasRoutingApp
     {
         private readonly IConfigService _configService;
         private bool _isSidebarExpanded = false;
+        private double _currentSidebarWidth = 400.0;
         private string _currentLoadedUrl = string.Empty;
 
         public MainViewModel ViewModel { get; }
@@ -31,11 +34,16 @@ namespace AvasRoutingApp
         {
             InitializeComponent();
             _configService = configService ?? throw new ArgumentNullException(nameof(configService));
+            _currentSidebarWidth = _configService.Current.SidebarWidth >= 320 && _configService.Current.SidebarWidth <= 650
+                ? _configService.Current.SidebarWidth
+                : 400.0;
+
             ViewModel = new MainViewModel(configService: _configService);
             SidebarView.DataContext = ViewModel;
 
             _configService.ConfigChanged += OnConfigChanged;
             UpdateStatusDisplays(_configService.Current);
+            ApplyAppLogo();
 
             Loaded += MainWindow_Loaded;
         }
@@ -45,12 +53,37 @@ namespace AvasRoutingApp
             InitializeComponent();
             ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
             _configService = ViewModel.ConfigService;
+            _currentSidebarWidth = _configService.Current.SidebarWidth >= 320 && _configService.Current.SidebarWidth <= 650
+                ? _configService.Current.SidebarWidth
+                : 400.0;
+
             SidebarView.DataContext = ViewModel;
 
             _configService.ConfigChanged += OnConfigChanged;
             UpdateStatusDisplays(_configService.Current);
+            ApplyAppLogo();
 
             Loaded += MainWindow_Loaded;
+        }
+
+        private void ApplyAppLogo()
+        {
+            var windowIcon = AppIconHelper.GetWindowIcon();
+            if (windowIcon != null)
+            {
+                Icon = windowIcon;
+            }
+
+            var appIcon = AppIconHelper.GetAppIcon(32);
+            if (appIcon != null)
+            {
+                ImgAppLogo.Source = appIcon;
+                ImgAppLogo.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                ImgAppLogo.Visibility = Visibility.Collapsed;
+            }
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -89,10 +122,12 @@ namespace AvasRoutingApp
                     MainWebView.CoreWebView2.NavigationCompleted += OnNavigationCompleted;
                 }
 
+                AppLogger.Info("WebView2", $"WebView2 initialized with UserData: {userDataFolder}");
                 NavigateToConfiguredUrl();
             }
             catch (Exception ex)
             {
+                AppLogger.Error("WebView2", "WebView2 runtime initialization error", ex);
                 ShowOfflineBanner($"WebView2 runtime initialization error: {ex.Message}");
                 TxtStatus.Text = "Error initializing WebView2 environment.";
             }
@@ -103,12 +138,14 @@ namespace AvasRoutingApp
             string url = _configService.Current.BlueRiverUrl;
             if (string.IsNullOrWhiteSpace(url))
             {
+                AppLogger.Warn("WebView2", "BlueRiver AV Manager URL is not configured.");
                 ShowOfflineBanner("BlueRiver AV Manager URL is not configured. Open Settings to specify a valid URL.");
                 return;
             }
 
             if (MainWebView.CoreWebView2 == null)
             {
+                AppLogger.Warn("WebView2", "WebView2 browser core is not yet initialized.");
                 ShowOfflineBanner("WebView2 browser core is not yet initialized.");
                 return;
             }
@@ -118,10 +155,12 @@ namespace AvasRoutingApp
                 _currentLoadedUrl = url;
                 TxtCurrentUrlDisplay.Text = $"URL: {url}";
                 TxtStatus.Text = $"Connecting to {url}...";
+                AppLogger.Info("WebView2", $"Navigating to {url}");
                 MainWebView.CoreWebView2.Navigate(url);
             }
             catch (Exception ex)
             {
+                AppLogger.Error("WebView2", $"Navigation failed to {url}", ex);
                 ShowOfflineBanner($"Navigation failed: {ex.Message}");
             }
         }
@@ -129,17 +168,20 @@ namespace AvasRoutingApp
         private void OnNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
         {
             TxtStatus.Text = $"Loading {e.Uri}...";
+            AppLogger.Debug("WebView2", $"Navigation starting: {e.Uri}");
         }
 
         private void OnNavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
         {
             if (!e.IsSuccess)
             {
+                AppLogger.Warn("WebView2", $"Navigation completed with error: {e.WebErrorStatus} for {_currentLoadedUrl}");
                 ShowOfflineBanner($"Unable to reach BlueRiver AV Manager at '{_currentLoadedUrl}'. Web error: {e.WebErrorStatus}");
                 TxtStatus.Text = $"Connection failed ({e.WebErrorStatus}). Offline fallback notice displayed.";
             }
             else
             {
+                AppLogger.Info("WebView2", $"Successfully connected to BlueRiver AV Manager at {_currentLoadedUrl}");
                 HideOfflineBanner();
                 TxtStatus.Text = "Connected to BlueRiver AV Manager | Portable WebView2 (.\\WebView2_UserData)";
             }
@@ -195,8 +237,23 @@ namespace AvasRoutingApp
         private async void BtnToggleSidebar_Click(object sender, RoutedEventArgs e)
         {
             _isSidebarExpanded = !_isSidebarExpanded;
-            SidebarContainer.Width = _isSidebarExpanded ? 340 : 0;
-            TxtToggleIcon.Text = _isSidebarExpanded ? "▶ CLOSE" : "◀ PREVIEW";
+
+            if (_isSidebarExpanded)
+            {
+                SidebarContainer.Width = _currentSidebarWidth;
+                SidebarContainer.Visibility = Visibility.Visible;
+                SidebarSplitter.Visibility = Visibility.Visible;
+                TxtToggleIcon.Text = "▶ CLOSE";
+            }
+            else
+            {
+                SidebarContainer.Width = 0;
+                SidebarContainer.Visibility = Visibility.Collapsed;
+                SidebarSplitter.Visibility = Visibility.Collapsed;
+                TxtToggleIcon.Text = "◀ PREVIEW";
+            }
+
+            AppLogger.Info("MainWindow", $"Preview sidebar toggled | Expanded: {_isSidebarExpanded} | Width: {_currentSidebarWidth}");
 
             try
             {
@@ -209,9 +266,31 @@ namespace AvasRoutingApp
                     await ViewModel.CollapseSidebarAsync();
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Suppress async void exceptions if window is closed during expansion/collapse
+                AppLogger.Error("MainWindow", "Exception during sidebar toggle", ex);
+            }
+        }
+
+        private void SidebarSplitter_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            if (!_isSidebarExpanded) return;
+
+            // Dragging left (e.HorizontalChange < 0) widens the right-docked sidebar
+            double targetWidth = SidebarContainer.Width - e.HorizontalChange;
+            targetWidth = Math.Clamp(targetWidth, 320.0, 650.0);
+            SidebarContainer.Width = targetWidth;
+            _currentSidebarWidth = targetWidth;
+        }
+
+        private void SidebarSplitter_DragCompleted(object sender, DragCompletedEventArgs e)
+        {
+            if (_configService != null)
+            {
+                var cfg = _configService.Current.Clone();
+                cfg.SidebarWidth = Math.Round(_currentSidebarWidth, 0);
+                _configService.Save(cfg);
+                AppLogger.Debug("MainWindow", $"Persisted custom sidebar width: {cfg.SidebarWidth}px");
             }
         }
 
@@ -220,6 +299,7 @@ namespace AvasRoutingApp
             Dispatcher.Invoke(() =>
             {
                 UpdateStatusDisplays(config);
+                App.ApplyTheme(config.Theme);
             });
         }
 

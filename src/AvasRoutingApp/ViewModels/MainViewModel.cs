@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using AvasRoutingApp.Configuration;
+using AvasRoutingApp.Logging;
 using AvasRoutingApp.Rtp;
 using AvasRoutingApp.Sdvoe;
 
@@ -181,15 +182,19 @@ namespace AvasRoutingApp.ViewModels
                 StatusText = "Expanding sidebar | Discovering AVAS-223 encoders...";
                 IsBusy = true;
 
+                AppLogger.Info("Sidebar", "Expanding preview sidebar — initiating discovery and stream acquisition...");
                 await StartAllStreamsInternalAsync(ct);
+                AppLogger.Info("Sidebar", $"Sidebar expansion complete | Active streams: {ActiveStreamCount} / {DiscoveredEncoderCount}");
                 return true;
             }
             catch (OperationCanceledException)
             {
+                AppLogger.Warn("Sidebar", "Sidebar expansion was cancelled.");
                 return false;
             }
             catch (Exception ex)
             {
+                AppLogger.Error("Sidebar", "Error during sidebar expansion", ex);
                 StatusText = $"Error expanding sidebar: {ex.Message}";
                 return false;
             }
@@ -229,12 +234,15 @@ namespace AvasRoutingApp.ViewModels
                 StatusText = "Sidebar collapsed | Tearing down streams...";
                 IsBusy = true;
 
+                AppLogger.Info("Sidebar", "Collapsing preview sidebar — tearing down streams and releasing resources...");
                 await StopAllStreamsInternalAsync(ct);
                 StatusText = "Sidebar collapsed | All streams released";
+                AppLogger.Info("Sidebar", "All preview streams and multicast resources released.");
                 return true;
             }
             catch (Exception ex)
             {
+                AppLogger.Error("Sidebar", "Error during sidebar collapse", ex);
                 StatusText = $"Error collapsing sidebar: {ex.Message}";
                 return false;
             }
@@ -333,10 +341,13 @@ namespace AvasRoutingApp.ViewModels
             IReadOnlyList<AvasDevice> devices;
             try
             {
+                AppLogger.Info("Discovery", "Querying SDVoE Control Server for connected endpoints...");
                 devices = await _discoveryService.DiscoverAvas223DevicesAsync(ct);
+                AppLogger.Info("Discovery", $"Discovered {devices.Count} total endpoints from SDVoE server.");
             }
             catch (Exception ex)
             {
+                AppLogger.Error("Discovery", "Device discovery failed", ex);
                 StatusText = $"Device discovery failed: {ex.Message}";
                 return;
             }
@@ -347,6 +358,7 @@ namespace AvasRoutingApp.ViewModels
                 .ToList();
 
             DiscoveredEncoderCount = filteredEncoders.Count;
+            AppLogger.Info("Discovery", $"Filtered for AVAS-223 chip_0 TX encoders: {DiscoveredEncoderCount} matching device(s).");
 
             int startedCount = 0;
             int basePort = _configService.Current.BasePort;
@@ -363,11 +375,15 @@ namespace AvasRoutingApp.ViewModels
                 string? mcastIp = _multicastController.AllocateMulticastIp(dev.MacAddress);
                 if (string.IsNullOrEmpty(mcastIp))
                 {
+                    AppLogger.Warn("Multicast", $"Multicast pool exhausted! Cannot allocate address for MAC: {dev.MacAddress}");
                     continue; // Pool exhausted
                 }
 
+                AppLogger.Info("StreamControl", $"Allocated Multicast IP {mcastIp}:{basePort} for MAC {dev.MacAddress} ({dev.DeviceName})");
+
                 // Command SDVoE Control Server to start thumbnail streaming
                 bool started = await _multicastController.StartPreviewStreamAsync(dev.MacAddress, mcastIp, basePort, ct);
+                AppLogger.Info("StreamControl", $"Start preview stream response for {dev.MacAddress}: {(started ? "SUCCESS" : "FAILED / UNSUPPORTED")}");
 
                 // Build Card ViewModel
                 var card = new EncoderCardViewModel
@@ -378,7 +394,8 @@ namespace AvasRoutingApp.ViewModels
                     MulticastIp = mcastIp,
                     Port = basePort,
                     Resolution = "320x180",
-                    IsStreaming = started
+                    IsStreaming = started,
+                    StatusMessage = started ? "Streaming" : "Stream start request unacknowledged"
                 };
 
                 // Create UDP Multicast Receiver and bind to card
@@ -387,10 +404,12 @@ namespace AvasRoutingApp.ViewModels
 
                 try
                 {
+                    AppLogger.Info("Multicast", $"Binding UDP listener on {mcastIp}:{basePort} (Local NIC: '{(string.IsNullOrEmpty(localNic) ? "ALL" : localNic)}')");
                     receiver.StartListening(mcastIp, basePort, localNic);
                 }
                 catch (Exception ex)
                 {
+                    AppLogger.Error("Multicast", $"Socket bind error for {mcastIp}:{basePort}", ex);
                     card.StatusMessage = $"Socket bind error: {ex.Message}";
                 }
 
@@ -400,11 +419,14 @@ namespace AvasRoutingApp.ViewModels
 
             ActiveStreamCount = EncoderCards.Count;
             StatusText = $"Active previews: {ActiveStreamCount} / {DiscoveredEncoderCount} AVAS-223 chip_0 encoders";
+            AppLogger.Info("Sidebar", $"Sidebar update finished: {ActiveStreamCount} card(s) active.");
         }
 
         private async Task StopAllStreamsInternalAsync(CancellationToken ct)
         {
             var cardsToStop = EncoderCards.ToList();
+            AppLogger.Info("Sidebar", $"Stopping {cardsToStop.Count} active stream cards...");
+
             foreach (var card in cardsToStop)
             {
                 try
@@ -412,32 +434,45 @@ namespace AvasRoutingApp.ViewModels
                     // 1. Drop multicast group and dispose receiver sockets
                     if (card.Receiver != null)
                     {
+                        AppLogger.Debug("Multicast", $"Dropping multicast group for MAC {card.MacAddress} ({card.MulticastIp})");
                         card.Receiver.StopListening();
                         card.Receiver.Dispose();
                     }
                     card.DetachReceiver();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    AppLogger.Warn("Multicast", $"Error stopping receiver for {card.MacAddress}", ex);
+                }
 
                 try
                 {
                     // 2. Command encoder to stop streaming
+                    AppLogger.Debug("StreamControl", $"Stopping preview stream on hardware for {card.MacAddress}");
                     await _multicastController.StopPreviewStreamAsync(card.MacAddress, ct);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    AppLogger.Warn("StreamControl", $"Error commanding stream stop for {card.MacAddress}", ex);
+                }
 
                 try
                 {
                     // 3. Release allocated multicast IP back to pool
+                    AppLogger.Debug("Multicast", $"Releasing multicast IP for MAC {card.MacAddress}");
                     _multicastController.ReleaseMulticastIp(card.MacAddress);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    AppLogger.Warn("Multicast", $"Error releasing multicast IP for {card.MacAddress}", ex);
+                }
 
                 card.Dispose();
             }
 
             EncoderCards.Clear();
             ActiveStreamCount = 0;
+            AppLogger.Info("Sidebar", "All cards cleared and stopped.");
         }
 
         public void Dispose()

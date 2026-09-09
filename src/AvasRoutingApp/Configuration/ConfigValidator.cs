@@ -106,6 +106,20 @@ namespace AvasRoutingApp.Configuration
                 }
             }
 
+            // Theme validation (Dark or Light)
+            if (string.IsNullOrWhiteSpace(config.Theme) ||
+                (!string.Equals(config.Theme, "Dark", StringComparison.OrdinalIgnoreCase) &&
+                 !string.Equals(config.Theme, "Light", StringComparison.OrdinalIgnoreCase)))
+            {
+                config.Theme = "Dark"; // Normalize fallback
+            }
+
+            // SidebarWidth validation (clamp to valid range [280, 800])
+            if (config.SidebarWidth < 280.0 || config.SidebarWidth > 800.0)
+            {
+                config.SidebarWidth = 400.0; // Normalize fallback
+            }
+
             return (errors.Count == 0, errors);
         }
 

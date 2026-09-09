@@ -16,11 +16,41 @@ namespace AvasRoutingApp.Views
         {
             InitializeComponent();
             _configService = configService ?? throw new ArgumentNullException(nameof(configService));
+            ApplyAppLogo();
             LoadConfigToUi(_configService.Current);
+        }
+
+        private void ApplyAppLogo()
+        {
+            var windowIcon = AppIconHelper.GetWindowIcon();
+            if (windowIcon != null)
+            {
+                Icon = windowIcon;
+            }
+
+            var appIcon = AppIconHelper.GetAppIcon(32);
+            if (appIcon != null)
+            {
+                ImgSettingsLogo.Source = appIcon;
+                ImgSettingsLogo.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                ImgSettingsLogo.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void LoadConfigToUi(AppConfig config)
         {
+            if (string.Equals(config.Theme, "Light", StringComparison.OrdinalIgnoreCase))
+            {
+                CmbTheme.SelectedIndex = 1;
+            }
+            else
+            {
+                CmbTheme.SelectedIndex = 0;
+            }
+
             TxtBlueRiverUrl.Text = config.BlueRiverUrl;
             TxtControlServerIp.Text = config.ControlServerIp;
             TxtRestPort.Text = config.RestPort.ToString();
@@ -51,8 +81,12 @@ namespace AvasRoutingApp.Views
                 errors.Add("Multicast Base Port must be a valid integer.");
             }
 
+            string selectedTheme = (CmbTheme.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString() ?? _configService.Current.Theme;
+
             var candidateConfig = new AppConfig
             {
+                Theme = selectedTheme,
+                SidebarWidth = _configService.Current.SidebarWidth,
                 BlueRiverUrl = TxtBlueRiverUrl.Text.Trim(),
                 ControlServerIp = TxtControlServerIp.Text.Trim(),
                 RestPort = restPort,
@@ -76,6 +110,7 @@ namespace AvasRoutingApp.Views
             try
             {
                 _configService.Save(candidateConfig);
+                App.ApplyTheme(candidateConfig.Theme);
                 DialogResult = true;
                 Close();
             }

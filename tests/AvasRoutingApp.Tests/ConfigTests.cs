@@ -42,8 +42,10 @@ namespace AvasRoutingApp.Tests
             Assert.Equal(6970, config.TelnetPort);
             Assert.Equal("224.1.1.1", config.MulticastStartIp);
             Assert.Equal("224.1.3.225", config.MulticastEndIp);
-            Assert.Equal(6792, config.BasePort);
+            Assert.Equal(5000, config.BasePort);
             Assert.Equal("", config.LocalNetworkInterfaceIp);
+            Assert.Equal("Dark", config.Theme);
+            Assert.Equal(400.0, config.SidebarWidth);
         }
 
         [Fact]
@@ -58,7 +60,9 @@ namespace AvasRoutingApp.Tests
                 MulticastStartIp = "224.1.2.1",
                 MulticastEndIp = "224.1.2.100",
                 BasePort = 7000,
-                LocalNetworkInterfaceIp = "192.168.1.200"
+                LocalNetworkInterfaceIp = "192.168.1.200",
+                Theme = "Light",
+                SidebarWidth = 480.0
             };
 
             var clone = original.Clone();
@@ -71,12 +75,18 @@ namespace AvasRoutingApp.Tests
             Assert.Equal(original.MulticastEndIp, clone.MulticastEndIp);
             Assert.Equal(original.BasePort, clone.BasePort);
             Assert.Equal(original.LocalNetworkInterfaceIp, clone.LocalNetworkInterfaceIp);
+            Assert.Equal(original.Theme, clone.Theme);
+            Assert.Equal(original.SidebarWidth, clone.SidebarWidth);
 
             // Mutate clone and assert original remains unchanged
             clone.BlueRiverUrl = "http://modified.local";
             clone.RestPort = 9999;
+            clone.Theme = "Dark";
+            clone.SidebarWidth = 350.0;
             Assert.Equal("http://192.168.1.50:8080", original.BlueRiverUrl);
             Assert.Equal(9200, original.RestPort);
+            Assert.Equal("Light", original.Theme);
+            Assert.Equal(480.0, original.SidebarWidth);
         }
 
         [Fact]
@@ -91,7 +101,9 @@ namespace AvasRoutingApp.Tests
                 MulticastStartIp = "225.1.1.1",
                 MulticastEndIp = "225.1.2.200",
                 BasePort = 6800,
-                LocalNetworkInterfaceIp = "10.0.0.100"
+                LocalNetworkInterfaceIp = "10.0.0.100",
+                Theme = "Light",
+                SidebarWidth = 425.0
             };
 
             string json = JsonSerializer.Serialize(expected, new JsonSerializerOptions { WriteIndented = true });
@@ -106,6 +118,8 @@ namespace AvasRoutingApp.Tests
             Assert.Equal(expected.MulticastEndIp, actual.MulticastEndIp);
             Assert.Equal(expected.BasePort, actual.BasePort);
             Assert.Equal(expected.LocalNetworkInterfaceIp, actual.LocalNetworkInterfaceIp);
+            Assert.Equal(expected.Theme, actual.Theme);
+            Assert.Equal(expected.SidebarWidth, actual.SidebarWidth);
         }
 
         [Fact]
@@ -308,6 +322,39 @@ namespace AvasRoutingApp.Tests
             var (isValid, _) = ConfigValidator.Validate(config);
 
             Assert.Equal(shouldBeValid, isValid);
+        }
+
+        [Theory]
+        [InlineData("Dark", "Dark")]
+        [InlineData("Light", "Light")]
+        [InlineData("dark", "dark")]
+        [InlineData("light", "light")]
+        [InlineData("Custom", "Dark")] // Fallback
+        [InlineData("", "Dark")] // Fallback
+        public void Validator_Theme_Normalization(string inputTheme, string expectedTheme)
+        {
+            var config = new AppConfig { Theme = inputTheme };
+            var (isValid, errors) = ConfigValidator.Validate(config);
+
+            Assert.True(isValid);
+            Assert.Empty(errors);
+            Assert.Equal(expectedTheme, config.Theme, ignoreCase: true);
+        }
+
+        [Theory]
+        [InlineData(320.0, 320.0)]
+        [InlineData(400.0, 400.0)]
+        [InlineData(650.0, 650.0)]
+        [InlineData(100.0, 400.0)] // Out of bounds fallback
+        [InlineData(1000.0, 400.0)] // Out of bounds fallback
+        public void Validator_SidebarWidth_Normalization(double inputWidth, double expectedWidth)
+        {
+            var config = new AppConfig { SidebarWidth = inputWidth };
+            var (isValid, errors) = ConfigValidator.Validate(config);
+
+            Assert.True(isValid);
+            Assert.Empty(errors);
+            Assert.Equal(expectedWidth, config.SidebarWidth);
         }
     }
 }

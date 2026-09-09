@@ -34,7 +34,7 @@ namespace AvasRoutingApp.Sdvoe
         public MulticastIpManager(
             string startIpStr = "224.1.1.1",
             string endIpStr = "224.1.3.225",
-            int basePort = 6792)
+            int basePort = 5000)
         {
             if (!IPAddress.TryParse(startIpStr, out var startAddr))
                 throw new ArgumentException($"Invalid Start IP address: {startIpStr}", nameof(startIpStr));

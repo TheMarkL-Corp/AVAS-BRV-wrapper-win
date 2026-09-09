@@ -1071,7 +1071,8 @@ namespace E2ETests.Suites
         {
             string baseDir = AppContext.BaseDirectory;
             Assert.True(baseDir.Contains("AVAS-blueriver-wrapper-winform", StringComparison.OrdinalIgnoreCase) ||
-                        baseDir.Contains("BlueRiver AV Overlay Test App", StringComparison.OrdinalIgnoreCase));
+                        baseDir.Contains("BlueRiver AV Overlay Test App", StringComparison.OrdinalIgnoreCase) ||
+                        baseDir.Contains("AVAS-BRV-wrapper-win", StringComparison.OrdinalIgnoreCase));
         }
 
         [Fact]

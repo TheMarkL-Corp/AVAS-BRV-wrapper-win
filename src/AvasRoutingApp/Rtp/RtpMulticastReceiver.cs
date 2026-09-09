@@ -75,6 +75,7 @@ namespace AvasRoutingApp.Rtp
             try
             {
                 _udpClient = new UdpClient();
+                _udpClient.ExclusiveAddressUse = false;
                 _udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 _udpClient.Client.ReceiveBufferSize = 4 * 1024 * 1024; // 4MB buffer absorbs micro-bursts
 
@@ -98,7 +99,31 @@ namespace AvasRoutingApp.Rtp
                         }
                         else
                         {
-                            _udpClient.JoinMulticastGroup(mcastAddr);
+                            // Mirror THUMBNAIL_AVP: join multicast on all active IPv4 interfaces
+                            // to guarantee IGMP reports reach the AV network switch across multi-NIC hosts
+                            bool joinedAny = false;
+                            try
+                            {
+                                var hostAddrs = Dns.GetHostAddresses(Dns.GetHostName());
+                                foreach (var addr in hostAddrs)
+                                {
+                                    if (addr.AddressFamily == AddressFamily.InterNetwork)
+                                    {
+                                        try
+                                        {
+                                            _udpClient.JoinMulticastGroup(mcastAddr, addr);
+                                            joinedAny = true;
+                                        }
+                                        catch { }
+                                    }
+                                }
+                            }
+                            catch { }
+
+                            if (!joinedAny)
+                            {
+                                _udpClient.JoinMulticastGroup(mcastAddr);
+                            }
                         }
                     }
                     catch (SocketException)

@@ -24,7 +24,7 @@ namespace AvasRoutingApp.ViewModels
         private string _deviceName = string.Empty;
         private string _unicastIp = string.Empty;
         private string _multicastIp = string.Empty;
-        private int _port = 6792;
+        private int _port = 5000;
         private string _resolution = "320x180";
         private double _currentFps = 0.0;
         private bool _isStreaming = false;

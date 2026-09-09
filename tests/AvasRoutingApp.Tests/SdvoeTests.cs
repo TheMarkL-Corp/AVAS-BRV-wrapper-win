@@ -216,7 +216,7 @@ namespace AvasRoutingApp.Tests
 
             Assert.Equal("224.1.1.1", mgr.StartIp);
             Assert.Equal("224.1.3.225", mgr.EndIp);
-            Assert.Equal(6792, mgr.BasePort);
+            Assert.Equal(5000, mgr.BasePort);
             Assert.Equal(0, mgr.ActiveAllocationCount);
         }
 
@@ -623,6 +623,104 @@ namespace AvasRoutingApp.Tests
 
             // Allocation released
             Assert.False(ipManager.IsAllocated("f8228500aaaa"));
+        }
+
+        [Fact]
+        public async Task StartAndStopPreviewStreamViaAvpRs232_SendsExpectedJsonPayloads()
+        {
+            var listener = new HttpListener();
+            // Use dynamic free port for HTTP listener
+            int port = 0;
+            using (var s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+            {
+                s.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+                port = ((IPEndPoint)s.LocalEndPoint!).Port;
+            }
+
+            string prefix = $"http://127.0.0.1:{port}/";
+            listener.Prefixes.Add(prefix);
+            listener.Start();
+
+            var receivedBodies = new List<string>();
+            var listenTask = Task.Run(async () =>
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    var ctx = await listener.GetContextAsync();
+                    using var r = new System.IO.StreamReader(ctx.Request.InputStream, Encoding.UTF8);
+                    string b = await r.ReadToEndAsync();
+                    lock (receivedBodies) receivedBodies.Add(b);
+
+                    byte[] resp = Encoding.UTF8.GetBytes("{\"status\":\"SUCCESS\",\"result\":{\"error\":[],\"send_rs232\":[{\"device_id\":\"f8228500aaaa\"}]}}");
+                    ctx.Response.ContentType = "application/json";
+                    ctx.Response.ContentLength64 = resp.Length;
+                    await ctx.Response.OutputStream.WriteAsync(resp, 0, resp.Length);
+                    ctx.Response.Close();
+                }
+            });
+
+            try
+            {
+                using var client = new SdvoeClient("127.0.0.1", 6970, port);
+
+                bool startOk = await client.StartPreviewStreamViaAvpRs232Async("F8:22:85:00:AA:AA", "224.1.3.1");
+                Assert.True(startOk);
+
+                bool stopOk = await client.StopPreviewStreamViaAvpRs232Async("f8228500aaaa");
+                Assert.True(stopOk);
+
+                await listenTask;
+
+                Assert.Equal(3, receivedBodies.Count);
+                Assert.Contains("\"data_string\":\"set rtp igmp 224.1.3.1\\r\\n\"", receivedBodies[0]);
+                Assert.Contains("\"op\":\"send:rs232\"", receivedBodies[0]);
+                Assert.Contains("\"data_string\":\"set rtp ON\\r\\n\"", receivedBodies[1]);
+                Assert.Contains("\"data_string\":\"set rtp OFF\\r\\n\"", receivedBodies[2]);
+            }
+            finally
+            {
+                listener.Stop();
+                listener.Close();
+            }
+        }
+
+        [Fact]
+        public async Task LiveHardware_IfControlServerRunning_StreamsFrames()
+        {
+            // Check if 127.0.0.1:8090 is reachable
+            using var testTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            try
+            {
+                await testTcp.ConnectAsync(IPAddress.Parse("127.0.0.1"), 8090);
+            }
+            catch
+            {
+                // Not running on live machine with controlserver, skip gracefully
+                return;
+            }
+
+            using var client = new SdvoeClient("127.0.0.1", 6970, 8090);
+            string mac = "74fe488b07bb";
+            string mcast = "224.1.3.1";
+            int port = 5000;
+
+            bool startOk = await client.StartPreviewStreamAsync(mac, mcast, port);
+            if (!startOk) return; // Device might not be connected in CI
+
+            using var receiver = new Rtp.RtpMulticastReceiver();
+            receiver.StartListening(mcast, port);
+
+            // Wait for packets
+            for (int i = 0; i < 15; i++)
+            {
+                await Task.Delay(200);
+                if (receiver.ReceivedPacketsCount > 0) break;
+            }
+
+            Assert.True(receiver.ReceivedPacketsCount > 0, "Packets should be received on UDP 5000 from hardware");
+
+            bool stopOk = await client.StopPreviewStreamAsync(mac, free: false);
+            Assert.True(stopOk);
         }
 
         #endregion

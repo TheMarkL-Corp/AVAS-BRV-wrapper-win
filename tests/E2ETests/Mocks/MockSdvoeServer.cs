@@ -635,6 +635,40 @@ namespace E2ETests.Mocks
                             }
                             return;
                         }
+                        else if (op.Equals("send:rs232", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string dataString = root.TryGetProperty("data_string", out var ds) ? ds.GetString() ?? "" : "";
+                            if (_devices.TryGetValue(mac, out var dev))
+                            {
+                                if (dataString.Contains("set rtp igmp", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var parts = dataString.Trim().Split(' ');
+                                    if (parts.Length >= 4)
+                                    {
+                                        dev.MulticastIp = parts[3];
+                                    }
+                                }
+                                else if (dataString.Contains("set rtp ON", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    dev.IsStreaming = true;
+                                    if (dev.MulticastIp != null)
+                                    {
+                                        _activeMulticastStreams[dev.MulticastIp] = mac;
+                                    }
+                                }
+                                else if (dataString.Contains("set rtp OFF", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    dev.IsStreaming = false;
+                                }
+
+                                await WriteJsonResponseAsync(resp, 200, $"{{\"status\":\"SUCCESS\",\"result\":{{\"error\":[],\"send_rs232\":[{{\"device_id\":\"{mac}\"}}]}}}}");
+                            }
+                            else
+                            {
+                                await WriteJsonResponseAsync(resp, 404, "{\"status\":\"ERROR\",\"error\":{\"reason\":\"NOT_FOUND\"}}");
+                            }
+                            return;
+                        }
                     }
                 }
 

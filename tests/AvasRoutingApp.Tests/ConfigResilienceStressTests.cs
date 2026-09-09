@@ -127,7 +127,7 @@ namespace AvasRoutingApp.Tests
             Assert.Equal(8080, current.RestPort);
             Assert.Equal("224.1.1.1", current.MulticastStartIp);
             Assert.Equal("224.1.3.225", current.MulticastEndIp);
-            Assert.Equal(6792, current.BasePort);
+            Assert.Equal(5000, current.BasePort);
         }
 
         [Fact]

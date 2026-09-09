@@ -12,11 +12,13 @@
     <Version>1.0.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <InformationalVersion>1.0.0-release</InformationalVersion>
-    <Product>AVAS Routing SW</Product>
-    <Company>Advantech / AVAS</Company>
-    <Description>AVAS Routing SW — Dual Link SDVoE Manager with Embedded BlueRiver AV Manager &amp; Live Multicast Previews</Description>
-    <Copyright>Copyright © 2026 Advantech / AVAS. All rights reserved.</Copyright>
+    <InformationalVersion>1.0.0</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <ApplicationIcon>logo.ico</ApplicationIcon>
+    <Product>AVAS Routing Software</Product>
+    <Company>Advantech Co., Ltd.</Company>
+    <Description>AVAS Routing Software — Dual Link SDVoE Manager with Embedded BlueRiver AV Manager &amp; Live Multicast Previews</Description>
+    <Copyright>Copyright © 2026 Advantech Co., Ltd. All rights reserved.</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +27,9 @@
 
   <ItemGroup>
     <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="logo.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

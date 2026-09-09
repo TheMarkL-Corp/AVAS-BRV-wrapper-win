@@ -3,7 +3,7 @@ using System;
 namespace AvasRoutingApp.Configuration
 {
     /// <summary>
-    /// Configuration model for AVAS Routing SW.
+    /// Configuration model for AVAS Routing Software.
     /// Strictly conforms to PROJECT.md § Interface Contracts.
     /// </summary>
     public class AppConfig
@@ -14,8 +14,10 @@ namespace AvasRoutingApp.Configuration
         public int TelnetPort { get; set; } = 6970;
         public string MulticastStartIp { get; set; } = "224.1.1.1";
         public string MulticastEndIp { get; set; } = "224.1.3.225";
-        public int BasePort { get; set; } = 6792;
+        public int BasePort { get; set; } = 5000;
         public string LocalNetworkInterfaceIp { get; set; } = "";
+        public string Theme { get; set; } = "Dark";
+        public double SidebarWidth { get; set; } = 400.0;
 
         /// <summary>
         /// Creates a deep copy of the configuration instance.
@@ -31,7 +33,9 @@ namespace AvasRoutingApp.Configuration
                 MulticastStartIp = this.MulticastStartIp,
                 MulticastEndIp = this.MulticastEndIp,
                 BasePort = this.BasePort,
-                LocalNetworkInterfaceIp = this.LocalNetworkInterfaceIp
+                LocalNetworkInterfaceIp = this.LocalNetworkInterfaceIp,
+                Theme = this.Theme,
+                SidebarWidth = this.SidebarWidth
             };
         }
     }

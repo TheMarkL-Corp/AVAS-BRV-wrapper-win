@@ -74,7 +74,7 @@ namespace AvasRoutingApp.Tests
                     var configService = new ConfigService(Path.Combine(tempDir, "appsettings.json"));
                     var window = new MainWindow(configService);
 
-                    Assert.Equal("AVAS Routing SW — Dual Link SDVoE Manager", window.Title);
+                    Assert.Equal("AVAS Routing Software — Dual Link SDVoE Manager", window.Title);
                     Assert.Equal(1440, window.Width);
                     Assert.Equal(850, window.Height);
                     Assert.Equal(900, window.MinWidth);
@@ -129,7 +129,7 @@ namespace AvasRoutingApp.Tests
 
                     // 1st click: Expand
                     btnToggle.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
-                    Assert.Equal(340, sidebar.Width);
+                    Assert.Equal(configService.Current.SidebarWidth, sidebar.Width);
                     Assert.Equal("▶ CLOSE", txtToggleIcon.Text);
 
                     // 2nd click: Collapse

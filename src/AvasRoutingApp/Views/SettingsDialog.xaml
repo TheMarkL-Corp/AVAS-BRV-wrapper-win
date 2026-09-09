@@ -1,36 +1,46 @@
 <Window x:Class="AvasRoutingApp.Views.SettingsDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Settings — AVAS Routing SW"
-        Height="620" Width="520"
+        Title="Settings — AVAS Routing Software"
+        Height="660" Width="520"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="#1E1E24"
-        Foreground="#EDF2F4">
+        Background="{DynamicResource ThemeWindowBackgroundBrush}"
+        Foreground="{DynamicResource ThemeTextPrimaryBrush}">
 
     <Window.Resources>
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#EDF2F4" />
+            <Setter Property="Foreground" Value="{DynamicResource ThemeTextPrimaryBrush}" />
             <Setter Property="FontSize" Value="12" />
         </Style>
 
         <Style x:Key="HeaderLabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#4895EF" />
+            <Setter Property="Foreground" Value="{DynamicResource ThemeAccentBrush}" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Margin" Value="0,10,0,4" />
         </Style>
 
         <Style x:Key="SubLabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#8D99AE" />
+            <Setter Property="Foreground" Value="{DynamicResource ThemeTextSecondaryBrush}" />
             <Setter Property="FontSize" Value="10" />
             <Setter Property="Margin" Value="0,0,0,4" />
         </Style>
 
         <Style TargetType="TextBox">
-            <Setter Property="Background" Value="#14151B" />
-            <Setter Property="Foreground" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#3D405B" />
+            <Setter Property="Background" Value="{DynamicResource ThemeInputBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ThemeInputForegroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeInputBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource ThemeInputBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ThemeInputForegroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeInputBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="6,4" />
             <Setter Property="FontSize" Value="12" />
@@ -38,8 +48,8 @@
         </Style>
 
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#4895EF" />
-            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="Background" Value="{DynamicResource ThemeAccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ThemeAccentForegroundBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Padding" Value="16,6" />
             <Setter Property="Margin" Value="6,0,0,0" />
@@ -48,12 +58,12 @@
         </Style>
 
         <Style x:Key="SecondaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#2B2D42" />
-            <Setter Property="Foreground" Value="#EDF2F4" />
+            <Setter Property="Background" Value="{DynamicResource ThemeButtonBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ThemeButtonForegroundBrush}" />
             <Setter Property="Padding" Value="16,6" />
             <Setter Property="Margin" Value="6,0,0,0" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="#3D405B" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ThemeButtonBorderBrush}" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
     </Window.Resources>
@@ -66,12 +76,28 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Title -->
-        <TextBlock Grid.Row="0" Text="Configuration &amp; Network Settings" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,12" />
+        <!-- Title & App Info -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                <Image x:Name="ImgSettingsLogo" Width="22" Height="22" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+                <TextBlock Text="Configuration &amp; Network Settings" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" VerticalAlignment="Center" />
+            </StackPanel>
+            <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="3" Padding="6,2" VerticalAlignment="Center">
+                <TextBlock Text="v1.0.0" FontSize="11" Foreground="{DynamicResource ThemeAccentBrush}" FontWeight="Bold" />
+            </Border>
+        </DockPanel>
 
         <!-- Form ScrollViewer -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="0,0,8,0">
+                <!-- Appearance / Theme Section -->
+                <TextBlock Text="Appearance &amp; Theme" Style="{StaticResource HeaderLabelStyle}" />
+                <TextBlock Text="Select application theme (seamless with BlueRiver AV Manager):" Style="{StaticResource SubLabelStyle}" />
+                <ComboBox x:Name="CmbTheme" SelectedIndex="0">
+                    <ComboBoxItem Content="Dark Mode (Advantech Blue / Charcoal)" Tag="Dark" />
+                    <ComboBoxItem Content="Light Mode (Advantech Blue / Crisp Gray)" Tag="Light" />
+                </ComboBox>
+
                 <!-- BlueRiver AV Manager Section -->
                 <TextBlock Text="BlueRiver AV Manager Web Interface" Style="{StaticResource HeaderLabelStyle}" />
                 <TextBlock Text="URL for embedding the BlueRiver AV Manager web interface:" />
@@ -123,7 +149,7 @@
                 </Grid>
 
                 <TextBlock Text="Multicast Base Port:" />
-                <TextBox x:Name="TxtBasePort" Text="6792" />
+                <TextBox x:Name="TxtBasePort" Text="5000" />
 
                 <!-- Local Network Interface -->
                 <TextBlock Text="Local Network Interface" Style="{StaticResource HeaderLabelStyle}" />
