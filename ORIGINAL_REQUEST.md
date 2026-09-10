@@ -13,7 +13,7 @@ Integrity mode: development
 - Developed as a portable native Windows desktop application in C# .NET (WPF or Windows Forms) targeting .NET Framework or .NET 8/9 with self-contained / portable deployment.
 - Integrates Microsoft WebView2 to render the BlueRiver AV Manager web UI as the primary workspace.
 - Provides a configuration / settings panel (persisted to a local JSON/XML config file in the application directory) allowing the user to configure:
-  - BlueRiver AV Manager URL (e.g. http://localhost:3000 or user-defined IP/hostname)
+  - BlueRiver AV Manager URL (e.g. http://localhost:80 or user-defined IP/hostname)
   - SDVoE Control Server IP Address
   - SDVoE Control Server HTTP REST API Port (default: 8080, configurable)
   - Control Server Telnet / TCP Port (fixed: 6970)

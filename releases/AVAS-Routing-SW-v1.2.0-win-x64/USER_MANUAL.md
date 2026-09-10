@@ -1,4 +1,4 @@
-# AVAS Routing SW — User Manual (v1.1.0)
+# AVAS Routing SW — User Manual (v1.2.0)
 
 ## 1. Product Introduction
 **AVAS Routing SW** is a high-performance native Windows desktop application designed to control and monitor SDVoE AV distribution networks. It serves as a comprehensive management environment:
@@ -118,7 +118,7 @@ The software communicates with the SDVoE Control Server and enforces an authorit
 ## 8. Troubleshooting & FAQ
 
 **Q1: The web view shows an offline warning.**
-- *Solution*: Verify that the BlueRiver AV Manager server is running. Open **⚙ Settings** and confirm the URL (e.g. `http://localhost:3000` or `http://192.168.1.50:80`). Click **Retry** once the server is accessible.
+- *Solution*: Verify that the BlueRiver AV Manager server is running. Open **⚙ Settings** and confirm the URL (e.g. `http://localhost:80` or `http://192.168.1.50:80`). Click **Retry** once the server is accessible.
 
 **Q2: No preview cards appear when I expand the preview sidebar.**
 - *Solution*: Check that the SDVoE Control Server IP and REST port in Settings match your `controlserver.conf` file. Click **🔄 Discover** in the preview drawer to trigger a fresh scan.

@@ -105,7 +105,7 @@ C:\Users\mark.leorna\.dotnet\dotnet.exe run
 ### Operational Instructions:
 1. **Startup**:
    - The application opens centered at 1440x850.
-   - The embedded Microsoft WebView2 loads the BlueRiver AV Manager web interface (default `http://localhost:3000`). If the web server is offline, an offline banner appears with a direct retry button.
+   - The embedded Microsoft WebView2 loads the BlueRiver AV Manager web interface (default `http://localhost:80`). If the web server is offline, an offline banner appears with a direct retry button.
    - The preview overlay on the right is **collapsed** by default.
 2. **Settings**:
    - Click the **⚙ Settings** button in the top toolbar.

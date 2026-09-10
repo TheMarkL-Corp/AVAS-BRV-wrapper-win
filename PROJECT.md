@@ -14,7 +14,7 @@ AVAS Routing SW is a high-performance portable native Windows desktop applicatio
 | | Microsoft WebView2 Browser                             | |    | | Native Overlay | |
 | | (Embeds BlueRiver AV Manager Web UI)                    | | T  | | Sidebar Panel  | |
 | | Isolated portable UserDataFolder: .\WebView2_UserData   | | O  | | (Collapsed on  | |
-| | Configurable URL: e.g. http://localhost:3000            | | G  | |  Startup)      | |
+| | Configurable URL: e.g. http://localhost:80              | | G  | |  Startup)      | |
 | |                                                         | | G  | |                | |
 | |                                                         | | L  | | [Preview Card] | |
 | |                                                         | | E  | | Live Video     | |
@@ -84,7 +84,7 @@ AVAS Routing SW is a high-performance portable native Windows desktop applicatio
 ```csharp
 public class AppConfig
 {
-    public string BlueRiverUrl { get; set; } = "http://localhost:3000";
+    public string BlueRiverUrl { get; set; } = "http://localhost:80";
     public string ControlServerIp { get; set; } = "127.0.0.1";
     public int RestPort { get; set; } = 8080;
     public int TelnetPort { get; set; } = 6970;
