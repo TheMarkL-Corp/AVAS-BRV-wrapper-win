@@ -145,6 +145,9 @@ $ReadmeContent = @"
 
 This is the offline (zero-internet) installer bundle for **AVAS Routing Software v$Version**.
 
+> **IMPORTANT PREREQUISITE NOTICE**:
+> This package installer does NOT include the BlueRiver AV Manager installer. In order for this application and the Advantech white-labeling feature to work properly, **BlueRiver AV Manager must already be installed** on the target machine (or accessible over the local network).
+
 ## How to Install
 Double-click `AvasRoutingSetup.exe` (or run `Install.bat`).
 

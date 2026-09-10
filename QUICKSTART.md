@@ -9,6 +9,12 @@ This application provides a dual-capability management cockpit:
 
 ---
 
+> [!WARNING]
+> **Prerequisite Notice: BlueRiver AV Manager Not Included**
+> Please note that this installer and standalone application package **do NOT include** the installer for Semtech's **BlueRiver AV Manager**. In order for this application and installer to work properly, **BlueRiver AV Manager must already be installed** on the target machine (or accessible over the network). The optional Advantech white-labeling feature specifically requires a local installation of BlueRiver AV Manager (`bavm` service and local files) in order to apply branding patches.
+
+---
+
 ## 1. Quick Start: Choosing Your Installation Method
 
 AVAS Routing SW v1.2.0 provides two official distribution options:
@@ -21,7 +27,7 @@ releases/AVAS-Routing-SW-Installer-v1.2.0.zip
 1. Extract the zip archive and double-click `Install.bat` (or `AvasRoutingSetup.exe`).
 2. **Zero-Internet Runtime Validation**: The installer automatically checks if **.NET 8 Desktop Runtime** and **Microsoft Edge WebView2 Runtime** are installed. If missing, it silently installs them from local bundled packages (`redist/`) without requiring internet access.
 3. **Customization & Shortcuts**: Choose whether to create Desktop and Start Menu shortcuts.
-4. **Advantech White-Labeling**: Optionally enable the 4-step Advantech branding pipeline for BlueRiver AV Manager.
+4. **Advantech White-Labeling**: Optionally enable the 4-step Advantech branding pipeline for BlueRiver AV Manager *(requires local BlueRiver AV Manager installation)*.
 5. Setup installs to `%LocalAppData%\Programs\Advantech\AVAS Routing SW` with registered Windows Programs & Features uninstaller support.
 
 ### Option B: Standalone Portable Application
@@ -71,7 +77,10 @@ Click **Save Settings**. Settings are atomically persisted to `appsettings.json`
 
 When selected during installation (or via setup maintenance), the installer performs an automated 4-step branding process for BlueRiver AV Manager:
 
-1. **Step 1 (Detect & Stop Service)**: Probes if the Windows Service `bavm` exists. If not found, notifies user gracefully and continues installation. If found, stops the `bavm` service.
+> [!NOTE]
+> BlueRiver AV Manager must be installed locally on the system for the white-labeling pipeline to locate the service and branding directories.
+
+1. **Step 1 (Detect & Stop Service)**: Probes if the Windows Service `bavm` exists. If not found, notifies user gracefully and continues installation without failing. If found, stops the `bavm` service.
 2. **Step 2 (Deploy Logo)**: Backs up original `logo.svg` to `logo.svg.bak` and deploys Advantech's corporate `logo.svg` into `%APPDATA%\Semtech\BlueRiver AV Manager\app\front\images\`.
 3. **Step 3 (Theme & Header Configuration)**: Backs up original `index.js` to `index.js.bak` and injects Advantech branding into `%APPDATA%\Semtech\BlueRiver AV Manager\app\src\config\index.js`:
    ```javascript
