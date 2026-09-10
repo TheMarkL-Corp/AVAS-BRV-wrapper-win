@@ -1,0 +1,190 @@
+<Window x:Class="AvasRoutingSetup.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="AVAS Routing Software — Setup Wizard (v1.1.0)"
+        Height="640" Width="720"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanMinimize"
+        Background="{StaticResource PageBackgroundBrush}"
+        Icon="Assets/logo.ico">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="70"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="65"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Header Bar -->
+        <Border Grid.Row="0" Background="{StaticResource HeaderBackgroundBrush}" Padding="20,0">
+            <Grid VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Image Grid.Column="0" Source="Assets/logo.ico" Width="36" Height="36" Margin="0,0,14,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="AVAS Routing Software" Foreground="White" FontWeight="Bold" FontSize="17"/>
+                    <TextBlock Text="Offline Package Installer &amp; Setup Wizard" Foreground="#94A3B8" FontSize="12" Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <Border Grid.Column="2" Background="#1E293B" CornerRadius="12" Padding="10,4">
+                    <TextBlock Text="v1.1.0" Foreground="#38BDF8" FontWeight="SemiBold" FontSize="12"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Main Body / Wizard Views -->
+        <Grid Grid.Row="1" Margin="24,18">
+
+            <!-- ================= STEP 1: CONFIGURATION VIEW ================= -->
+            <Grid x:Name="ViewConfig" Visibility="Visible">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+
+                        <!-- Install Location Card -->
+                        <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Destination Directory" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="Choose the location where AVAS Routing Software will be installed:" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,3,0,10"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="TxtInstallPath" Grid.Column="0" FontSize="13" Padding="8,7" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" VerticalContentAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="Browse..." Margin="8,0,0,0" Style="{StaticResource SecondaryButtonStyle}" Click="BtnBrowse_Click"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Options Card -->
+                        <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Installation Options" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="Configure shortcuts and UI custom styling:" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,3,0,12"/>
+
+                                <CheckBox x:Name="ChkDesktopShortcut" IsChecked="True" Margin="0,4" Content="Create Desktop Shortcut" FontWeight="Medium" FontSize="13"/>
+                                <TextBlock Text="Creates an icon on your desktop with quick access to the software." Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="24,0,0,8"/>
+
+                                <CheckBox x:Name="ChkStartMenuShortcut" IsChecked="True" Margin="0,4" Content="Create Start Menu Shortcut" FontWeight="Medium" FontSize="13"/>
+                                <TextBlock Text="Adds AVAS Routing Software to the Windows Start Menu under Advantech." Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="24,0,0,8"/>
+
+                                <Separator Background="{StaticResource BorderBrush}" Margin="0,6,0,10"/>
+
+                                <CheckBox x:Name="ChkWhiteLabel" IsChecked="False" Margin="0,4" Content="White-label BlueRiver AV Manager to Advantech" FontWeight="SemiBold" FontSize="13" Foreground="#0055AF"/>
+                                <TextBlock Text="Applies Advantech branding assets (logo.svg, index.js, corporate theme) to the local BlueRiver AV Manager installation in %APPDATA%." Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="24,0,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Zero-Internet Prerequisites Card -->
+                        <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="18">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Pre-requisites Status (Zero-Internet Install)" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="Dependencies are verified and automatically installed from local packages if needed:" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,3,0,10"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="4" Padding="8,4" VerticalAlignment="Top">
+                                        <TextBlock Text="OFFLINE READY" Foreground="#059669" FontWeight="Bold" FontSize="11"/>
+                                    </Border>
+                                </Grid>
+
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="IconDotNet" Grid.Column="0" Text="🔍" FontSize="13" Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="1" Text=".NET 8 Windows Desktop Runtime (x64)" FontSize="13" FontWeight="Medium"/>
+                                    <TextBlock x:Name="TxtDotNetStatus" Grid.Column="2" Text="Detecting..." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" FontWeight="SemiBold"/>
+                                </Grid>
+
+                                <Grid Margin="0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="IconWebView2" Grid.Column="0" Text="🔍" FontSize="13" Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="1" Text="Microsoft Edge WebView2 Runtime (x64)" FontSize="13" FontWeight="Medium"/>
+                                    <TextBlock x:Name="TxtWebView2Status" Grid.Column="2" Text="Detecting..." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" FontWeight="SemiBold"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- ================= STEP 2: PROGRESS VIEW ================= -->
+            <Grid x:Name="ViewProgress" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" x:Name="TxtProgressTitle" Text="Installing AVAS Routing Software..." FontWeight="Bold" FontSize="16" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                <TextBlock Grid.Row="1" x:Name="TxtProgressSubtitle" Text="Please wait while the setup wizard configures your installation." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,0,0,16"/>
+
+                <ProgressBar Grid.Row="2" x:Name="ProgressBarMain" Height="8" Minimum="0" Maximum="100" Value="10" Foreground="{StaticResource AdvantechBlueBrush}" Background="#E2E8F0" BorderThickness="0" Margin="0,0,0,16"/>
+
+                <!-- Activity Log -->
+                <Border Grid.Row="3" Background="#0F172A" CornerRadius="6" BorderBrush="#334155" BorderThickness="1" Padding="12">
+                    <ScrollViewer x:Name="ScrollLogs" VerticalScrollBarVisibility="Auto">
+                        <TextBox x:Name="TxtLogs" Background="Transparent" Foreground="#F8FAFC" BorderThickness="0" IsReadOnly="True" TextWrapping="Wrap" FontFamily="Consolas" FontSize="12"/>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <!-- ================= STEP 3: FINISHED VIEW ================= -->
+            <Grid x:Name="ViewFinished" Visibility="Collapsed">
+                <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="32" VerticalAlignment="Center">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="🎉" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                        <TextBlock Text="Installation Completed!" FontWeight="Bold" FontSize="20" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="AVAS Routing Software v1.1.0 is ready for use on this computer." Foreground="{StaticResource TextSecondaryBrush}" FontSize="13" Margin="0,8,0,24" HorizontalAlignment="Center"/>
+
+                        <Border Background="#F1F5F9" CornerRadius="6" Padding="16" Margin="0,0,0,24" MaxWidth="500">
+                            <StackPanel>
+                                <TextBlock x:Name="TxtSummaryDest" Text="• Location: ..." FontSize="12" Foreground="#334155" Margin="0,2"/>
+                                <TextBlock x:Name="TxtSummaryShortcuts" Text="• Shortcuts: Desktop and Start Menu configured" FontSize="12" Foreground="#334155" Margin="0,2"/>
+                                <TextBlock x:Name="TxtSummaryWhiteLabel" Text="• Advantech White-Labeling: Applied" FontSize="12" Foreground="#334155" Margin="0,2"/>
+                            </StackPanel>
+                        </Border>
+
+                        <CheckBox x:Name="ChkLaunchApp" IsChecked="True" Content="Launch AVAS Routing Software now" FontWeight="SemiBold" FontSize="14" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+        </Grid>
+
+        <!-- Bottom Actions Bar -->
+        <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="20,0">
+            <Grid VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock x:Name="TxtFooterStatus" Grid.Column="0" Text="Ready to install" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button x:Name="BtnCancel" Content="Cancel" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0" Click="BtnCancel_Click"/>
+                    <Button x:Name="BtnAction" Content="Install Now" Style="{StaticResource AdvantechButtonStyle}" Click="BtnAction_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

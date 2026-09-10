@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AvasRoutingApp\AvasRoutingApp.csproj" />
+    <ProjectReference Include="..\..\src\AvasRoutingSetup\AvasRoutingSetup.csproj" />
   </ItemGroup>
 
 </Project>

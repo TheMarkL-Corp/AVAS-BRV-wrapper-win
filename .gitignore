@@ -14,3 +14,8 @@
 ## Runtime User Data
 **/WebView2_UserData/
 *.log
+
+## Installer Redistributables & Large Bundles (>100MB)
+installer/bin/
+installer/redist/*.exe
+releases/AVAS-Routing-SW-Installer*
