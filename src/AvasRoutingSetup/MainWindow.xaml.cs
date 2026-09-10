@@ -27,18 +27,9 @@ public partial class MainWindow : Window
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        // 1. Initialize default install path
-        bool isAdmin = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
-        if (isAdmin)
-        {
-            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            _targetInstallDir = Path.Combine(programFiles, @"Advantech\AVAS Routing SW");
-        }
-        else
-        {
-            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            _targetInstallDir = Path.Combine(localAppData, @"Programs\Advantech\AVAS Routing SW");
-        }
+        // 1. Initialize default install path (%LocalAppData%\Programs\Advantech\AVAS Routing SW)
+        string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        _targetInstallDir = Path.Combine(localAppData, @"Programs\Advantech\AVAS Routing SW");
         TxtInstallPath.Text = _targetInstallDir;
 
         // 2. Pre-flight dependency check

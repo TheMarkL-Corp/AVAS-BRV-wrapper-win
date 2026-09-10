@@ -55,9 +55,32 @@ public class InstallerTests
     [Fact]
     public void WhiteLabelManager_ResolvesAppPath()
     {
-        bool found = WhiteLabelManager.TryGetBlueRiverAppPath(out string path);
+        string path = WhiteLabelManager.GetBlueRiverAppPath();
         Assert.False(string.IsNullOrEmpty(path));
         Assert.Contains("BlueRiver AV Manager", path);
+    }
+
+    [Fact]
+    public void WhiteLabelManager_PatchIndexJsBranding_ReplacesRequiredValues()
+    {
+        string original = @"
+const Branding = (() => {
+  const { APP_TITLE, APP_HEADER, THEME_PRIMARY_COLOR, THEME_SECONDARY_COLOR } = {
+    APP_TITLE: 'BlueRiver AV Manager',
+    APP_HEADER: 'BlueRiver AV Manager',
+    THEME_PRIMARY_COLOR: '#00afaa',
+    THEME_SECONDARY_COLOR: '#f2f2f2',
+  };
+  return { Title: APP_TITLE, Header: APP_HEADER };
+})();";
+
+        string patched = WhiteLabelManager.PatchIndexJsBranding(original);
+
+        Assert.Contains("APP_TITLE: 'AV Manager'", patched);
+        Assert.Contains("APP_HEADER: 'AV Manager'", patched);
+        Assert.Contains("THEME_PRIMARY_COLOR: '#0055afff'", patched);
+        Assert.DoesNotContain("BlueRiver AV Manager", patched);
+        Assert.DoesNotContain("#00afaa", patched);
     }
 
     [Fact]

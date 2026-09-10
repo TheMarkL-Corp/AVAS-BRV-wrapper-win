@@ -1,47 +1,69 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace AvasRoutingSetup.Engine;
 
 /// <summary>
-/// Handles white-labeling the BlueRiver AV Manager UI and backend configuration to Advantech.
+/// Implements the 4-step Advantech White-Labeling process for BlueRiver AV Manager:
+/// Step 1: Detect and stop 'bavm' Windows service (if missing, notify user and skip without blocking install).
+/// Step 2: Replace logo.svg in %APPDATA%\Semtech\BlueRiver AV Manager\app\front\images\logo.svg.
+/// Step 3: Replace branding values (APP_TITLE, APP_HEADER, THEME_PRIMARY_COLOR) in \src\config\index.js.
+/// Step 4: Restart 'bavm' Windows service.
 /// </summary>
 public static class WhiteLabelManager
 {
     private const string ServiceName = "bavm";
 
     /// <summary>
-    /// Locates the BlueRiver AV Manager installation path in AppData or Program Files.
+    /// Checks if the 'bavm' Windows service is installed on this machine.
     /// </summary>
-    public static bool TryGetBlueRiverAppPath(out string appPath)
+    public static bool IsBavmServiceInstalled()
     {
-        // 1. Primary path: %APPDATA%\Semtech\BlueRiver AV Manager\app
-        string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        string defaultPath = Path.Combine(appData, @"Semtech\BlueRiver AV Manager\app");
-        if (Directory.Exists(defaultPath))
+        try
         {
-            appPath = defaultPath;
+            var psi = new ProcessStartInfo
+            {
+                FileName = "sc.exe",
+                Arguments = $"query {ServiceName}",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(psi);
+            if (process == null) return false;
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit(3000);
+
+            if (process.ExitCode != 0 || output.Contains("1060", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
             return true;
         }
-
-        // 2. ProgramData fallback
-        string programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-        string commonPath = Path.Combine(programData, @"Semtech\BlueRiver AV Manager\app");
-        if (Directory.Exists(commonPath))
+        catch
         {
-            appPath = commonPath;
-            return true;
+            return false;
         }
-
-        appPath = defaultPath;
-        return false;
     }
 
     /// <summary>
-    /// Applies Advantech white-labeling assets and configuration to BlueRiver AV Manager.
+    /// Gets the target BlueRiver AV Manager app directory: %APPDATA%\Semtech\BlueRiver AV Manager\app
+    /// </summary>
+    public static string GetBlueRiverAppPath()
+    {
+        string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        return Path.Combine(appData, @"Semtech\BlueRiver AV Manager\app");
+    }
+
+    /// <summary>
+    /// Executes the 4-step Advantech White-Labeling process.
     /// </summary>
     public static async Task<(bool Success, string Message)> ApplyWhiteLabelAsync(
         string whiteLabelSourceDir,
@@ -51,21 +73,59 @@ public static class WhiteLabelManager
         {
             try
             {
-                if (!TryGetBlueRiverAppPath(out string targetAppPath))
+                string targetAppPath = GetBlueRiverAppPath();
+
+                // =========================================================================
+                // 1st Step: Stop bavm windows service
+                // (Detect if it exists; if not, notify user that BlueRiver is not installed
+                //  locally and proceed with installation without white-labeling)
+                // =========================================================================
+                log?.Invoke("Step 1/4: Checking if BlueRiver AV Manager ('bavm' service) is installed...");
+
+                bool serviceInstalled = IsBavmServiceInstalled();
+                bool dirExists = Directory.Exists(targetAppPath);
+
+                if (!serviceInstalled && !dirExists)
                 {
-                    log?.Invoke($"Warning: BlueRiver AV Manager app directory not found at {targetAppPath}. It will be created.");
+                    string notice = "Notice: BlueRiver AV Manager is not installed locally on this machine ('bavm' service not found). Continuing installation without white-labeling.";
+                    log?.Invoke(notice);
+                    return (false, notice);
                 }
 
-                log?.Invoke($"Target BlueRiver App path: {targetAppPath}");
+                if (serviceInstalled)
+                {
+                    log?.Invoke("• 'bavm' Windows service detected. Stopping service...");
+                    bool stopped = StopService(ServiceName, timeoutSeconds: 15, log);
+                    if (!stopped)
+                    {
+                        log?.Invoke("• Warning: Could not verify service stop, continuing with file replacement.");
+                    }
+                    else
+                    {
+                        log?.Invoke("• 'bavm' service stopped successfully.");
+                    }
+                }
+                else
+                {
+                    log?.Invoke("• Service 'bavm' not registered, but BlueRiver app directory exists. Proceeding with file replacement.");
+                }
 
+                // =========================================================================
+                // 2nd Step: Replace logo.svg in %APPDATA%\Semtech\BlueRiver AV Manager\app\front\images\logo.svg
+                // Copy logo.svg from Advantech BR Patch / bundled whitelabel source
+                // =========================================================================
+                log?.Invoke("Step 2/4: Deploying Advantech logo.svg...");
                 string imageDestDir = Path.Combine(targetAppPath, @"front\images");
-                string configDestDir = Path.Combine(targetAppPath, @"src\config");
-
                 Directory.CreateDirectory(imageDestDir);
-                Directory.CreateDirectory(configDestDir);
 
-                // 1. Deploy Logo
                 string sourceLogo = Path.Combine(whiteLabelSourceDir, "logo.svg");
+                if (!File.Exists(sourceLogo))
+                {
+                    // Check fallback in Downloads\Advantech BR Patch\image\logo.svg
+                    string userDownloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), @"Downloads\Advantech BR Patch\image\logo.svg");
+                    if (File.Exists(userDownloads)) sourceLogo = userDownloads;
+                }
+
                 if (File.Exists(sourceLogo))
                 {
                     string destLogo = Path.Combine(imageDestDir, "logo.svg");
@@ -74,139 +134,222 @@ public static class WhiteLabelManager
                     if (File.Exists(destLogo) && !File.Exists(bakLogo))
                     {
                         File.Copy(destLogo, bakLogo, overwrite: false);
-                        log?.Invoke("Backed up original logo.svg to logo.svg.bak");
+                        log?.Invoke("• Backed up original logo.svg to logo.svg.bak");
                     }
 
                     File.Copy(sourceLogo, destLogo, overwrite: true);
-                    log?.Invoke("Deployed Advantech logo.svg successfully.");
+                    log?.Invoke($"• Replaced {destLogo} with Advantech logo.");
                 }
                 else
                 {
-                    log?.Invoke($"Notice: Source logo.svg not found at {sourceLogo}, skipping logo replacement.");
+                    log?.Invoke($"• Warning: Source logo.svg not found at {sourceLogo}. Skipping logo copy.");
                 }
 
-                // 2. Deploy Configuration / index.js
-                string sourceIndex = Path.Combine(whiteLabelSourceDir, "index.js");
-                if (File.Exists(sourceIndex))
-                {
-                    string destIndex = Path.Combine(configDestDir, "index.js");
-                    string bakIndex = Path.Combine(configDestDir, "index.js.bak");
+                // =========================================================================
+                // 3rd Step: Replace the values in \src\config\index.js:
+                // APP_TITLE: 'AV Manager',
+                // APP_HEADER: 'AV Manager',
+                // THEME_PRIMARY_COLOR: '#0055afff',
+                // =========================================================================
+                log?.Invoke("Step 3/4: Updating branding values in index.js...");
+                string indexJsPath = Path.Combine(targetAppPath, @"src\config\index.js");
 
-                    if (File.Exists(destIndex) && !File.Exists(bakIndex))
+                if (File.Exists(indexJsPath))
+                {
+                    string bakIndex = Path.Combine(targetAppPath, @"src\config\index.js.bak");
+                    if (!File.Exists(bakIndex))
                     {
-                        File.Copy(destIndex, bakIndex, overwrite: false);
-                        log?.Invoke("Backed up original index.js to index.js.bak");
+                        File.Copy(indexJsPath, bakIndex, overwrite: false);
+                        log?.Invoke("• Backed up original index.js to index.js.bak");
                     }
 
-                    File.Copy(sourceIndex, destIndex, overwrite: true);
-                    log?.Invoke("Deployed Advantech index.js branding configuration successfully.");
+                    string indexContent = File.ReadAllText(indexJsPath);
+                    string patchedContent = PatchIndexJsBranding(indexContent);
+
+                    File.WriteAllText(indexJsPath, patchedContent);
+                    log?.Invoke("• Successfully updated index.js (APP_TITLE: 'AV Manager', APP_HEADER: 'AV Manager', THEME_PRIMARY_COLOR: '#0055afff').");
                 }
                 else
                 {
-                    log?.Invoke($"Notice: Source index.js not found at {sourceIndex}, skipping config replacement.");
+                    log?.Invoke($"• Notice: {indexJsPath} does not exist. Creating configuration from template...");
+                    string configDir = Path.Combine(targetAppPath, @"src\config");
+                    Directory.CreateDirectory(configDir);
+
+                    string newConfig = GenerateDefaultBrandedIndexJs();
+                    File.WriteAllText(indexJsPath, newConfig);
+                    log?.Invoke("• Created branded index.js.");
                 }
 
-                // 3. Restart bavm Windows service if present and running
-                TryRestartBavmService(log);
+                // =========================================================================
+                // 4th Step: Restart the bavm windows service
+                // =========================================================================
+                if (serviceInstalled)
+                {
+                    log?.Invoke("Step 4/4: Restarting 'bavm' Windows service...");
+                    bool started = StartService(ServiceName, timeoutSeconds: 15, log);
+                    if (started)
+                    {
+                        log?.Invoke("• 'bavm' service started successfully with Advantech branding.");
+                    }
+                    else
+                    {
+                        log?.Invoke("• Warning: Could not verify service start. You can start it manually via Services.");
+                    }
+                }
+                else
+                {
+                    log?.Invoke("Step 4/4: 'bavm' service is not installed, no service restart needed.");
+                }
 
-                return (true, "Advantech white-labeling applied successfully.");
+                return (true, "Advantech White-Labeling completed successfully across all 4 steps.");
             }
             catch (Exception ex)
             {
-                log?.Invoke($"White-labeling error: {ex.Message}");
-                return (false, $"Failed to apply white-labeling: {ex.Message}");
+                log?.Invoke($"• White-labeling error: {ex.Message}");
+                return (false, $"White-labeling encountered an error: {ex.Message}");
             }
         });
     }
 
     /// <summary>
-    /// Restores original BlueRiver AV Manager files from backup (.bak).
+    /// Replaces the 3 branding values in index.js content:
+    /// APP_TITLE: 'AV Manager',
+    /// APP_HEADER: 'AV Manager',
+    /// THEME_PRIMARY_COLOR: '#0055afff',
     /// </summary>
-    public static bool RestoreOriginal(Action<string>? log = null)
+    public static string PatchIndexJsBranding(string content)
     {
-        try
+        // Replace APP_TITLE
+        if (Regex.IsMatch(content, @"APP_TITLE:\s*['""][^'""]*['""]"))
         {
-            if (!TryGetBlueRiverAppPath(out string targetAppPath)) return false;
-
-            string bakLogo = Path.Combine(targetAppPath, @"front\images\logo.svg.bak");
-            string destLogo = Path.Combine(targetAppPath, @"front\images\logo.svg");
-            if (File.Exists(bakLogo))
-            {
-                File.Copy(bakLogo, destLogo, overwrite: true);
-                File.Delete(bakLogo);
-                log?.Invoke("Restored original logo.svg.");
-            }
-
-            string bakIndex = Path.Combine(targetAppPath, @"src\config\index.js.bak");
-            string destIndex = Path.Combine(targetAppPath, @"src\config\index.js");
-            if (File.Exists(bakIndex))
-            {
-                File.Copy(bakIndex, destIndex, overwrite: true);
-                File.Delete(bakIndex);
-                log?.Invoke("Restored original index.js.");
-            }
-
-            TryRestartBavmService(log);
-            return true;
+            content = Regex.Replace(content, @"APP_TITLE:\s*['""][^'""]*['""]", "APP_TITLE: 'AV Manager'");
         }
-        catch (Exception ex)
+
+        // Replace APP_HEADER
+        if (Regex.IsMatch(content, @"APP_HEADER:\s*['""][^'""]*['""]"))
         {
-            log?.Invoke($"Error restoring original files: {ex.Message}");
-            return false;
+            content = Regex.Replace(content, @"APP_HEADER:\s*['""][^'""]*['""]", "APP_HEADER: 'AV Manager'");
         }
+
+        // Replace THEME_PRIMARY_COLOR
+        if (Regex.IsMatch(content, @"THEME_PRIMARY_COLOR:\s*['""][^'""]*['""]"))
+        {
+            content = Regex.Replace(content, @"THEME_PRIMARY_COLOR:\s*['""][^'""]*['""]", "THEME_PRIMARY_COLOR: '#0055afff'");
+        }
+
+        return content;
     }
 
-    private static void TryRestartBavmService(Action<string>? log)
+    private static string GenerateDefaultBrandedIndexJs()
+    {
+        return @"import fs from 'fs';
+import path from 'path';
+import loadConfig from './loadConfig.js';
+
+loadConfig();
+
+const CertificateKeyPath = path.join(process.env.DATA_PATH || '', 'cert', 'server.key');
+const CertificatePath = path.join(process.env.DATA_PATH || '', 'cert', 'server.cer');
+const IsHttps = fs.existsSync(CertificateKeyPath) && fs.existsSync(CertificatePath);
+
+const Branding = (() => {
+  const { APP_TITLE, APP_HEADER, THEME_PRIMARY_COLOR, THEME_SECONDARY_COLOR } = {
+    ...{
+      APP_TITLE: 'AV Manager',
+      APP_HEADER: 'AV Manager',
+      THEME_PRIMARY_COLOR: '#0055afff',
+      THEME_SECONDARY_COLOR: '#f2f2f2',
+    },
+    ...process.env,
+  };
+  return {
+    Title: APP_TITLE,
+    Header: APP_HEADER,
+    PrimaryColor: THEME_PRIMARY_COLOR,
+    SecondaryColor: THEME_SECONDARY_COLOR,
+  };
+})();
+
+const config = { CertificateKeyPath, CertificatePath, IsHttps, Branding };
+export default config;
+";
+    }
+
+    private static bool StopService(string serviceName, int timeoutSeconds, Action<string>? log)
+    {
+        RunScCommand($"stop {serviceName}");
+
+        var sw = Stopwatch.StartNew();
+        while (sw.Elapsed.TotalSeconds < timeoutSeconds)
+        {
+            string status = QueryServiceStatus(serviceName);
+            if (status.Contains("STOPPED", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            Thread.Sleep(500);
+        }
+
+        return false;
+    }
+
+    private static bool StartService(string serviceName, int timeoutSeconds, Action<string>? log)
+    {
+        RunScCommand($"start {serviceName}");
+
+        var sw = Stopwatch.StartNew();
+        while (sw.Elapsed.TotalSeconds < timeoutSeconds)
+        {
+            string status = QueryServiceStatus(serviceName);
+            if (status.Contains("RUNNING", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            Thread.Sleep(500);
+        }
+
+        return false;
+    }
+
+    private static string QueryServiceStatus(string serviceName)
     {
         try
         {
-            // Use sc.exe query bavm
-            var queryPsi = new ProcessStartInfo
+            var psi = new ProcessStartInfo
             {
                 FileName = "sc.exe",
-                Arguments = $"query {ServiceName}",
+                Arguments = $"query {serviceName}",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-
-            using var queryProc = Process.Start(queryPsi);
-            if (queryProc == null) return;
-            string output = queryProc.StandardOutput.ReadToEnd();
-            queryProc.WaitForExit(3000);
-
-            if (output.Contains("RUNNING", StringComparison.OrdinalIgnoreCase))
-            {
-                log?.Invoke($"Restarting {ServiceName} service to load new branding assets...");
-                RunScCommand($"stop {ServiceName}");
-                Thread.Sleep(2000);
-                RunScCommand($"start {ServiceName}");
-                log?.Invoke($"{ServiceName} service restarted successfully.");
-            }
-            else if (output.Contains("STOPPED", StringComparison.OrdinalIgnoreCase))
-            {
-                log?.Invoke($"Starting {ServiceName} service...");
-                RunScCommand($"start {ServiceName}");
-                log?.Invoke($"{ServiceName} service started successfully.");
-            }
+            using var proc = Process.Start(psi);
+            if (proc == null) return string.Empty;
+            string output = proc.StandardOutput.ReadToEnd();
+            proc.WaitForExit(2000);
+            return output;
         }
-        catch (Exception ex)
+        catch
         {
-            log?.Invoke($"Notice: Could not restart service {ServiceName}: {ex.Message}");
+            return string.Empty;
         }
     }
 
     private static void RunScCommand(string args)
     {
-        var psi = new ProcessStartInfo
+        try
         {
-            FileName = "sc.exe",
-            Arguments = args,
-            RedirectStandardOutput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-        using var proc = Process.Start(psi);
-        proc?.WaitForExit(5000);
+            var psi = new ProcessStartInfo
+            {
+                FileName = "sc.exe",
+                Arguments = args,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            using var proc = Process.Start(psi);
+            proc?.WaitForExit(5000);
+        }
+        catch { }
     }
 }
