@@ -1,4 +1,4 @@
-# AVAS Routing SW — Quickstart Guide (v1.2.0)
+# AVAS Routing SW — Quickstart Guide (v1.1.0)
 
 Welcome to **AVAS Routing SW** (`AVAS-BRV-wrapper-win`), a lightweight, high-performance native Windows desktop application designed to control and monitor SDVoE AV distribution networks.
 
@@ -15,7 +15,7 @@ AVAS Routing SW is **100% portable** with zero external installer or registry de
 ### Step 1: Download & Extract
 Download the official release zip:
 ```
-releases/AVAS-Routing-SW-v1.2.0-win-x64.zip
+releases/AVAS-Routing-SW-v1.1.0-win-x64.zip
 ```
 Extract the archive anywhere on your system (e.g. `C:\Tools\AVAS-Routing-SW` or a portable USB drive).
 

@@ -1,4 +1,4 @@
-# AVAS Routing SW — User Manual (v1.2.0)
+# AVAS Routing SW — User Manual (v1.1.0)
 
 ## 1. Product Introduction
 **AVAS Routing SW** is a high-performance native Windows desktop application designed to control and monitor SDVoE AV distribution networks. It serves as a comprehensive management environment:

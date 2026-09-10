@@ -283,7 +283,7 @@ public partial class MainWindow : Window
         // ==========================================
         ProgressBarMain.Value = 98;
         TxtProgressTitle.Text = "Registering Windows application...";
-        UninstallRegistryHelper.Register(_targetInstallDir, "1.1.0", Log);
+        UninstallRegistryHelper.Register(_targetInstallDir, "1.2.0", Log);
 
         ProgressBarMain.Value = 100;
         Log("=== Installation Completed Successfully ===");
