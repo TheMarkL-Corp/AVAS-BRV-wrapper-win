@@ -2,9 +2,9 @@
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue.svg)](https://microsoft.com)
 [![Framework](https://img.shields.io/badge/.NET-8.0--windows-purple.svg)](https://dotnet.microsoft.com)
-[![Tests](https://img.shields.io/badge/tests-434%20passing%20(100%25)-brightgreen.svg)](#test-suite--qa-verification)
+[![Tests](https://img.shields.io/badge/tests-435%20passing%20(100%25)-brightgreen.svg)](#test-suite--qa-verification)
 [![Loop Stress](https://img.shields.io/badge/loop%20stress-4%2C005%2F4%2C005%20passed-success.svg)](./LOOP_TEST_RESULTS.md)
-[![Version](https://img.shields.io/badge/version-v1.2.0-informational.svg)](#)
+[![Version](https://img.shields.io/badge/version-v1.3.0-informational.svg)](#)
 
 A high-performance, portable native Windows desktop application that wraps the **Semtech BlueRiver AV Manager** web interface within an isolated **Microsoft WebView2** browser container, and provides a collapsible real-time overlay sidebar displaying live multicast video previews ($\ge 1$ FPS) of **Advantech AVAS-223 Encoders (`chip_0` only)** using SDVoE Control Server APIs and RFC 3550 / RFC 4175 UDP multicast ingestion.
 
@@ -18,6 +18,7 @@ A high-performance, portable native Windows desktop application that wraps the *
 - **Strict Hardware Filtering**: Automatically targets **AVAS-223 primary chip** (`Vendor ID: 105`, `Product ID: 81`, `ChipIndex: 0`, `IsTransmitter: true`), rejecting `chip_1` aggregators, receivers, and third-party SDVoE endpoints.
 - **Dynamic Multicast Pool Management**: Collision-free allocation of multicast IPs from configurable pool (`224.1.3.1` – `224.1.3.225`) and base UDP port (`5000`). Drops multicast memberships when the sidebar is collapsed or the app closes.
 - **High-Performance Direct Rasterization**: Q10 fixed-point SIMD-friendly YUV422 $\to$ BGR24 conversion directly into WPF `WriteableBitmap.BackBuffer` with backpressure drop gates to eliminate UI freezes and GC churn.
+- **Touchscreen Optimized**: Designed for medical carts and surgical touchscreens with 36px–44px touch targets, native direct touch flick/drag scrolling (`PanningMode="VerticalOnly"`), high-contrast pressed states (`IsPressed`), and 14px draggable splitter grip.
 - **100% Portable**: Zero-install operation; portable settings stored in `appsettings.json`, and WebView2 profile isolated in `.\WebView2_UserData`.
 
 ---
@@ -26,7 +27,7 @@ A high-performance, portable native Windows desktop application that wraps the *
 
 ```
 +-----------------------------------------------------------------------------------------------+
-| AVAS ROUTING SW [v1.1.0]                                            URL: http://localhost:80 [⚙] |
+| AVAS ROUTING SW [v1.3.0]                                            URL: http://localhost:80 [⚙] |
 +---------------------------------------------------------------------------------------+-------+
 |                                                                                       | ◀     |
 |                                                                                       | P     |
@@ -62,7 +63,7 @@ A high-performance, portable native Windows desktop application that wraps the *
 ## Quick Start & Releases
 
 - **[Quickstart Guide](./QUICKSTART.md)**: 3-step zero-install run guide, QA audit findings, and troubleshooting.
-- **[Download v1.1.0 Release Zip](./releases/AVAS-Routing-SW-v1.1.0-win-x64.zip)**: Standalone portable application bundle (886 KB).
+- **[Download v1.3.0 Release Zip](./releases/AVAS-Routing-SW-v1.3.0-win-x64.zip)**: Standalone portable application bundle.
 
 ---
 

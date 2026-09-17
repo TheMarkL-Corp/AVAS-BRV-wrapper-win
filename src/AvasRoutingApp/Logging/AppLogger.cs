@@ -92,9 +92,24 @@ namespace AvasRoutingApp.Logging
                 Initialize();
             }
 
-            string fullMessage = ex != null
-                ? $"{message} | Exception: {ex.GetType().FullName}: {ex.Message}\nStackTrace:\n{ex.StackTrace}"
-                : message;
+            string fullMessage;
+            if (ex != null)
+            {
+                var sb = new System.Text.StringBuilder();
+                sb.Append(message).Append(" | Exception: ").Append(ex.GetType().FullName).Append(": ").Append(ex.Message);
+                var inner = ex.InnerException;
+                while (inner != null)
+                {
+                    sb.Append("\n  ---> Inner Exception: ").Append(inner.GetType().FullName).Append(": ").Append(inner.Message);
+                    inner = inner.InnerException;
+                }
+                sb.Append("\nStackTrace:\n").Append(ex.StackTrace);
+                fullMessage = sb.ToString();
+            }
+            else
+            {
+                fullMessage = message;
+            }
 
             WriteInternal(level, category, fullMessage);
         }

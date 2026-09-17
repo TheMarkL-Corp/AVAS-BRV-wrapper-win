@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using Microsoft.Web.WebView2.Core;
 using AvasRoutingApp.Configuration;
 using AvasRoutingApp.Logging;
@@ -46,6 +47,8 @@ namespace AvasRoutingApp
             ApplyAppLogo();
 
             Loaded += MainWindow_Loaded;
+            PreviewKeyDown += MainWindow_PreviewKeyDown;
+            SidebarView.CloseRequested += (s, e) => BtnToggleSidebar_Click(this, new RoutedEventArgs());
         }
 
         public MainWindow(MainViewModel viewModel)
@@ -64,6 +67,8 @@ namespace AvasRoutingApp
             ApplyAppLogo();
 
             Loaded += MainWindow_Loaded;
+            PreviewKeyDown += MainWindow_PreviewKeyDown;
+            SidebarView.CloseRequested += (s, e) => BtnToggleSidebar_Click(this, new RoutedEventArgs());
         }
 
         private void ApplyAppLogo()
@@ -167,6 +172,33 @@ namespace AvasRoutingApp
             }
         }
 
+        private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Control && e.Key == System.Windows.Input.Key.R)
+            {
+                BtnReload_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+            else if (System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Control && e.Key == System.Windows.Input.Key.OemComma)
+            {
+                BtnSettings_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+            else if (System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Control && e.Key == System.Windows.Input.Key.B)
+            {
+                BtnToggleSidebar_Click(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+            else if (e.Key == System.Windows.Input.Key.F5)
+            {
+                if (ViewModel?.RefreshDevicesCommand != null && ViewModel.RefreshDevicesCommand.CanExecute(null))
+                {
+                    ViewModel.RefreshDevicesCommand.Execute(null);
+                }
+                e.Handled = true;
+            }
+        }
+
         private void OnNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
         {
             TxtStatus.Text = $"Loading {e.Uri}...";
@@ -180,24 +212,40 @@ namespace AvasRoutingApp
                 AppLogger.Warn("WebView2", $"Navigation completed with error: {e.WebErrorStatus} for {_currentLoadedUrl}");
                 ShowOfflineBanner($"Unable to reach BlueRiver AV Manager at '{_currentLoadedUrl}'. Web error: {e.WebErrorStatus}");
                 TxtStatus.Text = $"Connection failed ({e.WebErrorStatus}). Offline fallback notice displayed.";
+                if (DotConnectionStatus != null)
+                {
+                    DotConnectionStatus.Fill = (Brush)FindResource("ThemeStatusOfflineBrush");
+                }
             }
             else
             {
                 AppLogger.Info("WebView2", $"Successfully connected to BlueRiver AV Manager at {_currentLoadedUrl}");
                 HideOfflineBanner();
                 TxtStatus.Text = "Connected to BlueRiver AV Manager | Portable WebView2 (.\\WebView2_UserData)";
+                if (DotConnectionStatus != null)
+                {
+                    DotConnectionStatus.Fill = (Brush)FindResource("ThemeStatusOnlineBrush");
+                }
             }
         }
 
         private void ShowOfflineBanner(string message)
         {
-            TxtOfflineMessage.Text = $"⚠ {message}";
+            TxtOfflineMessage.Text = message.StartsWith("⚠") ? message : $"⚠ {message}";
             OfflineBanner.Visibility = Visibility.Visible;
+            if (DotConnectionStatus != null && TryFindResource("ThemeStatusOfflineBrush") is Brush offlineBrush)
+            {
+                DotConnectionStatus.Fill = offlineBrush;
+            }
         }
 
         private void HideOfflineBanner()
         {
             OfflineBanner.Visibility = Visibility.Collapsed;
+            if (DotConnectionStatus != null && TryFindResource("ThemeStatusOnlineBrush") is Brush onlineBrush)
+            {
+                DotConnectionStatus.Fill = onlineBrush;
+            }
         }
 
         private void BtnReload_Click(object sender, RoutedEventArgs e)

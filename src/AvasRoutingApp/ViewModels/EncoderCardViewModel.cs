@@ -44,6 +44,61 @@ namespace AvasRoutingApp.ViewModels
         private string _companionMac = "NONE";
         private string _companionName = string.Empty;
         private bool _companionIsActive = false;
+        private bool _isMacCopied;
+        private bool _isMulticastCopied;
+
+        public bool IsMacCopied
+        {
+            get => _isMacCopied;
+            set => SetProperty(ref _isMacCopied, value);
+        }
+
+        public bool IsMulticastCopied
+        {
+            get => _isMulticastCopied;
+            set => SetProperty(ref _isMulticastCopied, value);
+        }
+
+        public System.Windows.Input.ICommand CopyMacCommand { get; }
+        public System.Windows.Input.ICommand CopyMulticastCommand { get; }
+
+        public EncoderCardViewModel()
+        {
+            CopyMacCommand = new RelayCommand(ExecuteCopyMac);
+            CopyMulticastCommand = new RelayCommand(ExecuteCopyMulticast);
+        }
+
+        private async void ExecuteCopyMac()
+        {
+            if (string.IsNullOrEmpty(_macAddress)) return;
+            try
+            {
+                System.Windows.Clipboard.SetText(_macAddress);
+                IsMacCopied = true;
+                await System.Threading.Tasks.Task.Delay(1500);
+                IsMacCopied = false;
+            }
+            catch
+            {
+                // Clipboard exceptions in sandbox/testing environments
+            }
+        }
+
+        private async void ExecuteCopyMulticast()
+        {
+            if (string.IsNullOrEmpty(MulticastEndpoint)) return;
+            try
+            {
+                System.Windows.Clipboard.SetText(MulticastEndpoint);
+                IsMulticastCopied = true;
+                await System.Threading.Tasks.Task.Delay(1500);
+                IsMulticastCopied = false;
+            }
+            catch
+            {
+                // Clipboard exceptions in sandbox/testing environments
+            }
+        }
 
         public string MacAddress
         {

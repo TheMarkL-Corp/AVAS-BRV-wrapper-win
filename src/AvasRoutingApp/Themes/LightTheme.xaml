@@ -24,14 +24,15 @@
 
     <!-- Typography -->
     <SolidColorBrush x:Key="ThemeTextPrimaryBrush" Color="#0F172A" />
-    <SolidColorBrush x:Key="ThemeTextSecondaryBrush" Color="#475569" />
+    <SolidColorBrush x:Key="ThemeTextSecondaryBrush" Color="#334155" />
     <SolidColorBrush x:Key="ThemeTextMutedBrush" Color="#64748B" />
 
     <!-- Buttons & Interactive Elements -->
-    <SolidColorBrush x:Key="ThemeButtonBackgroundBrush" Color="#E2E8F0" />
-    <SolidColorBrush x:Key="ThemeButtonForegroundBrush" Color="#1E293B" />
+    <SolidColorBrush x:Key="ThemeButtonBackgroundBrush" Color="#F1F5F9" />
+    <SolidColorBrush x:Key="ThemeButtonForegroundBrush" Color="#0F172A" />
     <SolidColorBrush x:Key="ThemeButtonBorderBrush" Color="#CBD5E1" />
-    <SolidColorBrush x:Key="ThemeButtonHoverBackgroundBrush" Color="#CBD5E1" />
+    <SolidColorBrush x:Key="ThemeButtonHoverBackgroundBrush" Color="#E2E8F0" />
+    <SolidColorBrush x:Key="ThemeButtonHoverBorderBrush" Color="#94A3B8" />
 
     <!-- Toggle Strip & Splitter -->
     <SolidColorBrush x:Key="ThemeToggleStripBackgroundBrush" Color="#E2E8F0" />
@@ -51,7 +52,15 @@
     <SolidColorBrush x:Key="ThemeTabInactiveForegroundBrush" Color="#64748B" />
     <SolidColorBrush x:Key="ThemeBadgeDualBackgroundBrush" Color="#0284C7" />
     <SolidColorBrush x:Key="ThemeBadgeSingleBackgroundBrush" Color="#64748B" />
+
+    <!-- Semantic Status & Diagnostics Brushes -->
     <SolidColorBrush x:Key="ThemeStatusOnlineBrush" Color="#10B981" />
     <SolidColorBrush x:Key="ThemeStatusOfflineBrush" Color="#EF4444" />
-
+    <SolidColorBrush x:Key="ThemeStatusSuccessBrush" Color="#059669" />
+    <SolidColorBrush x:Key="ThemeStatusSuccessBackgroundBrush" Color="#ECFDF5" />
+    <SolidColorBrush x:Key="ThemeStatusWarningBrush" Color="#D97706" />
+    <SolidColorBrush x:Key="ThemeStatusWarningBackgroundBrush" Color="#FFFBEB" />
+    <SolidColorBrush x:Key="ThemeStatusErrorBrush" Color="#DC2626" />
+    <SolidColorBrush x:Key="ThemeStatusErrorBackgroundBrush" Color="#FEF2F2" />
+    <SolidColorBrush x:Key="ThemeSurfaceOverlayBrush" Color="#50000000" />
 </ResourceDictionary>

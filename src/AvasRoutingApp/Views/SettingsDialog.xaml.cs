@@ -133,5 +133,42 @@ namespace AvasRoutingApp.Views
         {
             LoadConfigToUi(new AppConfig());
         }
+
+        private async void BtnTestConnection_Click(object sender, RoutedEventArgs e)
+        {
+            string host = TxtControlServerIp.Text.Trim();
+            if (!int.TryParse(TxtTelnetPort.Text.Trim(), out int port))
+            {
+                port = 6970;
+            }
+
+            TxtTestResult.Text = "Testing connection...";
+            TxtTestResult.Foreground = (System.Windows.Media.Brush)FindResource("ThemeAccentBrush");
+            TxtTestResult.Visibility = Visibility.Visible;
+
+            try
+            {
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                using var client = new System.Net.Sockets.TcpClient();
+                var connectTask = client.ConnectAsync(host, port);
+                var delayTask = System.Threading.Tasks.Task.Delay(2000);
+                if (await System.Threading.Tasks.Task.WhenAny(connectTask, delayTask) == connectTask && client.Connected)
+                {
+                    sw.Stop();
+                    TxtTestResult.Text = $"✓ SDVoE Server reachable ({sw.ElapsedMilliseconds} ms)";
+                    TxtTestResult.Foreground = (System.Windows.Media.Brush)FindResource("ThemeStatusOnlineBrush");
+                }
+                else
+                {
+                    TxtTestResult.Text = "✗ Connection timed out (check host & port)";
+                    TxtTestResult.Foreground = (System.Windows.Media.Brush)FindResource("ThemeStatusOfflineBrush");
+                }
+            }
+            catch (Exception ex)
+            {
+                TxtTestResult.Text = $"✗ Connection failed: {ex.Message}";
+                TxtTestResult.Foreground = (System.Windows.Media.Brush)FindResource("ThemeStatusOfflineBrush");
+            }
+        }
     }
 }

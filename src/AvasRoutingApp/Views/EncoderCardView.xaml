@@ -39,10 +39,19 @@
                     <!-- Live Decoded Video Viewport -->
                     <Image Source="{Binding PreviewBitmap}" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" MaxHeight="380" />
 
+                    <!-- Resolution & Live Overlay Badge -->
+                    <Border Background="{DynamicResource ThemeSurfaceOverlayBrush}" CornerRadius="3" Padding="6,2" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="6" Height="6" Fill="{Binding FpsBrush}" Margin="0,0,4,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Resolution, Mode=OneWay}" Foreground="White" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
                     <!-- Waiting / Connecting Overlay -->
-                    <Border Background="#B30B0C10" Visibility="{Binding IsWaitingForStream, Converter={StaticResource BoolToVisConverter}}"
+                    <Border Background="{DynamicResource ThemeSurfaceOverlayBrush}" Visibility="{Binding IsWaitingForStream, Converter={StaticResource BoolToVisConverter}}"
                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Path Data="{DynamicResource IconGeometrySignal}" Fill="{DynamicResource ThemeAccentBrush}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,6" />
                             <TextBlock Text="CONNECTING..." Foreground="{DynamicResource ThemeAccentBrush}" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,4" />
                             <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" HorizontalAlignment="Center" />
                         </StackPanel>
@@ -57,18 +66,39 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: Telemetry Details (MAC, Multicast IP:Port, Unicast IP, Resolution, Companion) -->
+                <!-- Left: Telemetry Details (MAC, Multicast IP:Port, Unicast IP) with Quick Copy -->
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" TextTrimming="CharacterEllipsis">
-                        <Run Text="MAC: " FontWeight="SemiBold" /><Run Text="{Binding MacAddress, Mode=OneWay}" Foreground="{DynamicResource ThemeTextPrimaryBrush}" />
-                    </TextBlock>
+                    <!-- MAC Row -->
+                    <DockPanel LastChildFill="False" Margin="0,0,0,3">
+                        <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" VerticalAlignment="Center">
+                            <Run Text="MAC: " FontWeight="SemiBold" />
+                            <Run Text="{Binding MacAddress, Mode=OneWay}" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontFamily="Consolas, Courier New" />
+                        </TextBlock>
+                        <Button Command="{Binding CopyMacCommand}" Background="{DynamicResource ThemePillBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}" Padding="7,3" Margin="8,0,0,0" Cursor="Hand" ToolTip="Copy MAC Address" MinHeight="26">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{DynamicResource IconGeometryCopy}" Fill="{DynamicResource ThemeTextMutedBrush}" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center" />
+                                <TextBlock Text=" Copied!" Foreground="{DynamicResource ThemeStatusOnlineBrush}" FontSize="9" FontWeight="Bold" Visibility="{Binding IsMacCopied, Converter={StaticResource BoolToVisConverter}}" />
+                            </StackPanel>
+                        </Button>
+                    </DockPanel>
+
+                    <!-- Multicast Row -->
+                    <DockPanel LastChildFill="False" Margin="0,3,0,3">
+                        <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" VerticalAlignment="Center">
+                            <Run Text="Mcast: " FontWeight="SemiBold" />
+                            <Run Text="{Binding MulticastEndpoint, Mode=OneWay}" Foreground="{DynamicResource ThemeAccentBrush}" FontFamily="Consolas, Courier New" />
+                        </TextBlock>
+                        <Button Command="{Binding CopyMulticastCommand}" Background="{DynamicResource ThemePillBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}" Padding="7,3" Margin="8,0,0,0" Cursor="Hand" ToolTip="Copy Multicast Endpoint" MinHeight="26">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{DynamicResource IconGeometryCopy}" Fill="{DynamicResource ThemeTextMutedBrush}" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center" />
+                                <TextBlock Text=" Copied!" Foreground="{DynamicResource ThemeStatusOnlineBrush}" FontSize="9" FontWeight="Bold" Visibility="{Binding IsMulticastCopied, Converter={StaticResource BoolToVisConverter}}" />
+                            </StackPanel>
+                        </Button>
+                    </DockPanel>
+
+                    <!-- IP & Resolution Row -->
                     <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
-                        <Run Text="Mcast: " FontWeight="SemiBold" /><Run Text="{Binding MulticastEndpoint, Mode=OneWay}" Foreground="{DynamicResource ThemeAccentBrush}" />
-                    </TextBlock>
-                    <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
-                        <Run Text="IP: " FontWeight="SemiBold" /><Run Text="{Binding UnicastIp, Mode=OneWay}" />
-                        <Run Text=" | " />
-                        <Run Text="{Binding Resolution, Mode=OneWay}" Foreground="{DynamicResource ThemeTextPrimaryBrush}" />
+                        <Run Text="IP: " FontWeight="SemiBold" /><Run Text="{Binding UnicastIp, Mode=OneWay}" FontFamily="Consolas, Courier New" />
                     </TextBlock>
                 </StackPanel>
 

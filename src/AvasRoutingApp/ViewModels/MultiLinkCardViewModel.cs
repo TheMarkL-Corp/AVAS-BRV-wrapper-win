@@ -216,17 +216,67 @@ namespace AvasRoutingApp.ViewModels
             }
         }
 
+        private bool _isPendingConfirmation = false;
+        private string _pendingTargetMode = string.Empty;
+        private string _pendingModeDescription = string.Empty;
+
+        public bool IsPendingConfirmation
+        {
+            get => _isPendingConfirmation;
+            set => SetProperty(ref _isPendingConfirmation, value);
+        }
+
+        public string PendingTargetMode
+        {
+            get => _pendingTargetMode;
+            set => SetProperty(ref _pendingTargetMode, value);
+        }
+
+        public string PendingModeDescription
+        {
+            get => _pendingModeDescription;
+            set => SetProperty(ref _pendingModeDescription, value);
+        }
+
         public bool CanSwitchMode => !_isBusy && !_isRebooting;
 
         public ICommand SetSingleModeCommand { get; }
         public ICommand SetDualModeCommand { get; }
+        public ICommand ConfirmPendingSwitchCommand { get; }
+        public ICommand CancelPendingSwitchCommand { get; }
 
         public MultiLinkCardViewModel(IMultiLinkService multiLinkService)
         {
             _multiLinkService = multiLinkService ?? throw new ArgumentNullException(nameof(multiLinkService));
 
-            SetSingleModeCommand = new RelayCommand(async () => await ExecuteModeSwitchAsync("SINGLE"), () => CanSwitchMode);
-            SetDualModeCommand = new RelayCommand(async () => await ExecuteModeSwitchAsync("DUAL"), () => CanSwitchMode);
+            SetSingleModeCommand = new RelayCommand(() => RequestModeSwitch("SINGLE"), () => CanSwitchMode);
+            SetDualModeCommand = new RelayCommand(() => RequestModeSwitch("DUAL"), () => CanSwitchMode);
+
+            ConfirmPendingSwitchCommand = new RelayCommand(async () =>
+            {
+                string target = PendingTargetMode;
+                IsPendingConfirmation = false;
+                await ExecuteModeSwitchAsync(target);
+            }, () => CanSwitchMode);
+
+            CancelPendingSwitchCommand = new RelayCommand(() =>
+            {
+                IsPendingConfirmation = false;
+                PendingTargetMode = string.Empty;
+            });
+        }
+
+        public void RequestModeSwitch(string targetMode)
+        {
+            targetMode = targetMode.ToUpperInvariant();
+            if (string.Equals(_linkMode, targetMode, StringComparison.OrdinalIgnoreCase)) return;
+            if (!CanSwitchMode) return;
+
+            PendingTargetMode = targetMode;
+            PendingModeDescription = targetMode == "DUAL"
+                ? "Switch to 20G Dual-Link? Transceiver will reboot for 20s and pause video."
+                : "Switch to 10G Single-Link? Transceiver will reboot for 20s and pause video.";
+            IsPendingConfirmation = true;
         }
 
         /// <summary>

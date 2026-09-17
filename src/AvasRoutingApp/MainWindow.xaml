@@ -14,47 +14,92 @@
         <Style x:Key="ToolbarButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{DynamicResource ThemeButtonBackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource ThemeButtonForegroundBrush}" />
-            <Setter Property="Padding" Value="12,5" />
+            <Setter Property="Padding" Value="14,6" />
             <Setter Property="Margin" Value="4,0" />
+            <Setter Property="MinHeight" Value="36" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="BorderBrush" Value="{DynamicResource ThemeButtonBorderBrush}" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Cursor" Value="Hand" />
-        </Style>
-
-        <Style x:Key="ToggleStripButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="{DynamicResource ThemeToggleStripForegroundBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border" 
+                                Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="5" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ThemeButtonHoverBackgroundBrush}" />
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource ThemeButtonHoverBorderBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ThemeAccentBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource ThemeAccentForegroundBrush}" />
+                                <Setter TargetName="Border" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="44" />
+            <RowDefinition Height="52" />
             <RowDefinition Height="*" />
             <RowDefinition Height="26" />
         </Grid.RowDefinitions>
 
         <!-- Top Header & Navigation Bar -->
         <Border Grid.Row="0" Background="{DynamicResource ThemeHeaderBackgroundBrush}" BorderBrush="{DynamicResource ThemeHeaderBorderBrush}" BorderThickness="0,0,0,1">
-            <DockPanel Margin="12,0,12,0" VerticalAlignment="Center">
+            <DockPanel Margin="14,0,14,0" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                    <Image x:Name="ImgAppLogo" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
-                    <TextBlock Text="AVAS ROUTING SOFTWARE" FontWeight="Bold" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="14" VerticalAlignment="Center" />
-                    <Border Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="3" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="TxtAppVersion" Text="v1.1.0" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="10" FontWeight="Bold" />
+                    <Image x:Name="ImgAppLogo" Width="22" Height="22" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+                    <TextBlock Text="AVAS ROUTING SOFTWARE" FontWeight="Bold" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="13" VerticalAlignment="Center" />
+                    <Border Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="4" Padding="5,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtAppVersion" Text="v1.3.0" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="10" FontWeight="Bold" />
                     </Border>
                     <TextBlock Text=" | SDVoE Preview Controller" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="12" VerticalAlignment="Center" Margin="6,0,0,0" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock x:Name="TxtCurrentUrlDisplay" Text="URL: http://localhost:80" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="11" VerticalAlignment="Center" Margin="0,0,12,0" />
-                    <Button Content="🔄 Reload" Click="BtnReload_Click" Style="{StaticResource ToolbarButtonStyle}" />
-                    <Button Content="⚙ Settings" Click="BtnSettings_Click" Style="{StaticResource ToolbarButtonStyle}" />
+                    <!-- URL Pill with Connection Status Dot -->
+                    <Border Background="{DynamicResource ThemePillBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,10,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse x:Name="DotConnectionStatus" Width="7" Height="7" Fill="{DynamicResource ThemeStatusOnlineBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TxtCurrentUrlDisplay" Text="URL: http://localhost:80" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="11" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Reload Button with Vector Icon -->
+                    <Button x:Name="BtnReload" Click="BtnReload_Click" Style="{StaticResource ToolbarButtonStyle}" ToolTip="Reload embedded web interface (Ctrl+R)">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Data="{DynamicResource IconGeometryRefresh}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Reload" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Settings Button with Vector Icon -->
+                    <Button x:Name="BtnSettings" Click="BtnSettings_Click" Style="{StaticResource ToolbarButtonStyle}" ToolTip="Configure server, multicast, and network settings (Ctrl+,)">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Data="{DynamicResource IconGeometrySettings}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Settings" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Header Toggle Sidebar Button with Vector Icon -->
+                    <Button x:Name="BtnToggleSidebar" Click="BtnToggleSidebar_Click" Style="{StaticResource ToolbarButtonStyle}" ToolTip="Toggle live preview &amp; multi-link sidebar (Ctrl+B)">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Data="{DynamicResource IconGeometryPreviews}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TxtToggleIcon" Text="◀ PREVIEW" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -74,12 +119,47 @@
                 </Grid.RowDefinitions>
 
                 <!-- Offline Fallback Banner -->
-                <Border x:Name="OfflineBanner" Grid.Row="0" Background="#C92A2A" Padding="12,8" Visibility="Collapsed" Panel.ZIndex="10">
+                <Border x:Name="OfflineBanner" Grid.Row="0" Background="{DynamicResource ThemeStatusErrorBackgroundBrush}" BorderBrush="{DynamicResource ThemeStatusErrorBrush}" BorderThickness="0,0,0,1" Padding="14,8" Visibility="Collapsed" Panel.ZIndex="10">
                     <DockPanel>
-                        <TextBlock x:Name="TxtOfflineMessage" Text="⚠ Unable to reach BlueRiver AV Manager at configured URL." Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                            <Path Data="{DynamicResource IconGeometryWarning}" Fill="{DynamicResource ThemeStatusErrorBrush}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TxtOfflineMessage" Text="Unable to reach BlueRiver AV Manager at configured URL." Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" />
+                        </StackPanel>
                         <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="12,0,0,0">
-                            <Button Content="Retry" Click="BtnRetry_Click" Padding="10,3" Margin="0,0,6,0" Background="#FFFFFF" Foreground="#1E1E24" FontWeight="Bold" BorderThickness="0" Cursor="Hand" />
-                            <Button Content="Settings..." Click="BtnSettings_Click" Padding="10,3" Background="{DynamicResource ThemeButtonBackgroundBrush}" Foreground="{DynamicResource ThemeButtonForegroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource ThemeButtonBorderBrush}" Cursor="Hand" />
+                            <Button Content="Retry" Click="BtnRetry_Click" Padding="14,6" MinHeight="34" Margin="0,0,8,0" Background="{DynamicResource ThemeAccentBrush}" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Border" Property="Opacity" Value="0.9" />
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="Border" Property="Opacity" Value="0.75" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button Content="Settings..." Click="BtnSettings_Click" Padding="14,6" MinHeight="34" Background="{DynamicResource ThemeButtonBackgroundBrush}" Foreground="{DynamicResource ThemeButtonForegroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource ThemeButtonBorderBrush}" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ThemeButtonHoverBackgroundBrush}" />
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="Border" Property="Opacity" Value="0.75" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
                         </StackPanel>
                     </DockPanel>
                 </Border>
@@ -88,12 +168,12 @@
                 <wv2:WebView2 x:Name="MainWebView" Grid.Row="1" />
             </Grid>
 
-            <!-- Column 1: Resizable Sidebar DockPanel (Splitter + Toggle Strip + Container) -->
+            <!-- Column 1: Resizable Sidebar (Splitter directly attached to Container, zero dead space!) -->
             <DockPanel Grid.Column="1">
                 <!-- Draggable Splitter Handle (visible when sidebar is open) -->
                 <Thumb x:Name="SidebarSplitter"
                        DockPanel.Dock="Left"
-                       Width="6"
+                       Width="14"
                        Cursor="SizeWE"
                        Background="{DynamicResource ThemeSplitterBrush}"
                        Visibility="Collapsed"
@@ -102,22 +182,11 @@
                     <Thumb.Template>
                         <ControlTemplate TargetType="Thumb">
                             <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource ThemeHeaderBorderBrush}" BorderThickness="1,0,0,0">
-                                <Border Width="2" Height="30" Background="{DynamicResource ThemeTextMutedBrush}" CornerRadius="1" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                <Border Width="4" Height="48" Background="{DynamicResource ThemeTextSecondaryBrush}" CornerRadius="2" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.75" />
                             </Border>
                         </ControlTemplate>
                     </Thumb.Template>
                 </Thumb>
-
-                <!-- Persistent 28px Toggle Strip -->
-                <Border DockPanel.Dock="Left" Width="28" Background="{DynamicResource ThemeToggleStripBackgroundBrush}" BorderBrush="{DynamicResource ThemeHeaderBorderBrush}" BorderThickness="1,0,0,0">
-                    <Button x:Name="BtnToggleSidebar" Click="BtnToggleSidebar_Click" Style="{StaticResource ToggleStripButtonStyle}" ToolTip="Toggle Live Preview Sidebar">
-                        <TextBlock x:Name="TxtToggleIcon" Text="◀ PREVIEW" FontSize="11" Foreground="{DynamicResource ThemeToggleStripForegroundBrush}" FontWeight="Bold">
-                            <TextBlock.LayoutTransform>
-                                <RotateTransform Angle="90" />
-                            </TextBlock.LayoutTransform>
-                        </TextBlock>
-                    </Button>
-                </Border>
 
                 <!-- Collapsible Resizable Sidebar Container -->
                 <Border x:Name="SidebarContainer"
@@ -133,10 +202,12 @@
         </Grid>
 
         <!-- Bottom Status Bar -->
-        <Border Grid.Row="2" Background="{DynamicResource ThemeStatusBarBackgroundBrush}" BorderBrush="{DynamicResource ThemeStatusBarBorderBrush}" BorderThickness="0,1,0,0" Padding="8,4">
+        <Border Grid.Row="2" Background="{DynamicResource ThemeStatusBarBackgroundBrush}" BorderBrush="{DynamicResource ThemeStatusBarBorderBrush}" BorderThickness="0,1,0,0" Padding="12,4">
             <DockPanel>
-                <TextBlock x:Name="TxtStatus" Text="Ready | Portable WebView2 UserData: .\WebView2_UserData" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="11" VerticalAlignment="Center" />
-                <TextBlock x:Name="TxtServerStatus" Text="SDVoE Server: 127.0.0.1:8090" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtStatus" Text="Ready | Portable WebView2 UserData: .\WebView2_UserData" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="11" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock x:Name="TxtServerStatus" Text="SDVoE Server: 127.0.0.1:8090" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" FontWeight="SemiBold" />
             </DockPanel>
         </Border>
     </Grid>

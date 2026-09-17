@@ -19,3 +19,6 @@
 installer/bin/
 installer/redist/*.exe
 releases/AVAS-Routing-SW-Installer*
+
+## Agent Skills & Local Cache
+.agents/

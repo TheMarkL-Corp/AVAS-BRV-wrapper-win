@@ -77,6 +77,7 @@ namespace AvasRoutingApp
                 var newDict = new ResourceDictionary { Source = uri };
 
                 app.Resources.MergedDictionaries.Clear();
+                app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("Themes/Icons.xaml", UriKind.Relative) });
                 app.Resources.MergedDictionaries.Add(newDict);
                 AppLogger.Info("Theme", $"Theme applied: {themeName} ({themeFile})");
             }
