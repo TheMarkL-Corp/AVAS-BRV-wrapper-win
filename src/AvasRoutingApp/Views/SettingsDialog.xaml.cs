@@ -53,6 +53,25 @@ namespace AvasRoutingApp.Views
                 CmbTheme.SelectedIndex = 0;
             }
 
+            if (string.Equals(config.SidebarFontSize, "Small", StringComparison.OrdinalIgnoreCase))
+            {
+                CmbSidebarFontSize.SelectedIndex = 0;
+            }
+            else if (string.Equals(config.SidebarFontSize, "Large", StringComparison.OrdinalIgnoreCase))
+            {
+                CmbSidebarFontSize.SelectedIndex = 2;
+            }
+            else if (string.Equals(config.SidebarFontSize, "ExtraLarge", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(config.SidebarFontSize, "Extra Large", StringComparison.OrdinalIgnoreCase))
+            {
+                CmbSidebarFontSize.SelectedIndex = 3;
+            }
+            else
+            {
+                CmbSidebarFontSize.SelectedIndex = 1;
+            }
+            UpdateLivePreviewScale();
+
             TxtBlueRiverUrl.Text = config.BlueRiverUrl;
             TxtControlServerIp.Text = config.ControlServerIp;
             TxtRestPort.Text = config.RestPort.ToString();
@@ -62,6 +81,44 @@ namespace AvasRoutingApp.Views
             TxtBasePort.Text = config.BasePort.ToString();
             TxtLocalNetworkInterfaceIp.Text = config.LocalNetworkInterfaceIp;
             BorderErrors.Visibility = Visibility.Collapsed;
+        }
+
+        private void CmbSidebarFontSize_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            UpdateLivePreviewScale();
+        }
+
+        private void UpdateLivePreviewScale()
+        {
+            if (PreviewScaleTransform == null || TxtPreviewScaleBadge == null || CmbSidebarFontSize == null) return;
+
+            string tag = (CmbSidebarFontSize.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString() ?? "Normal";
+            double scale = 1.0;
+            string label = "100% (Normal)";
+
+            switch (tag)
+            {
+                case "Small":
+                    scale = 0.90;
+                    label = "90% (Small)";
+                    break;
+                case "Large":
+                    scale = 1.15;
+                    label = "115% (Large)";
+                    break;
+                case "ExtraLarge":
+                    scale = 1.30;
+                    label = "130% (Extra Large)";
+                    break;
+                default:
+                    scale = 1.00;
+                    label = "100% (Normal)";
+                    break;
+            }
+
+            PreviewScaleTransform.ScaleX = scale;
+            PreviewScaleTransform.ScaleY = scale;
+            TxtPreviewScaleBadge.Text = label;
         }
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)
@@ -84,11 +141,21 @@ namespace AvasRoutingApp.Views
             }
 
             string selectedTheme = (CmbTheme.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString() ?? _configService.Current.Theme;
+            string selectedFontSize = (CmbSidebarFontSize.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString() ?? "Normal";
+
+            // If font size preset changed, automatically adapt default sidebar width
+            double candidateWidth = _configService.Current.SidebarWidth;
+            if (!string.Equals(selectedFontSize, _configService.Current.SidebarFontSize, StringComparison.OrdinalIgnoreCase))
+            {
+                var tempCfg = new AppConfig { SidebarFontSize = selectedFontSize };
+                candidateWidth = tempCfg.GetDefaultSidebarWidth();
+            }
 
             var candidateConfig = new AppConfig
             {
                 Theme = selectedTheme,
-                SidebarWidth = _configService.Current.SidebarWidth,
+                SidebarFontSize = selectedFontSize,
+                SidebarWidth = candidateWidth,
                 BlueRiverUrl = TxtBlueRiverUrl.Text.Trim(),
                 ControlServerIp = TxtControlServerIp.Text.Trim(),
                 RestPort = restPort,

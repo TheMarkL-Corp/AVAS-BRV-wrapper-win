@@ -9,20 +9,28 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>AvasRoutingApp</AssemblyName>
     <RootNamespace>AvasRoutingApp</RootNamespace>
-    <Version>1.3.0</Version>
-    <AssemblyVersion>1.3.0.0</AssemblyVersion>
-    <FileVersion>1.3.0.0</FileVersion>
-    <InformationalVersion>1.3.0</InformationalVersion>
+    <Version>1.4.0</Version>
+    <AssemblyVersion>1.4.0.0</AssemblyVersion>
+    <FileVersion>1.4.0.0</FileVersion>
+    <InformationalVersion>1.4.0</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <ApplicationIcon>logo.ico</ApplicationIcon>
     <Product>AVAS Routing Software</Product>
     <Company>Advantech Co., Ltd.</Company>
-    <Description>AVAS Routing Software — Dual Link SDVoE Manager with Embedded BlueRiver AV Manager &amp; Live Multicast Previews</Description>
+    <Description>AVAS Routing Software — Dual Link SDVoE Manager with Embedded BlueRiver AV Manager, Live Multicast Previews &amp; Device Temperature Monitoring</Description>
     <Copyright>Copyright © 2026 Advantech Co., Ltd. All rights reserved.</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4191.47" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="VOIPS">
+      <HintPath>lib\VOIPS.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
@@ -30,6 +38,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="logo.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="lib\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

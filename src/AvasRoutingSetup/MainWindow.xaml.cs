@@ -223,6 +223,10 @@ public partial class MainWindow : Window
             string zipFile = Path.Combine(baseDir, "payload.zip");
             if (!File.Exists(zipFile))
             {
+                zipFile = Path.Combine(baseDir, "AVAS-Routing-SW-v1.4.0-win-x64.zip");
+            }
+            if (!File.Exists(zipFile))
+            {
                 zipFile = Path.Combine(baseDir, "AVAS-Routing-SW-v1.3.0-win-x64.zip");
             }
             if (!File.Exists(zipFile))
@@ -291,7 +295,7 @@ public partial class MainWindow : Window
         // ==========================================
         ProgressBarMain.Value = 98;
         TxtProgressTitle.Text = "Registering Windows application...";
-        UninstallRegistryHelper.Register(_targetInstallDir, "1.3.0", Log);
+        UninstallRegistryHelper.Register(_targetInstallDir, "1.4.0", Log);
 
         ProgressBarMain.Value = 100;
         Log("=== Installation Completed Successfully ===");

@@ -47,6 +47,9 @@
     </UserControl.Resources>
 
     <Grid Background="{DynamicResource ThemeSidebarBackgroundBrush}" HorizontalAlignment="Stretch">
+        <Grid.LayoutTransform>
+            <ScaleTransform ScaleX="{Binding SidebarFontScale, FallbackValue=1.0}" ScaleY="{Binding SidebarFontScale, FallbackValue=1.0}" />
+        </Grid.LayoutTransform>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -77,10 +80,11 @@
                         </Button.Template>
                     </Button>
 
-                    <!-- Navigation Segmented Tabs (Live Previews vs Multi-Link) -->
+                    <!-- Navigation Segmented Tabs (Live Previews vs Multi-Link vs Thermals) -->
                     <Border Background="{DynamicResource ThemePillBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="3">
                         <Grid>
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
@@ -89,10 +93,11 @@
                             <Button Grid.Column="0" 
                                     Command="{Binding SelectPreviewsTabCommand}"
                                     Height="36" 
-                                    FontSize="12" 
+                                    FontSize="11" 
                                     FontWeight="Bold" 
                                     Cursor="Hand"
-                                    BorderThickness="0">
+                                    BorderThickness="0"
+                                    ToolTip="Live Preview Streams">
                                 <Button.Style>
                                     <Style TargetType="Button">
                                         <Setter Property="Background" Value="Transparent" />
@@ -115,8 +120,8 @@
                                     <ControlTemplate TargetType="Button">
                                         <Border Background="{TemplateBinding Background}" CornerRadius="4">
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                <Path Data="{DynamicResource IconGeometryPreviews}" Fill="{TemplateBinding Foreground}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center" />
-                                                <TextBlock Text="Live Previews" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center" />
+                                                <Path Data="{DynamicResource IconGeometryPreviews}" Fill="{TemplateBinding Foreground}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="Previews" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </Border>
                                     </ControlTemplate>
@@ -127,10 +132,11 @@
                             <Button Grid.Column="1" 
                                     Command="{Binding SelectMultiLinkTabCommand}"
                                     Height="36" 
-                                    FontSize="12" 
+                                    FontSize="11" 
                                     FontWeight="Bold" 
                                     Cursor="Hand"
-                                    BorderThickness="0">
+                                    BorderThickness="0"
+                                    ToolTip="Multi-Link 10G/20G Topology">
                                 <Button.Style>
                                     <Style TargetType="Button">
                                         <Setter Property="Background" Value="Transparent" />
@@ -153,8 +159,57 @@
                                     <ControlTemplate TargetType="Button">
                                         <Border Background="{TemplateBinding Background}" CornerRadius="4">
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                <Path Data="{DynamicResource IconGeometryMultiLink}" Fill="{TemplateBinding Foreground}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                <Path Data="{DynamicResource IconGeometryMultiLink}" Fill="{TemplateBinding Foreground}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center" />
                                                 <TextBlock Text="Multi-Link" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <!-- Tab 3: Thermals (Device Temperatures) -->
+                            <Button Grid.Column="2" 
+                                    Command="{Binding SelectTemperatureTabCommand}"
+                                    Height="36" 
+                                    FontSize="11" 
+                                    FontWeight="Bold" 
+                                    Cursor="Hand"
+                                    BorderThickness="0"
+                                    ToolTip="Device Temperatures (TX &amp; RX Junctions)">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="Foreground" Value="{DynamicResource ThemeTabInactiveForegroundBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsTemperatureTabSelected}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource ThemeTabActiveBackgroundBrush}" />
+                                                <Setter Property="Foreground" Value="{DynamicResource ThemeTabActiveForegroundBrush}" />
+                                            </DataTrigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Opacity" Value="0.9" />
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter Property="Opacity" Value="0.75" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Path Data="{DynamicResource IconGeometryTemperature}" Fill="{TemplateBinding Foreground}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                                <TextBlock Text="Thermals" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center" />
+                                                <!-- Critical Temperature Warning Indicator -->
+                                                <Border Background="#EF4444" 
+                                                        CornerRadius="6" 
+                                                        Width="13" Height="13" 
+                                                        Margin="4,0,0,0" 
+                                                        VerticalAlignment="Center"
+                                                        ToolTip="Critical Junction Temperature (> 70°C) Detected!"
+                                                        Visibility="{Binding HasAnyCriticalTemperature, Converter={StaticResource BoolToVisConverter}}">
+                                                    <TextBlock Text="!" Foreground="White" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
                                             </StackPanel>
                                         </Border>
                                     </ControlTemplate>
@@ -245,6 +300,139 @@
                         </DockPanel>
                     </Border>
                 </StackPanel>
+
+                <!-- Header Content for Temperature Tab -->
+                <StackPanel Visibility="{Binding IsTemperatureTabSelected, Converter={StaticResource BoolToVisConverter}}">
+                    <DockPanel>
+                        <TextBlock Text="DEVICE TEMPERATURES" FontWeight="Bold" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="13" VerticalAlignment="Center" />
+                        <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="4" Padding="6,2">
+                            <TextBlock Text="TX &amp; RX / Chip 0 &amp; 1" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" FontWeight="SemiBold" />
+                        </Border>
+                    </DockPanel>
+
+                    <TextBlock Text="SDVoE REST API vs Advantech VoIP SDK Junction Telemetry" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="10" Margin="0,2,0,8" />
+
+                    <!-- Sub-Filter Segmented Buttons: All / TX / RX & Refresh Button -->
+                    <DockPanel Margin="0,0,0,8">
+                        <Border Background="{DynamicResource ThemePillBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="2" DockPanel.Dock="Left">
+                            <StackPanel Orientation="Horizontal">
+                                <!-- All Filter Button -->
+                                <Button Command="{Binding SetFilterAllCommand}" Padding="8,3" Height="26" Cursor="Hand" BorderThickness="0">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Foreground" Value="{DynamicResource ThemeTextSecondaryBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsFilterAllSelected}" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource ThemeTabActiveBackgroundBrush}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource ThemeTabActiveForegroundBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                <TextBlock FontSize="10" FontWeight="SemiBold">
+                                                    <Run Text="All (" /><Run Text="{Binding TotalTemperatureDeviceCount, Mode=OneWay}" /><Run Text=")" />
+                                                </TextBlock>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <!-- TX Filter Button -->
+                                <Button Command="{Binding SetFilterTxCommand}" Padding="8,3" Height="26" Cursor="Hand" BorderThickness="0" Margin="2,0,0,0">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Foreground" Value="{DynamicResource ThemeTextSecondaryBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsFilterTxSelected}" Value="True">
+                                                    <Setter Property="Background" Value="#3B82F6" />
+                                                    <Setter Property="Foreground" Value="White" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                <TextBlock FontSize="10" FontWeight="SemiBold">
+                                                    <Run Text="TX (" /><Run Text="{Binding TxTemperatureCount, Mode=OneWay}" /><Run Text=")" />
+                                                </TextBlock>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <!-- RX Filter Button -->
+                                <Button Command="{Binding SetFilterRxCommand}" Padding="8,3" Height="26" Cursor="Hand" BorderThickness="0" Margin="2,0,0,0">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="Foreground" Value="{DynamicResource ThemeTextSecondaryBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsFilterRxSelected}" Value="True">
+                                                    <Setter Property="Background" Value="#8B5CF6" />
+                                                    <Setter Property="Foreground" Value="White" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                <TextBlock FontSize="10" FontWeight="SemiBold">
+                                                    <Run Text="RX (" /><Run Text="{Binding RxTemperatureCount, Mode=OneWay}" /><Run Text=")" />
+                                                </TextBlock>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Refresh Button -->
+                        <Button DockPanel.Dock="Right" HorizontalAlignment="Right"
+                                Command="{Binding RefreshTemperaturesCommand}" 
+                                Style="{StaticResource SidebarActionButtonStyle}" 
+                                Padding="10,4" 
+                                MinHeight="26" 
+                                Margin="0"
+                                ToolTip="Query junction temperatures from SDVoE API and VoIP SDK (F5)">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{DynamicResource IconGeometryRefresh}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Refresh" VerticalAlignment="Center" FontSize="10" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Button>
+                    </DockPanel>
+
+                    <!-- Temperature Telemetry & Auto-poll Summary -->
+                    <Border Background="{DynamicResource ThemeCardHeaderBackgroundBrush}" CornerRadius="4" Padding="8,5" Margin="0,2,0,0" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}">
+                        <DockPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding LastTemperatureUpdatedText, Mode=OneWay}" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="10" VerticalAlignment="Center" />
+                                <TextBlock Text=" • 5s Auto-poll" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="10" VerticalAlignment="Center" Margin="4,0,0,0" />
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <!-- Critical Alert Badge if any -->
+                                <Border Background="#33EF4444" BorderBrush="#EF4444" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="0,0,6,0"
+                                        Visibility="{Binding HasAnyCriticalTemperature, Converter={StaticResource BoolToVisConverter}}">
+                                    <TextBlock Foreground="#EF4444" FontSize="9" FontWeight="Bold">
+                                        <Run Text="{Binding CriticalTemperatureCount, Mode=OneWay}" /><Run Text=" >70°C alert" />
+                                    </TextBlock>
+                                </Border>
+                                
+                                <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" VerticalAlignment="Center">
+                                    <Run Text="Threshold: " />
+                                    <Run Text=">70°C" FontWeight="Bold" Foreground="#EF4444" />
+                                </TextBlock>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                </StackPanel>
             </StackPanel>
         </Border>
 
@@ -321,6 +509,126 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                </StackPanel>
+
+                <!-- View 3: Temperature Tab Content -->
+                <StackPanel Visibility="{Binding IsTemperatureTabSelected, Converter={StaticResource BoolToVisConverter}}">
+                    <!-- Empty State Notice for Temperature -->
+                    <Border Background="{DynamicResource ThemeCardBackgroundBrush}" CornerRadius="6" Padding="16" Margin="0,12,0,0" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding TemperatureCards.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel HorizontalAlignment="Center">
+                            <Path Data="{DynamicResource IconGeometryTemperature}" Fill="{DynamicResource ThemeTextMutedBrush}" Width="28" Height="28" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                            <TextBlock Text="No Temperature Readings Available" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontSize="12" HorizontalAlignment="Center" />
+                            <TextBlock Text="Click 'Refresh' to query SDVoE API and VoIP SDK for encoder/decoder junction temperatures." Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="11" TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Group 1: TX Encoders Section -->
+                    <StackPanel Visibility="{Binding ShowTxSection, Converter={StaticResource BoolToVisConverter}}" Margin="0,0,0,10">
+                        <!-- Collapsible Section Header for TX -->
+                        <Border Background="{DynamicResource ThemeCardHeaderBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,6" Padding="10,6">
+                            <Button Command="{Binding ToggleTxSectionCommand}" Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="0" HorizontalContentAlignment="Stretch">
+                                <DockPanel LastChildFill="True">
+                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                                        <Border Background="#3B82F6" CornerRadius="3" Padding="5,1" Margin="0,0,6,0">
+                                            <TextBlock Text="TX" Foreground="White" FontSize="9" FontWeight="Bold" />
+                                        </Border>
+                                        <TextBlock Text="ENCODERS" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontSize="11" VerticalAlignment="Center" />
+                                        <Border Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="8" Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding FilteredTxCards.Count, Mode=OneWay}" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" FontWeight="SemiBold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <Path DockPanel.Dock="Right" HorizontalAlignment="Right" Width="10" Height="10" Stretch="Uniform" Fill="{DynamicResource ThemeTextSecondaryBrush}" VerticalAlignment="Center">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Data" Value="{DynamicResource IconGeometryChevronDown}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsTxSectionExpanded}" Value="False">
+                                                        <Setter Property="Data" Value="{DynamicResource IconGeometryChevronRight}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </DockPanel>
+                            </Button>
+                        </Border>
+
+                        <!-- TX Cards List -->
+                        <ItemsControl ItemsSource="{Binding FilteredTxCards}" 
+                                      Visibility="{Binding IsTxSectionExpanded, Converter={StaticResource BoolToVisConverter}}"
+                                      VirtualizingPanel.IsVirtualizing="True" 
+                                      VirtualizingPanel.VirtualizationMode="Recycling">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <views:DeviceTemperatureCardView />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- Group 2: RX Decoders Section -->
+                    <StackPanel Visibility="{Binding ShowRxSection, Converter={StaticResource BoolToVisConverter}}">
+                        <!-- Collapsible Section Header for RX -->
+                        <Border Background="{DynamicResource ThemeCardHeaderBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,6" Padding="10,6">
+                            <Button Command="{Binding ToggleRxSectionCommand}" Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="0" HorizontalContentAlignment="Stretch">
+                                <DockPanel LastChildFill="True">
+                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                                        <Border Background="#8B5CF6" CornerRadius="3" Padding="5,1" Margin="0,0,6,0">
+                                            <TextBlock Text="RX" Foreground="White" FontSize="9" FontWeight="Bold" />
+                                        </Border>
+                                        <TextBlock Text="DECODERS" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontSize="11" VerticalAlignment="Center" />
+                                        <Border Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="8" Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding FilteredRxCards.Count, Mode=OneWay}" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" FontWeight="SemiBold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <Path DockPanel.Dock="Right" HorizontalAlignment="Right" Width="10" Height="10" Stretch="Uniform" Fill="{DynamicResource ThemeTextSecondaryBrush}" VerticalAlignment="Center">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Data" Value="{DynamicResource IconGeometryChevronDown}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsRxSectionExpanded}" Value="False">
+                                                        <Setter Property="Data" Value="{DynamicResource IconGeometryChevronRight}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </DockPanel>
+                            </Button>
+                        </Border>
+
+                        <!-- RX Cards List -->
+                        <ItemsControl ItemsSource="{Binding FilteredRxCards}" 
+                                      Visibility="{Binding IsRxSectionExpanded, Converter={StaticResource BoolToVisConverter}}"
+                                      VirtualizingPanel.IsVirtualizing="True" 
+                                      VirtualizingPanel.VirtualizationMode="Recycling">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <views:DeviceTemperatureCardView />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </StackPanel>
             </Grid>
         </ScrollViewer>

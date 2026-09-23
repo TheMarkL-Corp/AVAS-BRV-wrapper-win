@@ -350,6 +350,13 @@ namespace AvasRoutingApp
             {
                 UpdateStatusDisplays(config);
                 App.ApplyTheme(config.Theme);
+                _currentSidebarWidth = config.SidebarWidth >= 320 && config.SidebarWidth <= 650
+                    ? config.SidebarWidth
+                    : config.GetDefaultSidebarWidth();
+                if (_isSidebarExpanded)
+                {
+                    SidebarContainer.Width = _currentSidebarWidth;
+                }
             });
         }
 

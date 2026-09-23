@@ -10,6 +10,7 @@ using AvasRoutingApp.Rtp;
 using AvasRoutingApp.Sdvoe;
 using AvasRoutingApp.ViewModels;
 using AvasRoutingApp.Views;
+using System.Windows;
 
 namespace AvasRoutingApp.Tests
 {
@@ -331,36 +332,99 @@ namespace AvasRoutingApp.Tests
         [Fact]
         public void Sidebar_InstantiateCardView_OnStaThread()
         {
-            Exception? caughtEx = null;
-            var t = new Thread(() =>
+            WpfTestHelper.Run(() =>
             {
+                var card = new EncoderCardViewModel
+                {
+                    DeviceName = "Test Card",
+                    MacAddress = "00:11:22:33:44:55",
+                    UnicastIp = "10.0.0.1",
+                    MulticastIp = "224.1.1.1",
+                    Port = 6792
+                };
+                var view = new EncoderCardView
+                {
+                    DataContext = card
+                };
+                view.Measure(new System.Windows.Size(350, 260));
+                view.Arrange(new System.Windows.Rect(0, 0, 350, 260));
+                view.UpdateLayout();
+            });
+        }
+
+        [Fact]
+        public void Sidebar_FontScale_UpdatesFromConfigChange()
+        {
+            var mockDiscovery = new MockDiscoveryService();
+            var mockController = new MockMulticastController();
+
+            string tempDir = Path.Combine(Path.GetTempPath(), "avas_sidebar_test_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+            try
+            {
+                var configService = new ConfigService(Path.Combine(tempDir, "appsettings.json"));
+                using var vm = new MainViewModel(mockDiscovery, mockController, configService);
+
+                // Initial scale: Normal (1.0)
+                Assert.Equal(1.0, vm.SidebarFontScale);
+
+                // Update config to ExtraLarge
+                var config = configService.Current;
+                config.SidebarFontSize = "ExtraLarge";
+                configService.Save(config);
+
+                Assert.Equal(1.30, vm.SidebarFontScale);
+
+                // Update config to Small
+                config.SidebarFontSize = "Small";
+                configService.Save(config);
+
+                Assert.Equal(0.90, vm.SidebarFontScale);
+            }
+            finally
+            {
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, true);
+                }
+            }
+        }
+
+        [Fact]
+        public void SettingsDialog_SidebarFontSize_LoadsAndSaves()
+        {
+            WpfTestHelper.Run(() =>
+            {
+                string tempDir = Path.Combine(Path.GetTempPath(), "avas_settings_test_" + Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(tempDir);
                 try
                 {
-                    var card = new EncoderCardViewModel
-                    {
-                        DeviceName = "Test Card",
-                        MacAddress = "00:11:22:33:44:55",
-                        UnicastIp = "10.0.0.1",
-                        MulticastIp = "224.1.1.1",
-                        Port = 6792
-                    };
-                    var view = new EncoderCardView
-                    {
-                        DataContext = card
-                    };
-                    view.Measure(new System.Windows.Size(350, 260));
-                    view.Arrange(new System.Windows.Rect(0, 0, 350, 260));
-                    view.UpdateLayout();
+                    var configService = new ConfigService(Path.Combine(tempDir, "appsettings.json"));
+                    var dialog = new SettingsDialog(configService);
+
+                    var cmbFont = (System.Windows.Controls.ComboBox)dialog.FindName("CmbSidebarFontSize");
+                    Assert.NotNull(cmbFont);
+                    Assert.Equal("Normal / Default (100% — Standard)", ((System.Windows.Controls.ComboBoxItem)cmbFont.SelectedItem).Content.ToString());
+
+                    // Select "Large (115%)" (index 2: 0=Small, 1=Normal, 2=Large, 3=ExtraLarge)
+                    cmbFont.SelectedIndex = 2;
+
+                    var btnSave = (System.Windows.Controls.Button)dialog.FindName("BtnSave");
+                    Assert.NotNull(btnSave);
+                    btnSave.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+
+                    // Verify saved config
+                    Assert.Equal("Large", configService.Current.SidebarFontSize);
+                    Assert.Equal(420.0, configService.Current.SidebarWidth);
                 }
-                catch (Exception ex)
+                finally
                 {
-                    caughtEx = ex;
+                    if (Directory.Exists(tempDir))
+                    {
+                        Directory.Delete(tempDir, true);
+                    }
                 }
             });
-            t.SetApartmentState(ApartmentState.STA);
-            t.Start();
-            t.Join();
-            Assert.Null(caughtEx);
         }
     }
 }

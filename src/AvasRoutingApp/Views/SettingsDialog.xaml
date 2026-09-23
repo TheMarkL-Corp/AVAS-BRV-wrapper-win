@@ -266,6 +266,53 @@
                             <ComboBoxItem Content="Dark Mode (Advantech Blue / Charcoal)" Tag="Dark" />
                         </ComboBox>
 
+                        <TextBlock Text="Sidebar Font Size:" FontSize="11" Foreground="{DynamicResource ThemeTextSecondaryBrush}" Margin="0,0,0,4" />
+                        <ComboBox x:Name="CmbSidebarFontSize" SelectedIndex="1" SelectionChanged="CmbSidebarFontSize_SelectionChanged" Margin="0,0,0,8">
+                            <ComboBoxItem Content="Small (90% — Compact density)" Tag="Small" />
+                            <ComboBoxItem Content="Normal / Default (100% — Standard)" Tag="Normal" />
+                            <ComboBoxItem Content="Large (115% — Enhanced readability)" Tag="Large" />
+                            <ComboBoxItem Content="Extra Large (130% — High visibility)" Tag="ExtraLarge" />
+                        </ComboBox>
+
+                        <!-- Live Typography Preview Box -->
+                        <Border Background="{DynamicResource ThemeCardHeaderBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,12">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,4">
+                                    <TextBlock Text="LIVE SIDEBAR TYPOGRAPHY PREVIEW" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource ThemeTextMutedBrush}" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="TxtPreviewScaleBadge" Text="100% (Normal)" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ThemeAccentBrush}" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                </DockPanel>
+                                <Border Background="{DynamicResource ThemePillBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="5" Padding="8,6">
+                                    <Grid x:Name="GridPreviewContainer">
+                                        <Grid.LayoutTransform>
+                                            <ScaleTransform x:Name="PreviewScaleTransform" ScaleX="1.0" ScaleY="1.0" />
+                                        </Grid.LayoutTransform>
+                                        <StackPanel>
+                                            <DockPanel Margin="0,0,0,4">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Border Background="#3B82F6" CornerRadius="3" Padding="4,1" Margin="0,0,5,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="TX" Foreground="White" FontSize="9" FontWeight="Bold" />
+                                                    </Border>
+                                                    <TextBlock Text="ENC1_DUAL_LINK_SFPA" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource ThemeTextPrimaryBrush}" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <Border Background="{DynamicResource ThemeCardHeaderBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="4,1" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                                                    <TextBlock Text="DUAL LINK" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextSecondaryBrush}" />
+                                                </Border>
+                                            </DockPanel>
+                                            <DockPanel>
+                                                <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10">
+                                                    <Run Text="SDVoE: " Foreground="{DynamicResource ThemeTextMutedBrush}" /><Run Text="55 °C" FontWeight="SemiBold" Foreground="#10B981" />
+                                                    <Run Text="  VoIP: " Foreground="{DynamicResource ThemeTextMutedBrush}" /><Run Text="55 °C" FontWeight="SemiBold" Foreground="#10B981" />
+                                                </TextBlock>
+                                                <Border Background="{DynamicResource ThemeCardHeaderBackgroundBrush}" BorderBrush="#10B981" BorderThickness="1" CornerRadius="3" Padding="5,1" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                                                    <TextBlock Text="● Match" FontSize="9" FontWeight="Bold" Foreground="#10B981" />
+                                                </Border>
+                                            </DockPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
                         <TextBlock Text="BlueRiver AV Manager Web URL:" FontSize="11" Foreground="{DynamicResource ThemeTextSecondaryBrush}" Margin="0,0,0,4" />
                         <TextBox x:Name="TxtBlueRiverUrl" Text="http://localhost:80" />
                     </StackPanel>
@@ -371,10 +418,10 @@
 
         <!-- Dialog Buttons -->
         <DockPanel Grid.Row="3" Margin="0,8,0,0">
-            <Button Content="Reset Defaults" Click="BtnResetDefaults_Click" Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Left" />
+            <Button x:Name="BtnResetDefaults" Content="Reset Defaults" Click="BtnResetDefaults_Click" Style="{StaticResource SecondaryButtonStyle}" HorizontalAlignment="Left" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Cancel" Click="BtnCancel_Click" Style="{StaticResource SecondaryButtonStyle}" IsCancel="True" />
-                <Button Content="Save Settings" Click="BtnSave_Click" Style="{StaticResource PrimaryButtonStyle}" IsDefault="True" />
+                <Button x:Name="BtnCancel" Content="Cancel" Click="BtnCancel_Click" Style="{StaticResource SecondaryButtonStyle}" IsCancel="True" />
+                <Button x:Name="BtnSave" Content="Save Settings" Click="BtnSave_Click" Style="{StaticResource PrimaryButtonStyle}" IsDefault="True" />
             </StackPanel>
         </DockPanel>
     </Grid>

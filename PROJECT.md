@@ -65,6 +65,8 @@ AVAS Routing SW is a high-performance portable native Windows desktop applicatio
 | 15 | R5.4 Zero-Leak WPF Rendering | Direct `WriteableBitmap.BackBuffer` updating at >= 1 FPS without GDI or memory leaks | M5 | ORIGINAL_REQUEST §R5 |
 | 16 | E2E.1 Automated Test Suite & Packaging | Full end-to-end testing (Tiers 1-5) and standalone portable package verification | M6 | ORIGINAL_REQUEST Acceptance |
 | 17 | R6.1 AVAS-223 Multi-Link Management | Check Single/Dual-link mode, companion online/offline status pill, mode toggle with non-blocking 20s countdown, automatic stream pause/reconnect | M7 | V1.1.0_GOAL |
+| 18 | R7.1 Device Temperature & Telemetry Monitoring | TX & RX temperature cards, dual-source SDVoE vs VoIP SDK discrepancy engine, companion chip_0 & chip_1 combining, >70°C bold red alerts, active-tab auto-polling | M8 | V1.4.0_GOAL |
+| 19 | R8.1 Sidebar Font Size Adjustment & Scaling | Discrete preset selector (Small, Normal, Large, ExtraLarge), live preview in Settings dialog, layout transform scaling, dynamic width adaptation | M9 | V1.4.0_GOAL |
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
@@ -77,6 +79,8 @@ AVAS Routing SW is a high-performance portable native Windows desktop applicatio
 | M5 | RTP Ingestion & Rasterizer | Async UDP multicast listener, RFC 3550/4175 parser, Q10 YUV422 rasterizer, WriteableBitmap | M4 | DONE |
 | M6 | Final Verification & Release | Run 388 tests (100% pass), 4,005 loop stress runs, GitHub release v1.0.0 | E2E, M5 | DONE (v1.0.0 Released) |
 | M7 | Multi-Link Management (v1.1.0) | Top segmented switcher tab, companion telemetry, mode toggle, safe reboot & preview co-existence | M4, M6 | DONE (v1.1.0 Ready) |
+| M8 | Device Temperature Monitoring (v1.4.0) | Sidebar Thermals tab, TX/RX grouping, chip_0 & chip_1 companion pairing, SDVoE vs VoIP SDK discrepancy testing, >70°C alert styling | M4, M7 | DONE (v1.4.0 Released) |
+| M9 | Sidebar Font Size Adjustment (v1.4.0) | Settings typography presets, live preview, layout transform scaling, dynamic width adaptation | M8 | DONE (v1.4.0 Released) |
 
 ## Interface Contracts
 

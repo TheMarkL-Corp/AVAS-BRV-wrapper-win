@@ -19,35 +19,7 @@ namespace AvasRoutingApp.Tests
     {
         private static void RunInSta(Action<Dispatcher> action)
         {
-            Exception? caught = null;
-            var thread = new Thread(() =>
-            {
-                try
-                {
-                    if (Application.Current == null)
-                    {
-                        new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-                    }
-                    var dispatcher = Dispatcher.CurrentDispatcher;
-                    action(dispatcher);
-                }
-                catch (Exception ex)
-                {
-                    caught = ex;
-                }
-            });
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-            bool finished = thread.Join(15000);
-            if (!finished)
-            {
-                thread.Interrupt();
-                throw new TimeoutException("STA test execution timed out after 15 seconds.");
-            }
-            if (caught != null)
-            {
-                throw new AggregateException("STA test failed", caught);
-            }
+            WpfTestHelper.Run(action);
         }
 
         private static void PumpDispatcher(Dispatcher dispatcher, int milliseconds)

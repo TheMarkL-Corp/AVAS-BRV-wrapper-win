@@ -13,7 +13,7 @@ namespace AvasRoutingApp.Tests
         [Fact]
         public void VersionString_ReturnsConsistentVersion()
         {
-            Assert.Equal("v1.3.0", AppInfo.VersionString);
+            Assert.Equal("v1.4.0", AppInfo.VersionString);
             Assert.Equal("AVAS Routing Software", AppInfo.AppName);
             Assert.Equal("Dual Link SDVoE Manager", AppInfo.AppSubtitle);
         }
@@ -25,7 +25,7 @@ namespace AvasRoutingApp.Tests
             var ver = asm.GetName().Version;
             Assert.NotNull(ver);
             Assert.Equal(1, ver.Major);
-            Assert.Equal(3, ver.Minor);
+            Assert.Equal(4, ver.Minor);
             Assert.Equal(0, ver.Build);
         }
 
@@ -81,26 +81,7 @@ namespace AvasRoutingApp.Tests
 
         private static void RunInSta(Action action)
         {
-            Exception? caught = null;
-            var thread = new Thread(() =>
-            {
-                try
-                {
-                    action();
-                }
-                catch (Exception ex)
-                {
-                    caught = ex;
-                }
-            });
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-            bool finished = thread.Join(10000);
-            Assert.True(finished, "STA thread timed out.");
-            if (caught != null)
-            {
-                throw new AggregateException("Exception thrown on STA thread", caught);
-            }
+            WpfTestHelper.Run(action);
         }
     }
 }

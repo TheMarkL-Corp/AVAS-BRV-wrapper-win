@@ -1,0 +1,233 @@
+<UserControl x:Class="AvasRoutingApp.Views.DeviceTemperatureCardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="260" d:DesignWidth="360">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+    </UserControl.Resources>
+
+    <Border Background="{DynamicResource ThemeCardBackgroundBrush}" 
+            BorderBrush="{Binding CardBorderBrush}" 
+            BorderThickness="1" 
+            CornerRadius="8" 
+            Margin="0,0,0,10" 
+            Padding="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /> <!-- Header: Type, Name, Link Badge, Alert -->
+                <RowDefinition Height="Auto" /> <!-- Device ID & IP Sub-bar -->
+                <RowDefinition Height="Auto" /> <!-- Chip 0 Telemetry Box -->
+                <RowDefinition Height="Auto" /> <!-- Chip 1 Companion Telemetry Box -->
+            </Grid.RowDefinitions>
+
+            <!-- 1. Header: Device Type Pill, Name, Link Badge, Critical Warning Icon -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,6">
+                <!-- Left: Device Type Pill (TX / RX) + Device Name -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                    <Border Background="{Binding DeviceTypeBrush}" CornerRadius="3" Padding="5,1" Margin="0,0,6,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DeviceType}" Foreground="White" FontSize="9" FontWeight="Bold" />
+                    </Border>
+                    <TextBlock Text="{Binding DeviceName}" 
+                               FontWeight="Bold" 
+                               Foreground="{DynamicResource ThemeTextPrimaryBrush}" 
+                               FontSize="12" 
+                               VerticalAlignment="Center" 
+                               TextTrimming="CharacterEllipsis" 
+                               MaxWidth="170" 
+                               ToolTip="{Binding DeviceName}" />
+                </StackPanel>
+
+                <!-- Right: Critical Alert Indicator + Link Mode Badge -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <!-- Critical Alert Icon (>70°C) -->
+                    <Border Background="#33EF4444" 
+                            BorderBrush="#EF4444" 
+                            BorderThickness="1" 
+                            CornerRadius="3" 
+                            Padding="4,1" 
+                            Margin="0,0,6,0" 
+                            Visibility="{Binding IsCritical, Converter={StaticResource BoolToVisConverter}}"
+                            ToolTip="Critical Junction Temperature Exceeded (> 70°C)">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path Data="{DynamicResource IconGeometryWarning}" Fill="#EF4444" Width="9" Height="9" Stretch="Uniform" Margin="0,0,3,0" VerticalAlignment="Center" />
+                            <TextBlock Text=">70°C" Foreground="#EF4444" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Link Mode Badge (Single / Dual) -->
+                    <Border Background="{DynamicResource ThemePillBackgroundBrush}" 
+                            BorderBrush="{DynamicResource ThemeCardBorderBrush}" 
+                            BorderThickness="1" 
+                            CornerRadius="3" 
+                            Padding="6,2" 
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{Binding LinkMode}" 
+                                   Foreground="{DynamicResource ThemeTextSecondaryBrush}" 
+                                   FontSize="9" 
+                                   FontWeight="SemiBold" />
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+
+            <!-- 2. Device ID & IP Address sub-header with Copy ID button -->
+            <DockPanel Grid.Row="1" Margin="0,0,0,8">
+                <Button Command="{Binding CopyDeviceIdCommand}"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Padding="0"
+                        VerticalAlignment="Center"
+                        ToolTip="Click to copy Device ID / MAC">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="ID: " Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="10" />
+                        <TextBlock Text="{Binding DeviceId}" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" FontFamily="Consolas, Courier New" />
+                        <Path Data="{DynamicResource IconGeometryCopy}" Fill="{DynamicResource ThemeTextMutedBrush}" Width="9" Height="9" Stretch="Uniform" Margin="4,0,0,0" VerticalAlignment="Center" />
+                        <TextBlock Text="Copied!" Foreground="{DynamicResource ThemeStatusOnlineBrush}" FontSize="9" FontWeight="Bold" Margin="4,0,0,0" Visibility="{Binding IsIdCopied, Converter={StaticResource BoolToVisConverter}}" />
+                    </StackPanel>
+                </Button>
+
+                <TextBlock Text="{Binding IpAddress}" 
+                           DockPanel.Dock="Right" 
+                           HorizontalAlignment="Right" 
+                           Foreground="{DynamicResource ThemeTextMutedBrush}" 
+                           FontSize="10" 
+                           FontFamily="Consolas, Courier New" 
+                           VerticalAlignment="Center" />
+            </DockPanel>
+
+            <!-- 3. Chip 0 Telemetry Box (Primary) -->
+            <Border Grid.Row="2" Background="{DynamicResource ThemeCardHeaderBackgroundBrush}" CornerRadius="5" Padding="8,6" Margin="0,0,0,6" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Primary (Chip 0)" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,3" />
+                        
+                        <!-- Dual Readings: SDVoE REST vs VoIP SDK -->
+                        <Grid Margin="0,1,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- SDVoE API Reading -->
+                            <StackPanel Grid.Column="0" Margin="0,0,14,0">
+                                <TextBlock Text="SDVoE API" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="9" />
+                                <TextBlock Text="{Binding Chip0SdvoeTempText}" 
+                                           Foreground="{Binding Chip0SdvoeForeground}" 
+                                           FontWeight="{Binding Chip0SdvoeFontWeight}" 
+                                           FontSize="13" 
+                                           Margin="0,1,0,0" />
+                            </StackPanel>
+
+                            <!-- VoIP SDK Reading -->
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="VoIP SDK" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="9" />
+                                <TextBlock Text="{Binding Chip0VoipSdkTempText}" 
+                                           Foreground="{Binding Chip0VoipForeground}" 
+                                           FontWeight="{Binding Chip0VoipFontWeight}" 
+                                           FontSize="13" 
+                                           Margin="0,1,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Discrepancy Status Pill -->
+                    <Border Grid.Column="1" 
+                            HorizontalAlignment="Right" 
+                            VerticalAlignment="Center" 
+                            Background="{DynamicResource ThemePillBackgroundBrush}" 
+                            CornerRadius="4" 
+                            Padding="6,3" 
+                            BorderThickness="1" 
+                            BorderBrush="{Binding Chip0DiscrepancyBrush}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="6" Height="6" Fill="{Binding Chip0DiscrepancyBrush}" Margin="0,0,4,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Chip0DiscrepancyText}" 
+                                       Foreground="{Binding Chip0DiscrepancyBrush}" 
+                                       FontWeight="Bold" 
+                                       FontSize="10" 
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- 4. Chip 1 Companion Telemetry Box (Shown for Dual-Link / Companions) -->
+            <Border Grid.Row="3" 
+                    Background="{DynamicResource ThemeCardHeaderBackgroundBrush}" 
+                    CornerRadius="5" 
+                    Padding="8,6" 
+                    BorderThickness="1" 
+                    BorderBrush="{DynamicResource ThemeCardBorderBrush}"
+                    Visibility="{Binding HasCompanion, Converter={StaticResource BoolToVisConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,3">
+                            <Run Text="Companion (Chip 1) - " />
+                            <Run Text="{Binding Chip1Id, Mode=OneWay}" FontFamily="Consolas, Courier New" FontSize="9" Foreground="{DynamicResource ThemeTextMutedBrush}" />
+                        </TextBlock>
+                        
+                        <!-- Dual Readings: SDVoE REST vs VoIP SDK -->
+                        <Grid Margin="0,1,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- SDVoE API Reading -->
+                            <StackPanel Grid.Column="0" Margin="0,0,14,0">
+                                <TextBlock Text="SDVoE API" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="9" />
+                                <TextBlock Text="{Binding Chip1SdvoeTempText}" 
+                                           Foreground="{Binding Chip1SdvoeForeground}" 
+                                           FontWeight="{Binding Chip1SdvoeFontWeight}" 
+                                           FontSize="13" 
+                                           Margin="0,1,0,0" />
+                            </StackPanel>
+
+                            <!-- VoIP SDK Reading -->
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="VoIP SDK" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="9" />
+                                <TextBlock Text="{Binding Chip1VoipSdkTempText}" 
+                                           Foreground="{Binding Chip1VoipForeground}" 
+                                           FontWeight="{Binding Chip1VoipFontWeight}" 
+                                           FontSize="13" 
+                                           Margin="0,1,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Discrepancy Status Pill -->
+                    <Border Grid.Column="1" 
+                            HorizontalAlignment="Right" 
+                            VerticalAlignment="Center" 
+                            Background="{DynamicResource ThemePillBackgroundBrush}" 
+                            CornerRadius="4" 
+                            Padding="6,3" 
+                            BorderThickness="1" 
+                            BorderBrush="{Binding Chip1DiscrepancyBrush}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="6" Height="6" Fill="{Binding Chip1DiscrepancyBrush}" Margin="0,0,4,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Chip1DiscrepancyText}" 
+                                       Foreground="{Binding Chip1DiscrepancyBrush}" 
+                                       FontWeight="Bold" 
+                                       FontSize="10" 
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

@@ -46,6 +46,7 @@ namespace AvasRoutingApp.Tests
             Assert.Equal("", config.LocalNetworkInterfaceIp);
             Assert.Equal("Light", config.Theme);
             Assert.Equal(400.0, config.SidebarWidth);
+            Assert.Equal("Normal", config.SidebarFontSize);
         }
 
         [Fact]
@@ -62,7 +63,8 @@ namespace AvasRoutingApp.Tests
                 BasePort = 7000,
                 LocalNetworkInterfaceIp = "192.168.1.200",
                 Theme = "Light",
-                SidebarWidth = 480.0
+                SidebarWidth = 480.0,
+                SidebarFontSize = "Large"
             };
 
             var clone = original.Clone();
@@ -77,16 +79,19 @@ namespace AvasRoutingApp.Tests
             Assert.Equal(original.LocalNetworkInterfaceIp, clone.LocalNetworkInterfaceIp);
             Assert.Equal(original.Theme, clone.Theme);
             Assert.Equal(original.SidebarWidth, clone.SidebarWidth);
+            Assert.Equal(original.SidebarFontSize, clone.SidebarFontSize);
 
             // Mutate clone and assert original remains unchanged
             clone.BlueRiverUrl = "http://modified.local";
             clone.RestPort = 9999;
             clone.Theme = "Dark";
             clone.SidebarWidth = 350.0;
+            clone.SidebarFontSize = "Small";
             Assert.Equal("http://192.168.1.50:8080", original.BlueRiverUrl);
             Assert.Equal(9200, original.RestPort);
             Assert.Equal("Light", original.Theme);
             Assert.Equal(480.0, original.SidebarWidth);
+            Assert.Equal("Large", original.SidebarFontSize);
         }
 
         [Fact]
@@ -103,7 +108,8 @@ namespace AvasRoutingApp.Tests
                 BasePort = 6800,
                 LocalNetworkInterfaceIp = "10.0.0.100",
                 Theme = "Light",
-                SidebarWidth = 425.0
+                SidebarWidth = 425.0,
+                SidebarFontSize = "ExtraLarge"
             };
 
             string json = JsonSerializer.Serialize(expected, new JsonSerializerOptions { WriteIndented = true });
@@ -120,6 +126,22 @@ namespace AvasRoutingApp.Tests
             Assert.Equal(expected.LocalNetworkInterfaceIp, actual.LocalNetworkInterfaceIp);
             Assert.Equal(expected.Theme, actual.Theme);
             Assert.Equal(expected.SidebarWidth, actual.SidebarWidth);
+            Assert.Equal(expected.SidebarFontSize, actual.SidebarFontSize);
+        }
+
+        [Theory]
+        [InlineData("Small", 0.90, 360.0)]
+        [InlineData("Normal", 1.00, 380.0)]
+        [InlineData("Large", 1.15, 420.0)]
+        [InlineData("ExtraLarge", 1.30, 460.0)]
+        [InlineData("unknown_preset", 1.00, 380.0)]
+        [InlineData(null, 1.00, 380.0)]
+        public void SidebarFontSize_Presets_MapToExpectedScalesAndWidths(string? preset, double expectedScale, double expectedWidth)
+        {
+            var config = new AppConfig { SidebarFontSize = preset! };
+
+            Assert.Equal(expectedScale, config.GetSidebarFontScale(), precision: 2);
+            Assert.Equal(expectedWidth, config.GetDefaultSidebarWidth(), precision: 1);
         }
 
         [Fact]

@@ -15,12 +15,14 @@ namespace AvasRoutingApp.ViewModels
     public enum SidebarTab
     {
         Previews,
-        MultiLink
+        MultiLink,
+        Temperature
     }
 
     /// <summary>
     /// Root ViewModel coordinating the native overlay sidebar, SDVoE discovery,
-    /// dynamic multicast IP allocation, live preview stream receivers, and multi-link topology management.
+    /// dynamic multicast IP allocation, live preview stream receivers, multi-link topology,
+    /// and device temperature telemetry with dual-source discrepancy tracking.
     /// </summary>
     public class MainViewModel : ViewModelBase, IAsyncDisposable, IDisposable
     {
@@ -28,6 +30,8 @@ namespace AvasRoutingApp.ViewModels
         private readonly IMulticastController _multicastController;
         private readonly IConfigService _configService;
         private readonly IMultiLinkService _multiLinkService;
+        private readonly ITemperatureService _temperatureService;
+        private readonly System.Windows.Threading.DispatcherTimer? _temperatureTimer;
         private readonly SemaphoreSlim _actionLock = new(1, 1);
 
         private SidebarTab _selectedTab = SidebarTab.Previews;
@@ -41,8 +45,17 @@ namespace AvasRoutingApp.ViewModels
         private bool _isBusy;
         private bool _disposed;
 
+        private string _selectedTemperatureFilter = "ALL";
+        private bool _isTxSectionExpanded = true;
+        private bool _isRxSectionExpanded = true;
+        private bool _isRefreshingTemperatures;
+        private string _lastTemperatureUpdatedText = "Not updated yet";
+
         public ObservableCollection<EncoderCardViewModel> EncoderCards { get; } = new();
         public ObservableCollection<MultiLinkCardViewModel> MultiLinkCards { get; } = new();
+        public ObservableCollection<DeviceTemperatureCardViewModel> TemperatureCards { get; } = new();
+        public ObservableCollection<DeviceTemperatureCardViewModel> FilteredTxCards { get; } = new();
+        public ObservableCollection<DeviceTemperatureCardViewModel> FilteredRxCards { get; } = new();
 
         public SidebarTab SelectedTab
         {
@@ -53,12 +66,15 @@ namespace AvasRoutingApp.ViewModels
                 {
                     OnPropertyChanged(nameof(IsPreviewsTabSelected));
                     OnPropertyChanged(nameof(IsMultiLinkTabSelected));
+                    OnPropertyChanged(nameof(IsTemperatureTabSelected));
+                    UpdateTemperaturePollingState();
                 }
             }
         }
 
         public bool IsPreviewsTabSelected => _selectedTab == SidebarTab.Previews;
         public bool IsMultiLinkTabSelected => _selectedTab == SidebarTab.MultiLink;
+        public bool IsTemperatureTabSelected => _selectedTab == SidebarTab.Temperature;
 
         public bool IsSidebarExpanded
         {
@@ -69,6 +85,7 @@ namespace AvasRoutingApp.ViewModels
                 {
                     OnPropertyChanged(nameof(ToggleButtonText));
                     OnPropertyChanged(nameof(ToggleTooltip));
+                    UpdateTemperaturePollingState();
                 }
             }
         }
@@ -78,6 +95,8 @@ namespace AvasRoutingApp.ViewModels
             get => _sidebarWidth;
             set => SetProperty(ref _sidebarWidth, value);
         }
+
+        public double SidebarFontScale => _configService.Current.GetSidebarFontScale();
 
         public double ToggleStripWidth { get; } = 28.0;
 
@@ -125,6 +144,61 @@ namespace AvasRoutingApp.ViewModels
         public ISdvoeDiscoveryService DiscoveryService => _discoveryService;
         public IMulticastController MulticastController => _multicastController;
         public IMultiLinkService MultiLinkService => _multiLinkService;
+        public ITemperatureService TemperatureService => _temperatureService;
+
+        public string SelectedTemperatureFilter
+        {
+            get => _selectedTemperatureFilter;
+            set
+            {
+                if (SetProperty(ref _selectedTemperatureFilter, value))
+                {
+                    OnPropertyChanged(nameof(IsFilterAllSelected));
+                    OnPropertyChanged(nameof(IsFilterTxSelected));
+                    OnPropertyChanged(nameof(IsFilterRxSelected));
+                    OnPropertyChanged(nameof(ShowTxSection));
+                    OnPropertyChanged(nameof(ShowRxSection));
+                    UpdateFilteredTemperatureCards();
+                }
+            }
+        }
+
+        public bool IsFilterAllSelected => string.Equals(_selectedTemperatureFilter, "ALL", StringComparison.OrdinalIgnoreCase);
+        public bool IsFilterTxSelected => string.Equals(_selectedTemperatureFilter, "TX", StringComparison.OrdinalIgnoreCase);
+        public bool IsFilterRxSelected => string.Equals(_selectedTemperatureFilter, "RX", StringComparison.OrdinalIgnoreCase);
+
+        public bool ShowTxSection => !string.Equals(_selectedTemperatureFilter, "RX", StringComparison.OrdinalIgnoreCase);
+        public bool ShowRxSection => !string.Equals(_selectedTemperatureFilter, "TX", StringComparison.OrdinalIgnoreCase);
+
+        public bool IsTxSectionExpanded
+        {
+            get => _isTxSectionExpanded;
+            set => SetProperty(ref _isTxSectionExpanded, value);
+        }
+
+        public bool IsRxSectionExpanded
+        {
+            get => _isRxSectionExpanded;
+            set => SetProperty(ref _isRxSectionExpanded, value);
+        }
+
+        public int TotalTemperatureDeviceCount => TemperatureCards.Count;
+        public int TxTemperatureCount => TemperatureCards.Count(c => c.IsTransmitter);
+        public int RxTemperatureCount => TemperatureCards.Count(c => c.IsReceiver);
+        public int CriticalTemperatureCount => TemperatureCards.Count(c => c.IsCritical);
+        public bool HasAnyCriticalTemperature => TemperatureCards.Any(c => c.IsCritical);
+
+        public string LastTemperatureUpdatedText
+        {
+            get => _lastTemperatureUpdatedText;
+            set => SetProperty(ref _lastTemperatureUpdatedText, value);
+        }
+
+        public bool IsRefreshingTemperatures
+        {
+            get => _isRefreshingTemperatures;
+            set => SetProperty(ref _isRefreshingTemperatures, value);
+        }
 
         public ICommand ToggleSidebarCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
@@ -132,15 +206,24 @@ namespace AvasRoutingApp.ViewModels
         public ICommand StartAllStreamsCommand { get; }
         public ICommand SelectPreviewsTabCommand { get; }
         public ICommand SelectMultiLinkTabCommand { get; }
+        public ICommand SelectTemperatureTabCommand { get; }
+        public ICommand SetFilterAllCommand { get; }
+        public ICommand SetFilterTxCommand { get; }
+        public ICommand SetFilterRxCommand { get; }
+        public ICommand ToggleTxSectionCommand { get; }
+        public ICommand ToggleRxSectionCommand { get; }
+        public ICommand RefreshTemperaturesCommand { get; }
 
         public MainViewModel(
             ISdvoeDiscoveryService? discoveryService = null,
             IMulticastController? multicastController = null,
             IConfigService? configService = null,
-            IMultiLinkService? multiLinkService = null)
+            IMultiLinkService? multiLinkService = null,
+            ITemperatureService? temperatureService = null)
         {
             _configService = configService ?? new ConfigService();
             _multiLinkService = multiLinkService ?? (_discoveryService as SdvoeClient)?.MultiLinkService ?? new MultiLinkService(_configService);
+            _temperatureService = temperatureService ?? new TemperatureService(_configService);
 
             if (discoveryService != null && multicastController != null)
             {
@@ -168,12 +251,41 @@ namespace AvasRoutingApp.ViewModels
             StartAllStreamsCommand = new RelayCommand(async () => await StartAllStreamsAsync());
             SelectPreviewsTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.Previews);
             SelectMultiLinkTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.MultiLink);
+            SelectTemperatureTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.Temperature);
+
+            SetFilterAllCommand = new RelayCommand(() => SelectedTemperatureFilter = "ALL");
+            SetFilterTxCommand = new RelayCommand(() => SelectedTemperatureFilter = "TX");
+            SetFilterRxCommand = new RelayCommand(() => SelectedTemperatureFilter = "RX");
+            ToggleTxSectionCommand = new RelayCommand(() => IsTxSectionExpanded = !IsTxSectionExpanded);
+            ToggleRxSectionCommand = new RelayCommand(() => IsRxSectionExpanded = !IsRxSectionExpanded);
+            RefreshTemperaturesCommand = new RelayCommand(async () => await RefreshTemperaturesAsync());
+
+            try
+            {
+                _temperatureTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+                _temperatureTimer.Tick += async (s, e) =>
+                {
+                    if (IsTemperatureTabSelected && IsSidebarExpanded && !IsRefreshingTemperatures)
+                    {
+                        await RefreshTemperaturesAsync();
+                    }
+                };
+            }
+            catch
+            {
+                // In non-WPF headless test contexts without Dispatcher
+            }
         }
 
         private void UpdateConfigInfo(AppConfig config)
         {
             ServerStatusText = $"SDVoE Server: {config.ControlServerIp}:{config.RestPort}";
             MulticastPoolRangeText = $"Multicast: {config.MulticastStartIp} - {config.MulticastEndIp} (Port {config.BasePort})";
+            OnPropertyChanged(nameof(SidebarFontScale));
+            if (IsSidebarExpanded)
+            {
+                SidebarWidth = config.GetDefaultSidebarWidth();
+            }
         }
 
         public async Task ToggleSidebarAsync(CancellationToken ct = default)
@@ -210,7 +322,7 @@ namespace AvasRoutingApp.ViewModels
                 if (_disposed) return false;
 
                 IsSidebarExpanded = true;
-                SidebarWidth = 380.0;
+                SidebarWidth = _configService.Current.GetDefaultSidebarWidth();
                 StatusText = "Expanding sidebar | Discovering AVAS-223 encoders...";
                 IsBusy = true;
 
@@ -666,10 +778,140 @@ namespace AvasRoutingApp.ViewModels
             AppLogger.Info("Sidebar", "All cards cleared and stopped.");
         }
 
+        #region Temperature Monitoring & Dual-Source Discrepancy
+
+        private void UpdateTemperaturePollingState()
+        {
+            if (IsTemperatureTabSelected && IsSidebarExpanded && !_disposed)
+            {
+                if (_temperatureTimer != null && !_temperatureTimer.IsEnabled)
+                {
+                    AppLogger.Debug("Temperature", "Starting 5s active-tab temperature polling timer.");
+                    _temperatureTimer.Start();
+                }
+
+                if (TemperatureCards.Count == 0)
+                {
+                    _ = RefreshTemperaturesAsync();
+                }
+            }
+            else
+            {
+                if (_temperatureTimer != null && _temperatureTimer.IsEnabled)
+                {
+                    AppLogger.Debug("Temperature", "Stopping active-tab temperature polling timer.");
+                    _temperatureTimer.Stop();
+                }
+            }
+        }
+
+        public async Task RefreshTemperaturesAsync(CancellationToken ct = default)
+        {
+            if (IsRefreshingTemperatures || _disposed) return;
+
+            try
+            {
+                IsRefreshingTemperatures = true;
+                StatusText = "Reading device temperatures (SDVoE & VoIP SDK)...";
+
+                var readings = await _temperatureService.QueryAllTemperaturesAsync(ct);
+
+                Action updateUi = () =>
+                {
+                    var existingLookup = TemperatureCards.ToDictionary(c => c.DeviceId, StringComparer.OrdinalIgnoreCase);
+                    var updatedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var reading in readings)
+                    {
+                        updatedIds.Add(reading.DeviceId);
+                        if (existingLookup.TryGetValue(reading.DeviceId, out var existingCard))
+                        {
+                            existingCard.Update(reading);
+                        }
+                        else
+                        {
+                            TemperatureCards.Add(new DeviceTemperatureCardViewModel(reading));
+                        }
+                    }
+
+                    // Remove devices no longer present
+                    for (int i = TemperatureCards.Count - 1; i >= 0; i--)
+                    {
+                        if (!updatedIds.Contains(TemperatureCards[i].DeviceId))
+                        {
+                            TemperatureCards.RemoveAt(i);
+                        }
+                    }
+
+                    UpdateFilteredTemperatureCards();
+                    LastTemperatureUpdatedText = $"Updated: {DateTime.Now:HH:mm:ss}";
+                    StatusText = $"Temperatures updated: {TemperatureCards.Count} device(s) ({CriticalTemperatureCount} critical >70°C)";
+
+                    OnPropertyChanged(nameof(TotalTemperatureDeviceCount));
+                    OnPropertyChanged(nameof(TxTemperatureCount));
+                    OnPropertyChanged(nameof(RxTemperatureCount));
+                    OnPropertyChanged(nameof(CriticalTemperatureCount));
+                    OnPropertyChanged(nameof(HasAnyCriticalTemperature));
+                };
+
+                if (System.Windows.Application.Current?.Dispatcher != null &&
+                    !System.Windows.Application.Current.Dispatcher.CheckAccess())
+                {
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(updateUi);
+                }
+                else
+                {
+                    updateUi();
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("Temperature", "Error refreshing temperatures", ex);
+                StatusText = "Failed updating temperatures";
+            }
+            finally
+            {
+                IsRefreshingTemperatures = false;
+            }
+        }
+
+        private void UpdateFilteredTemperatureCards()
+        {
+            FilteredTxCards.Clear();
+            FilteredRxCards.Clear();
+
+            bool showTx = !string.Equals(_selectedTemperatureFilter, "RX", StringComparison.OrdinalIgnoreCase);
+            bool showRx = !string.Equals(_selectedTemperatureFilter, "TX", StringComparison.OrdinalIgnoreCase);
+
+            if (showTx)
+            {
+                foreach (var card in TemperatureCards.Where(c => c.IsTransmitter))
+                {
+                    FilteredTxCards.Add(card);
+                }
+            }
+
+            if (showRx)
+            {
+                foreach (var card in TemperatureCards.Where(c => c.IsReceiver))
+                {
+                    FilteredRxCards.Add(card);
+                }
+            }
+
+            OnPropertyChanged(nameof(ShowTxSection));
+            OnPropertyChanged(nameof(ShowRxSection));
+        }
+
+        #endregion
+
         public void Dispose()
         {
             if (_disposed) return;
             _disposed = true;
+
+            try { _temperatureTimer?.Stop(); } catch { }
+            try { (_temperatureService as IDisposable)?.Dispose(); } catch { }
 
             _configService.ConfigChanged -= UpdateConfigInfo;
             try
@@ -686,6 +928,9 @@ namespace AvasRoutingApp.ViewModels
         {
             if (_disposed) return;
             _disposed = true;
+
+            try { _temperatureTimer?.Stop(); } catch { }
+            try { (_temperatureService as IDisposable)?.Dispose(); } catch { }
 
             _configService.ConfigChanged -= UpdateConfigInfo;
             try
