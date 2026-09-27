@@ -1,11 +1,11 @@
-# AVAS Routing SW — Quickstart Guide (v1.3.0)
+# AVAS Routing SW — Quickstart Guide (v1.4.0)
 
 Welcome to **AVAS Routing SW** (`AVAS-BRV-wrapper-win`), a lightweight, high-performance native Windows desktop application designed to control and monitor SDVoE AV distribution networks.
 
 This application provides a dual-capability management cockpit:
 1. **Embedded Web Management**: Wraps and renders Semtech's **BlueRiver AV Manager** web interface directly inside a high-speed Microsoft WebView2 Chromium container.
 2. **Real-Time Multicast Preview Overlay & Multi-Link Manager**: Provides a floating, collapsible native sidebar delivering live uncompressed video previews ($\ge 1$ FPS) and Multi-Link configuration for connected **Advantech AVAS-223 encoders** using SDVoE Control Server APIs and RFC 3550 / RFC 4175 UDP multicast ingestion.
-3. **Touchscreen Ergonomics**: Tailored for clinical monitors and medical touch carts with 36px–44px touch targets, native direct touch flick/drag scrolling (`PanningMode="VerticalOnly"`), high-contrast touch press feedback, and widened tactile splitter handles.
+3. **Touchscreen Ergonomics & Thermal Telemetry**: Tailored for clinical monitors and medical touch carts with 36px–44px touch targets, native direct touch flick/drag scrolling (`PanningMode="VerticalOnly"`), high-contrast touch press feedback, temperature telemetry monitoring with >70°C alert styling, and configurable sidebar typography presets (Small/Normal/Large).
 4. **Zero-Internet Package Installer & Advantech White-Labeling**: Bundles offline runtime prerequisites and an automated 4-step pipeline to re-brand the local BlueRiver AV Manager interface.
 
 ---
@@ -18,12 +18,12 @@ This application provides a dual-capability management cockpit:
 
 ## 1. Quick Start: Choosing Your Installation Method
 
-AVAS Routing SW v1.3.0 provides two official distribution options:
+AVAS Routing SW v1.4.0 provides two official distribution options:
 
 ### Option A: Complete Offline Installer (Recommended)
 Download:
 ```
-releases/AVAS-Routing-SW-Installer-v1.3.0.zip
+releases/AVAS-Routing-SW-Installer-v1.4.0.zip
 ```
 1. Extract the zip archive and double-click `Install.bat` (or `AvasRoutingSetup.exe`).
 2. **Zero-Internet Runtime Validation**: The installer automatically checks if **.NET 8 Desktop Runtime** and **Microsoft Edge WebView2 Runtime** are installed. If missing, it silently installs them from local bundled packages (`redist/`) without requiring internet access.
@@ -34,7 +34,7 @@ releases/AVAS-Routing-SW-Installer-v1.3.0.zip
 ### Option B: Standalone Portable Application
 Download:
 ```
-releases/AVAS-Routing-SW-v1.3.0-win-x64.zip
+releases/AVAS-Routing-SW-v1.4.0-win-x64.zip
 ```
 1. Extract the archive anywhere on your system (e.g. `C:\Tools\AVAS-Routing-SW` or a portable USB drive).
 2. Launch `AvasRoutingApp.exe`. No installation or administrative privileges required.
@@ -106,12 +106,12 @@ AVAS Routing SW v1.2.0 is validated by two automated test suites comprising **43
 
 ---
 
-## 6. Official Release Packages (v1.2.0)
+## 6. Official Release Packages (v1.4.0)
 
 | Package Asset | Size | Target Environment | Contents |
 |---|---|---|---|
-| **[AVAS-Routing-SW-Installer-v1.2.0.zip](https://github.com/TheMarkL-Corp/AVAS-BRV-wrapper-win/releases/download/v1.2.0/AVAS-Routing-SW-Installer-v1.2.0.zip)** | ~383.2 MB | Offline / Zero-Internet PC | Self-contained `AvasRoutingSetup.exe`, `Install.bat`, bundled `.NET 8 Desktop Runtime`, bundled `WebView2 Runtime`, Advantech white-labeling assets, and full app payload |
-| **[AVAS-Routing-SW-v1.2.0-win-x64.zip](https://github.com/TheMarkL-Corp/AVAS-BRV-wrapper-win/releases/download/v1.2.0/AVAS-Routing-SW-v1.2.0-win-x64.zip)** | ~748 KB | Pre-configured Windows x64 | Zero-install portable `AvasRoutingApp.exe`, DLLs, default config (`http://localhost:80`), and full documentation |
+| **[AVAS-Routing-SW-Installer-v1.4.0.zip](https://github.com/TheMarkL-Corp/AVAS-BRV-wrapper-win/releases/download/v1.4.0/AVAS-Routing-SW-Installer-v1.4.0.zip)** | ~366.3 MB | Offline / Zero-Internet PC | Self-contained `AvasRoutingSetup.exe`, `Install.bat`, bundled `.NET 8 Desktop Runtime`, bundled `WebView2 Runtime`, Advantech white-labeling assets, and full app payload |
+| **[AVAS-Routing-SW-v1.4.0-win-x64.zip](https://github.com/TheMarkL-Corp/AVAS-BRV-wrapper-win/releases/download/v1.4.0/AVAS-Routing-SW-v1.4.0-win-x64.zip)** | ~1.51 MB | Pre-configured Windows x64 | Zero-install portable `AvasRoutingApp.exe`, DLLs, default config (`http://localhost:80`), and full documentation |
 
 ---
 

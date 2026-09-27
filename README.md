@@ -63,7 +63,7 @@ A high-performance, portable native Windows desktop application that wraps the *
 ## Quick Start & Releases
 
 - **[Quickstart Guide](./QUICKSTART.md)**: 3-step zero-install run guide, QA audit findings, and troubleshooting.
-- **[Download v1.3.0 Release Zip](./releases/AVAS-Routing-SW-v1.3.0-win-x64.zip)**: Standalone portable application bundle.
+- **[Download v1.4.0 Release Zip](./releases/AVAS-Routing-SW-v1.4.0-win-x64.zip)**: Standalone portable application bundle.
 
 ---
 
