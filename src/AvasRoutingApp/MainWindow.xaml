@@ -63,7 +63,7 @@
                     <Image x:Name="ImgAppLogo" Width="22" Height="22" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
                     <TextBlock Text="AVAS ROUTING SOFTWARE" FontWeight="Bold" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="13" VerticalAlignment="Center" />
                     <Border Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="4" Padding="5,2" Margin="8,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="TxtAppVersion" Text="v1.3.0" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="10" FontWeight="Bold" />
+                        <TextBlock x:Name="TxtAppVersion" Text="v1.5.0" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="10" FontWeight="Bold" />
                     </Border>
                     <TextBlock Text=" | SDVoE Preview Controller" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="12" VerticalAlignment="Center" Margin="6,0,0,0" />
                 </StackPanel>

@@ -529,5 +529,235 @@ namespace AvasRoutingApp.Tests
         }
 
         #endregion
+
+        #region 6. v1.5.0 Unified Demux & Tolerant Reassembly Tests
+
+        [Fact]
+        public void ScanlineFrameReassembler_AllowPartialFrames_RendersTolerantlyOnPacketLoss()
+        {
+            var reassembler = new ScanlineFrameReassembler(allowPartialFrames: true);
+            ushort lineBytes = 8;
+            uint timestamp = 8888;
+
+            byte[] p0Payload = new byte[] { 10, 10, 10, 10, 10, 10, 10, 10 };
+            byte[] p1Payload = new byte[] { 20, 20, 20, 20, 20, 20, 20, 20 };
+            byte[] p3Payload = new byte[] { 40, 40, 40, 40, 40, 40, 40, 40 };
+
+            // Feed lines 0, 1, then line 3 (Marker), skipping line 2 (packet loss simulation)
+            byte[] p0 = CreateRtpVideoPacket(0, timestamp, 1, 0, 0, lineBytes, false, customPayload: p0Payload);
+            byte[] p1 = CreateRtpVideoPacket(1, timestamp, 1, 1, 0, lineBytes, false, customPayload: p1Payload);
+            byte[] p3 = CreateRtpVideoPacket(3, timestamp, 1, 3, 0, lineBytes, true, customPayload: p3Payload);
+
+            RtpHeader.TryParse(p0, out var h0);
+            RtpHeader.TryParse(p1, out var h1);
+            RtpHeader.TryParse(p3, out var h3);
+
+            Assert.Null(reassembler.ProcessPacket(in h0));
+            Assert.Null(reassembler.ProcessPacket(in h1));
+            var frame = reassembler.ProcessPacket(in h3);
+
+            // In v1.5.0, missing scanline 2 is tolerated and interpolated from line 1
+            Assert.NotNull(frame);
+            Assert.Equal(1, reassembler.FramesCompleted);
+            Assert.Equal(0, reassembler.FramesDropped);
+            Assert.Equal(4, frame.Height);
+
+            // Check that line 2 (offset 2 * 8 = 16) was interpolated from line 1 (value 20)
+            Assert.Equal(20, frame.YuvData[16]);
+            // Check that line 3 (offset 3 * 8 = 24) has its actual value 40
+            Assert.Equal(40, frame.YuvData[24]);
+        }
+
+        [Fact]
+        public void UnifiedRtpDemuxReceiver_DemuxPacket_RoutesBySenderIp()
+        {
+            var demuxer = new UnifiedRtpDemuxReceiver(59998);
+            string ip1 = "10.32.32.12";
+            string ip2 = "10.32.32.13";
+
+            var ch1 = demuxer.GetOrCreateChannel(ip1, "225.1.1.1");
+            var ch2 = demuxer.GetOrCreateChannel(ip2, "225.1.1.2");
+
+            ushort lineBytes = 8;
+            byte[] p1 = CreateRtpVideoPacket(0, 1000, 1, 0, 0, lineBytes, false);
+            byte[] p2 = CreateRtpVideoPacket(0, 2000, 2, 0, 0, lineBytes, false);
+
+            demuxer.DemuxPacket(ip1, p1);
+            demuxer.DemuxPacket(ip2, p2);
+
+            Assert.Equal(1, ((UnifiedRtpDemuxReceiver.DemuxChannel)ch1).ReceivedPacketsCount);
+            Assert.Equal(1, ((UnifiedRtpDemuxReceiver.DemuxChannel)ch2).ReceivedPacketsCount);
+
+            demuxer.Dispose();
+        }
+
+        [Fact]
+        public void ScanlineFrameReassembler_MarkerBitLoss_RecoversOnNewFrameBoundary()
+        {
+            var reassembler = new ScanlineFrameReassembler(allowPartialFrames: true);
+            ushort lineBytes = 8;
+            uint frame1Ts = 10000;
+            uint frame2Ts = 20000;
+
+            // Frame 1: send 15 lines (0 to 14), but omit marker bit line 14's marker (set marker: false)
+            // simulating marker bit loss.
+            for (ushort line = 0; line < 15; line++)
+            {
+                byte[] p = CreateRtpVideoPacket(line, frame1Ts, 1, line, 0, lineBytes, marker: false);
+                RtpHeader.TryParse(p, out var h);
+                var f = reassembler.ProcessPacket(in h);
+                Assert.Null(f); // No marker arrived, so frame is not completed yet
+            }
+
+            Assert.Equal(0, reassembler.FramesCompleted);
+            Assert.Equal(0, reassembler.FramesDropped);
+
+            // Now, Line 0 of Frame 2 arrives with new timestamp (> 1000 jump).
+            // Reassembler should detect new frame boundary, recover Frame 1, and start buffering Frame 2.
+            byte[] pNext0 = CreateRtpVideoPacket(0, frame2Ts, 1, 0, 0, lineBytes, marker: false);
+            RtpHeader.TryParse(pNext0, out var hNext0);
+            var recoveredFrame = reassembler.ProcessPacket(in hNext0);
+
+            Assert.NotNull(recoveredFrame);
+            Assert.Equal(frame1Ts, recoveredFrame.Timestamp);
+            Assert.Equal(15, recoveredFrame.Height);
+            Assert.Equal(4, recoveredFrame.Width); // 8 bytes / 2 bytes per pixel
+            Assert.Equal(1, reassembler.FramesCompleted);
+            Assert.Equal(0, reassembler.FramesDropped);
+        }
+
+        [Fact]
+        public unsafe void YuvRasterizer_ConvertYuv422ToBgr24Stride_HandlesPaddingAndZeroOverrun()
+        {
+            // Frame: 4x2 pixels
+            // YUV row = 4 pixels * 2 bytes = 8 bytes
+            // Total YUV = 16 bytes
+            // BGR row = 4 pixels * 3 bytes = 12 bytes
+            // Stride = 16 bytes (12 bytes BGR data + 4 bytes padding)
+            int width = 4;
+            int height = 2;
+            int stride = 16;
+            byte[] yuv = new byte[width * height * 2];
+            // Fill with neutral gray: U=128, Y0=128, V=128, Y1=128
+            for (int i = 0; i < yuv.Length; i += 4)
+            {
+                yuv[i] = 128;
+                yuv[i + 1] = 128;
+                yuv[i + 2] = 128;
+                yuv[i + 3] = 128;
+            }
+
+            // Allocate buffer with guard bands (canary bytes) before and after
+            int canarySize = 16;
+            int bufferSize = canarySize + (height * stride) + canarySize;
+            byte[] buffer = new byte[bufferSize];
+            Array.Fill(buffer, (byte)0xEE); // Canary value
+
+            fixed (byte* pYuv = yuv)
+            fixed (byte* pBuf = buffer)
+            {
+                byte* pBackBuffer = pBuf + canarySize;
+                Yuv422Rasterizer.ConvertYuv422ToBgr24Stride(pYuv, pBackBuffer, width, height, stride);
+            }
+
+            // Verify leading canary band is untouched
+            for (int i = 0; i < canarySize; i++)
+            {
+                Assert.Equal((byte)0xEE, buffer[i]);
+            }
+
+            // Verify row 0 BGR pixels (12 bytes): 128
+            for (int i = 0; i < 12; i++)
+            {
+                Assert.Equal((byte)128, buffer[canarySize + i]);
+            }
+
+            // Verify row 0 padding (4 bytes): untouched canary 0xEE
+            for (int i = 12; i < 16; i++)
+            {
+                Assert.Equal((byte)0xEE, buffer[canarySize + i]);
+            }
+
+            // Verify row 1 BGR pixels (12 bytes): 128
+            for (int i = 0; i < 12; i++)
+            {
+                Assert.Equal((byte)128, buffer[canarySize + stride + i]);
+            }
+
+            // Verify row 1 padding (4 bytes): untouched canary 0xEE
+            for (int i = 12; i < 16; i++)
+            {
+                Assert.Equal((byte)0xEE, buffer[canarySize + stride + i]);
+            }
+
+            // Verify trailing canary band is untouched (zero overrun)
+            int trailingStart = canarySize + (height * stride);
+            for (int i = trailingStart; i < bufferSize; i++)
+            {
+                Assert.Equal((byte)0xEE, buffer[i]);
+            }
+        }
+
+        [Fact]
+        public void UnifiedRtpDemuxReceiver_Port5000SocketLifecycle_NoSocketOrMemoryLeaks()
+        {
+            // Pick ephemeral port for testing socket bind/stop/dispose lifecycle
+            int port = 50000 + Random.Shared.Next(100, 900);
+            for (int iteration = 0; iteration < 5; iteration++)
+            {
+                using var demuxer = new UnifiedRtpDemuxReceiver(port);
+                demuxer.EnsureStarted(port);
+                Assert.True(demuxer.IsListening);
+                Assert.Equal(port, demuxer.Port);
+
+                var ch = demuxer.GetOrCreateChannel("192.168.1.100", "224.1.2.3");
+                Assert.NotNull(ch);
+                Assert.Equal(1, demuxer.ChannelCount);
+
+                byte[] packet = CreateRtpVideoPacket(0, 1000, 1, 0, 0, 8, marker: true);
+                demuxer.DemuxPacket("192.168.1.100", packet);
+                Assert.Equal(1, ((UnifiedRtpDemuxReceiver.DemuxChannel)ch).ReceivedPacketsCount);
+
+                demuxer.RemoveChannel("192.168.1.100");
+                Assert.Equal(0, demuxer.ChannelCount);
+                Assert.False(demuxer.IsListening);
+            }
+        }
+
+        [Fact]
+        public void UnifiedRtpDemuxReceiver_DefaultConstructor_UsesPort5000AndDemuxesByIp()
+        {
+            using var demuxer = new UnifiedRtpDemuxReceiver();
+            Assert.Equal(5000, demuxer.Port);
+            Assert.False(demuxer.IsListening);
+            Assert.Equal(0, demuxer.ChannelCount);
+
+            string ip1 = "10.32.32.101";
+            string ip2 = "10.32.32.102";
+
+            var ch1 = demuxer.GetOrCreateChannel(ip1, "225.1.1.1");
+            var ch2 = demuxer.GetOrCreateChannel(ip2, "225.1.1.2");
+
+            Assert.Equal(2, demuxer.ChannelCount);
+            Assert.Equal(5000, ((UnifiedRtpDemuxReceiver.DemuxChannel)ch1).Port);
+            Assert.Equal(5000, ((UnifiedRtpDemuxReceiver.DemuxChannel)ch2).Port);
+
+            // Test Demux routing by transmitter source IP
+            byte[] p1 = CreateRtpVideoPacket(0, 1000, 1, 0, 0, 8, false);
+            byte[] p2 = CreateRtpVideoPacket(0, 2000, 2, 0, 0, 8, false);
+
+            demuxer.DemuxPacket(ip1, p1);
+            demuxer.DemuxPacket(ip2, p2);
+
+            Assert.Equal(1, ((UnifiedRtpDemuxReceiver.DemuxChannel)ch1).ReceivedPacketsCount);
+            Assert.Equal(1, ((UnifiedRtpDemuxReceiver.DemuxChannel)ch2).ReceivedPacketsCount);
+
+            demuxer.RemoveChannel(ip1);
+            Assert.Equal(1, demuxer.ChannelCount);
+            demuxer.RemoveChannel(ip2);
+            Assert.Equal(0, demuxer.ChannelCount);
+        }
+
+        #endregion
     }
 }

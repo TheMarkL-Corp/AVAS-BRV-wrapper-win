@@ -40,8 +40,8 @@ namespace AvasRoutingApp.Tests
             Assert.Equal("127.0.0.1", config.ControlServerIp);
             Assert.Equal(8090, config.RestPort);
             Assert.Equal(6970, config.TelnetPort);
-            Assert.Equal("224.1.3.1", config.MulticastStartIp);
-            Assert.Equal("224.1.3.225", config.MulticastEndIp);
+            Assert.Equal("225.1.1.1", config.MulticastStartIp);
+            Assert.Equal("225.1.1.254", config.MulticastEndIp);
             Assert.Equal(5000, config.BasePort);
             Assert.Equal("", config.LocalNetworkInterfaceIp);
             Assert.Equal("Light", config.Theme);
@@ -207,6 +207,28 @@ namespace AvasRoutingApp.Tests
             Assert.NotNull(current);
             Assert.Equal("http://localhost:80", current.BlueRiverUrl);
             Assert.Equal("127.0.0.1", current.ControlServerIp);
+        }
+
+        [Fact]
+        public void ConfigService_LegacyMulticastRange_MigratesTo225_1_1_x()
+        {
+            string configPath = Path.Combine(_testDirectory, "legacy_appsettings.json");
+            string legacyJson = """
+            {
+                "ControlServerIp": "192.168.1.100",
+                "MulticastStartIp": "224.1.3.1",
+                "MulticastEndIp": "224.1.3.225"
+            }
+            """;
+            File.WriteAllText(configPath, legacyJson);
+
+            var service = new ConfigService(configPath);
+            var current = service.Current;
+
+            Assert.NotNull(current);
+            Assert.Equal("192.168.1.100", current.ControlServerIp);
+            Assert.Equal("225.1.1.1", current.MulticastStartIp);
+            Assert.Equal("225.1.1.254", current.MulticastEndIp);
         }
 
         [Fact]

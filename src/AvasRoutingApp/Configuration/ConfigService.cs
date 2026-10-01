@@ -141,7 +141,16 @@ namespace AvasRoutingApp.Configuration
             {
                 string json = File.ReadAllText(_filePath);
                 var loaded = JsonSerializer.Deserialize<AppConfig>(json, _jsonOptions);
-                return loaded ?? new AppConfig();
+                if (loaded != null)
+                {
+                    if (loaded.MulticastStartIp == "224.1.3.1" && loaded.MulticastEndIp == "224.1.3.225")
+                    {
+                        loaded.MulticastStartIp = "225.1.1.1";
+                        loaded.MulticastEndIp = "225.1.1.254";
+                    }
+                    return loaded;
+                }
+                return new AppConfig();
             }
             catch
             {

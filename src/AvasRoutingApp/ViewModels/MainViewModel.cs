@@ -605,14 +605,14 @@ namespace AvasRoutingApp.ViewModels
                     CompanionIsActive = compActive
                 };
 
-                // Create UDP Multicast Receiver and bind to card
-                var receiver = new RtpMulticastReceiver();
-                card.AttachReceiver(receiver);
+                // Bind to UnifiedRtpDemuxReceiver channel by sender Unicast IP
+                var channel = UnifiedRtpDemuxReceiver.Instance.GetOrCreateChannel(dev.IpAddress, mcastIp);
+                card.AttachReceiver(channel);
 
                 try
                 {
-                    AppLogger.Info("Multicast", $"Binding UDP listener on {mcastIp}:{basePort} (Local NIC: '{(string.IsNullOrEmpty(localNic) ? "ALL" : localNic)}')");
-                    receiver.StartListening(mcastIp, basePort, localNic);
+                    AppLogger.Info("Multicast", $"Binding Unified RTP channel for {dev.IpAddress} -> {mcastIp}:{basePort} (Local NIC: '{(string.IsNullOrEmpty(localNic) ? "ALL" : localNic)}')");
+                    channel.StartListening(mcastIp, basePort, localNic);
                 }
                 catch (Exception ex)
                 {
@@ -644,6 +644,7 @@ namespace AvasRoutingApp.ViewModels
                         previewCard.Receiver.Dispose();
                         previewCard.DetachReceiver();
                     }
+                    UnifiedRtpDemuxReceiver.Instance.RemoveChannel(previewCard.UnicastIp);
 
                     await _multicastController.StopPreviewStreamAsync(previewCard.MacAddress, CancellationToken.None);
                     _multicastController.ReleaseMulticastIp(previewCard.MacAddress);
@@ -702,15 +703,15 @@ namespace AvasRoutingApp.ViewModels
                     previewCard.IsStreaming = started;
                     previewCard.StatusMessage = started ? "Streaming" : "Stream restart pending";
 
-                    var receiver = new RtpMulticastReceiver();
-                    previewCard.AttachReceiver(receiver);
+                    var channel = UnifiedRtpDemuxReceiver.Instance.GetOrCreateChannel(previewCard.UnicastIp, mcastIp);
+                    previewCard.AttachReceiver(channel);
                     try
                     {
-                        receiver.StartListening(mcastIp, basePort, localNic);
+                        channel.StartListening(mcastIp, basePort, localNic);
                     }
                     catch (Exception ex)
                     {
-                        AppLogger.Error("Multicast", $"Failed to re-bind socket for {mcastIp}:{basePort}", ex);
+                        AppLogger.Error("Multicast", $"Failed to bind unified channel for {mcastIp}:{basePort}", ex);
                         previewCard.StatusMessage = $"Socket bind error: {ex.Message}";
                     }
                 }
@@ -742,6 +743,7 @@ namespace AvasRoutingApp.ViewModels
                         card.Receiver.Dispose();
                     }
                     card.DetachReceiver();
+                    UnifiedRtpDemuxReceiver.Instance.RemoveChannel(card.UnicastIp);
                 }
                 catch (Exception ex)
                 {
@@ -773,6 +775,7 @@ namespace AvasRoutingApp.ViewModels
                 card.Dispose();
             }
 
+            UnifiedRtpDemuxReceiver.Instance.StopListening();
             EncoderCards.Clear();
             ActiveStreamCount = 0;
             AppLogger.Info("Sidebar", "All cards cleared and stopped.");

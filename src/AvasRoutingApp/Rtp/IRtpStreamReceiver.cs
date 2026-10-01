@@ -48,5 +48,10 @@ namespace AvasRoutingApp.Rtp
         /// Indicates whether the receiver is actively listening on UDP sockets.
         /// </summary>
         bool IsListening { get; }
+
+        /// <summary>
+        /// Gets the current double-buffered WriteableBitmap rendering surface, if instantiated.
+        /// </summary>
+        WriteableBitmap? Bitmap { get; }
     }
 }

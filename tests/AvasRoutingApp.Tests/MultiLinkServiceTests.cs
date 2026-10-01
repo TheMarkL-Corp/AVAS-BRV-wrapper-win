@@ -149,11 +149,11 @@ namespace AvasRoutingApp.Tests
             bool success = await service.SetMultiLinkModeAsync("74fe488b07bb", "74FE488B07BC", "DUAL");
 
             Assert.True(success);
-            // Must have called set:multi_link on primary
+            // Must have called set:multi_link on primary chip_0 (MULTI_LINK_TRANSMITTER node)
             Assert.Contains(postedEndpoints, p => p == "/api/device/74fe488b07bb");
-            // Must have called set:multi_link on companion
-            Assert.Contains(postedEndpoints, p => p == "/api/device/74FE488B07BC");
-            // Must have rebooted both
+            // Primary chip_0 must have received the set:multi_link payload
+            Assert.Contains(postedBodies, b => b.Contains("\"set:multi_link\"") && b.Contains("\"DUAL\""));
+            // Must have rebooted primary chip_0 (BlueRiver coordinates link synchronization)
             Assert.Contains(postedBodies, b => b.Contains("\"reboot\""));
         }
 
@@ -325,21 +325,12 @@ namespace AvasRoutingApp.Tests
         }
 
         [Fact]
-        public async Task SetMultiLinkModeAsync_DualMode_CompanionFails_ReturnsFalse()
+        public async Task SetMultiLinkModeAsync_PrimaryFails_ReturnsFalse()
         {
             var mockHandler = new MockHttpMessageHandler();
             mockHandler.Handler = req =>
             {
-                string path = req.RequestUri?.AbsolutePath ?? "";
-                if (path == "/api/device/74fe488b07bb")
-                {
-                    // Primary succeeds
-                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-                    {
-                        Content = new StringContent("{\"status\":\"SUCCESS\"}", Encoding.UTF8, "application/json")
-                    });
-                }
-                // Companion fails with 500 error
+                // Primary fails with 500 error
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError));
             };
 
@@ -348,7 +339,6 @@ namespace AvasRoutingApp.Tests
             using var service = new MultiLinkService(configService, httpClient);
 
             bool success = await service.SetMultiLinkModeAsync("74fe488b07bb", "74FE488B07BC", "DUAL");
-            // Since companion failed in DUAL mode, overall result must be false
             Assert.False(success);
         }
 

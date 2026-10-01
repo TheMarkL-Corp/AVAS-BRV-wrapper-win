@@ -13,7 +13,7 @@ namespace AvasRoutingApp.Tests
         [Fact]
         public void VersionString_ReturnsConsistentVersion()
         {
-            Assert.Equal("v1.4.0", AppInfo.VersionString);
+            Assert.Equal("v1.5.0", AppInfo.VersionString);
             Assert.Equal("AVAS Routing Software", AppInfo.AppName);
             Assert.Equal("Dual Link SDVoE Manager", AppInfo.AppSubtitle);
         }
@@ -25,7 +25,7 @@ namespace AvasRoutingApp.Tests
             var ver = asm.GetName().Version;
             Assert.NotNull(ver);
             Assert.Equal(1, ver.Major);
-            Assert.Equal(4, ver.Minor);
+            Assert.Equal(5, ver.Minor);
             Assert.Equal(0, ver.Build);
         }
 

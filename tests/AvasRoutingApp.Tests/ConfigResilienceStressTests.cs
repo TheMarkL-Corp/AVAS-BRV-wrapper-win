@@ -125,8 +125,8 @@ namespace AvasRoutingApp.Tests
             Assert.Equal("http://localhost:80", current.BlueRiverUrl);
             Assert.Equal("127.0.0.1", current.ControlServerIp);
             Assert.Equal(8090, current.RestPort);
-            Assert.Equal("224.1.3.1", current.MulticastStartIp);
-            Assert.Equal("224.1.3.225", current.MulticastEndIp);
+            Assert.Equal("225.1.1.1", current.MulticastStartIp);
+            Assert.Equal("225.1.1.254", current.MulticastEndIp);
             Assert.Equal(5000, current.BasePort);
         }
 

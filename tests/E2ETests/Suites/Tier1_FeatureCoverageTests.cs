@@ -140,8 +140,8 @@ namespace E2ETests.Suites
             {
                 var service = new ConfigServiceHelper(tempConfig);
                 Assert.NotNull(service.Current);
-                Assert.Equal("224.1.3.1", service.Current.MulticastStartIp);
-                Assert.Equal("224.1.3.225", service.Current.MulticastEndIp);
+                Assert.Equal("225.1.1.1", service.Current.MulticastStartIp);
+                Assert.Equal("225.1.1.254", service.Current.MulticastEndIp);
                 Assert.Equal(6792, service.Current.BasePort);
             }
             finally

@@ -12,8 +12,8 @@ namespace AvasRoutingApp.Configuration
         public string ControlServerIp { get; set; } = "127.0.0.1";
         public int RestPort { get; set; } = 8090;
         public int TelnetPort { get; set; } = 6970;
-        public string MulticastStartIp { get; set; } = "224.1.3.1";
-        public string MulticastEndIp { get; set; } = "224.1.3.225";
+        public string MulticastStartIp { get; set; } = "225.1.1.1";
+        public string MulticastEndIp { get; set; } = "225.1.1.254";
         public int BasePort { get; set; } = 5000;
         public string LocalNetworkInterfaceIp { get; set; } = "";
         public string Theme { get; set; } = "Light";

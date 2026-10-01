@@ -29,13 +29,42 @@ namespace AvasRoutingApp.Sdvoe
             _httpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
         }
 
-        private string BaseUrl
+        private int _resolvedRestPort = 0;
+
+        private IEnumerable<int> GetPortsToTry()
         {
-            get
+            var cfg = _configService.Current;
+            int configured = cfg.RestPort > 0 ? cfg.RestPort : 8090;
+            int resolved = _resolvedRestPort > 0 ? _resolvedRestPort : configured;
+            return new[] { resolved, configured, 8090, 8080, 80 }.Distinct();
+        }
+
+        private static string NormalizeMac(string mac)
+        {
+            if (string.IsNullOrWhiteSpace(mac)) return string.Empty;
+            return mac.Replace(":", "").Replace("-", "").Trim().ToLowerInvariant();
+        }
+
+        private static bool IsConsecutiveMac(string macA, string macB)
+        {
+            if (string.IsNullOrWhiteSpace(macA) || string.IsNullOrWhiteSpace(macB)) return false;
+            macA = NormalizeMac(macA);
+            macB = NormalizeMac(macB);
+            if (macA.Length != 12 || macB.Length != 12) return false;
+            if (long.TryParse(macA, System.Globalization.NumberStyles.HexNumber, null, out long valA) &&
+                long.TryParse(macB, System.Globalization.NumberStyles.HexNumber, null, out long valB))
             {
-                var cfg = _configService.Current;
-                return $"http://{cfg.ControlServerIp}:{cfg.RestPort}";
+                return Math.Abs(valA - valB) == 1;
             }
+            return false;
+        }
+
+        private static bool ArePairedTransmitterNames(string nameA, string nameB)
+        {
+            if (string.IsNullOrWhiteSpace(nameA) || string.IsNullOrWhiteSpace(nameB)) return false;
+            string cleanA = nameA.Replace("SFPA", "", StringComparison.OrdinalIgnoreCase).Replace("SFPB", "", StringComparison.OrdinalIgnoreCase).Trim();
+            string cleanB = nameB.Replace("SFPA", "", StringComparison.OrdinalIgnoreCase).Replace("SFPB", "", StringComparison.OrdinalIgnoreCase).Trim();
+            return string.Equals(cleanA, cleanB, StringComparison.OrdinalIgnoreCase);
         }
 
         public async Task<IReadOnlyList<MultiLinkInfo>> QueryMultiLinkPairsAsync(CancellationToken ct = default)
@@ -43,7 +72,8 @@ namespace AvasRoutingApp.Sdvoe
             var pairs = new List<MultiLinkInfo>();
             try
             {
-                AppLogger.Info("MultiLink", $"Querying BlueRiver server at {BaseUrl} for AVAS-223 multi-link topology...");
+                var cfg = _configService.Current;
+                AppLogger.Info("MultiLink", $"Querying BlueRiver server at {cfg.ControlServerIp} for AVAS-223 multi-link topology...");
 
                 // 1. Get all device IDs
                 List<string> deviceIds;
@@ -155,6 +185,23 @@ namespace AvasRoutingApp.Sdvoe
                                 }
                             }
                         }
+                        else
+                        {
+                            // If companion not explicitly listed in MULTI_LINK_TRANSMITTER (e.g. device is currently in SINGLE mode),
+                            // correlate companion chip_1 from discovered transmitters by consecutive MAC or name prefix:
+                            var compCand = allTxDetails.FirstOrDefault(c =>
+                                c.Value.ChipId == 1 &&
+                                (IsConsecutiveMac(pair.PrimaryMac, c.Key) ||
+                                 ArePairedTransmitterNames(pair.PrimaryName, c.Value.Name)));
+
+                            if (!string.IsNullOrEmpty(compCand.Key))
+                            {
+                                pair.CompanionMac = compCand.Key;
+                                pair.CompanionName = compCand.Value.Name;
+                                pair.CompanionIsActive = compCand.Value.IsActive;
+                                AppLogger.Info("MultiLink", $"Correlated Companion {pair.CompanionMac} ({pair.CompanionName}) for Primary {pair.PrimaryMac} in {pair.LinkMode} mode (Active: {pair.CompanionIsActive})");
+                            }
+                        }
 
                         pairs.Add(pair);
                     }
@@ -171,48 +218,35 @@ namespace AvasRoutingApp.Sdvoe
         public async Task<bool> SetMultiLinkModeAsync(string primaryMac, string? companionMac, string targetMode, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(primaryMac)) return false;
+            string normPrimaryMac = NormalizeMac(primaryMac);
             targetMode = targetMode.ToUpperInvariant();
 
-            AppLogger.Info("MultiLink", $"Applying Multi-Link Mode '{targetMode}' to Primary {primaryMac} (Companion: {companionMac ?? "NONE"})...");
+            AppLogger.Info("MultiLink", $"Applying Multi-Link Mode '{targetMode}' to Primary {normPrimaryMac} (Adv_VOIPS_Sample chip_0 alignment)...");
 
             try
             {
-                // 1. Send set:multi_link to primary chip_0
+                // 1. Send set:multi_link EXCLUSIVELY to primary chip_0 (per Adv_VOIPS_Sample TX_SET_MULTI_LINK_MODE)
                 var p0Payload = new { op = "set:multi_link", mode = targetMode };
                 bool primarySuccess;
-                using (var r0 = await HttpPostAndPollAsync($"/api/device/{primaryMac}", p0Payload, ct))
+                using (var r0 = await HttpPostAndPollAsync($"/api/device/{normPrimaryMac}", p0Payload, ct))
                 {
                     primarySuccess = IsOperationSuccessful(r0);
                 }
-                AppLogger.Info("MultiLink", $"Primary {primaryMac} set:multi_link result: {(primarySuccess ? "SUCCESS" : "FAILED")}");
+                AppLogger.Info("MultiLink", $"Primary {normPrimaryMac} set:multi_link result: {(primarySuccess ? "SUCCESS" : "FAILED")}");
 
-                // 2. If target mode is DUAL and companion exists, also send set:multi_link to companion chip_1
-                bool companionSuccess = true;
-                bool hasComp = !string.IsNullOrWhiteSpace(companionMac) && !string.Equals(companionMac, "NONE", StringComparison.OrdinalIgnoreCase);
-                if (targetMode == "DUAL" && hasComp)
+                if (!primarySuccess)
                 {
-                    try
-                    {
-                        var p1Payload = new { op = "set:multi_link", mode = targetMode };
-                        using var r1 = await HttpPostAndPollAsync($"/api/device/{companionMac}", p1Payload, ct);
-                        companionSuccess = IsOperationSuccessful(r1);
-                        AppLogger.Info("MultiLink", $"Companion {companionMac} set:multi_link result: {(companionSuccess ? "SUCCESS" : "FAILED")}");
-                    }
-                    catch (Exception ex)
-                    {
-                        AppLogger.Warn("MultiLink", $"Failed setting mode on companion {companionMac}: {ex.Message}");
-                        companionSuccess = false;
-                    }
+                    return false;
                 }
 
-                // 3. Issue reboots to apply hardware changes
-                await RebootDeviceAsync(primaryMac, ct);
-                if (hasComp)
-                {
-                    await RebootDeviceAsync(companionMac!, ct);
-                }
+                // Settle delay before hardware reboot
+                await Task.Delay(300, ct);
 
-                return primarySuccess && companionSuccess;
+                // 2. Issue reboot only to primary chip_0; BlueRiver control server coordinates link synchronization
+                bool rebootSuccess = await RebootDeviceAsync(normPrimaryMac, ct);
+                AppLogger.Info("MultiLink", $"Primary {normPrimaryMac} reboot result: {(rebootSuccess ? "SUCCESS" : "FAILED")}");
+
+                return primarySuccess;
             }
             catch (Exception ex)
             {
@@ -224,6 +258,7 @@ namespace AvasRoutingApp.Sdvoe
         public async Task<bool> RebootDeviceAsync(string mac, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(mac)) return false;
+            mac = NormalizeMac(mac);
             try
             {
                 AppLogger.Info("MultiLink", $"Issuing reboot command to device {mac}...");
@@ -242,34 +277,58 @@ namespace AvasRoutingApp.Sdvoe
 
         private async Task<JsonDocument?> HttpGetJsonAsync(string endpoint, CancellationToken ct)
         {
-            try
+            var cfg = _configService.Current;
+            string host = cfg.ControlServerIp;
+            if (string.IsNullOrWhiteSpace(host)) host = "127.0.0.1";
+
+            foreach (int port in GetPortsToTry())
             {
-                using var resp = await _httpClient.GetAsync($"{BaseUrl}{endpoint}", ct);
-                if (!resp.IsSuccessStatusCode) return null;
-                var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
-                return JsonDocument.Parse(bytes);
+                try
+                {
+                    string url = $"http://{host}:{port}{endpoint}";
+                    using var resp = await _httpClient.GetAsync(url, ct);
+                    if (resp.IsSuccessStatusCode)
+                    {
+                        _resolvedRestPort = port;
+                        var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
+                        return JsonDocument.Parse(bytes);
+                    }
+                }
+                catch
+                {
+                    // Try next candidate port
+                }
             }
-            catch
-            {
-                return null;
-            }
+            return null;
         }
 
         private async Task<JsonDocument?> HttpPostJsonAsync(string endpoint, object payload, CancellationToken ct)
         {
-            try
+            var cfg = _configService.Current;
+            string host = cfg.ControlServerIp;
+            if (string.IsNullOrWhiteSpace(host)) host = "127.0.0.1";
+
+            string json = JsonSerializer.Serialize(payload);
+            foreach (int port in GetPortsToTry())
             {
-                string json = JsonSerializer.Serialize(payload);
-                using var content = new StringContent(json, Encoding.UTF8, "application/json");
-                using var resp = await _httpClient.PostAsync($"{BaseUrl}{endpoint}", content, ct);
-                if (!resp.IsSuccessStatusCode) return null;
-                var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
-                return JsonDocument.Parse(bytes);
+                try
+                {
+                    string url = $"http://{host}:{port}{endpoint}";
+                    using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    using var resp = await _httpClient.PostAsync(url, content, ct);
+                    if (resp.IsSuccessStatusCode)
+                    {
+                        _resolvedRestPort = port;
+                        var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
+                        return JsonDocument.Parse(bytes);
+                    }
+                }
+                catch
+                {
+                    // Try next candidate port
+                }
             }
-            catch
-            {
-                return null;
-            }
+            return null;
         }
 
         private async Task<JsonDocument?> HttpPostAndPollAsync(string endpoint, object payload, CancellationToken ct, int maxPolls = 12, int pollIntervalMs = 500)

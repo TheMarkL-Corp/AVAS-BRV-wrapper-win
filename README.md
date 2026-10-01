@@ -2,9 +2,9 @@
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue.svg)](https://microsoft.com)
 [![Framework](https://img.shields.io/badge/.NET-8.0--windows-purple.svg)](https://dotnet.microsoft.com)
-[![Tests](https://img.shields.io/badge/tests-435%20passing%20(100%25)-brightgreen.svg)](#test-suite--qa-verification)
+[![Tests](https://img.shields.io/badge/tests-462%20passing%20(100%25)-brightgreen.svg)](#test-suite--qa-verification)
 [![Loop Stress](https://img.shields.io/badge/loop%20stress-4%2C005%2F4%2C005%20passed-success.svg)](./LOOP_TEST_RESULTS.md)
-[![Version](https://img.shields.io/badge/version-v1.3.0-informational.svg)](#)
+[![Version](https://img.shields.io/badge/version-v1.5.0-informational.svg)](#)
 
 A high-performance, portable native Windows desktop application that wraps the **Semtech BlueRiver AV Manager** web interface within an isolated **Microsoft WebView2** browser container, and provides a collapsible real-time overlay sidebar displaying live multicast video previews ($\ge 1$ FPS) of **Advantech AVAS-223 Encoders (`chip_0` only)** using SDVoE Control Server APIs and RFC 3550 / RFC 4175 UDP multicast ingestion.
 
@@ -14,9 +14,11 @@ A high-performance, portable native Windows desktop application that wraps the *
 
 - **Embedded BlueRiver AV Manager**: Direct embedded web canvas wrapping BlueRiver AV Manager with zero external browser dependencies.
 - **Collapsible Live Multicast Preview**: Right-side collapsible sidebar (collapsed by default) with real-time video feeds for discovered AVAS-223 TX encoders.
-- **AVAS-223 Multi-Link Management**: Monitor Single/Dual link status, check companion chip (`chip_1`) online/offline health, and seamlessly toggle link modes with non-blocking reboots.
+- **Unified Single-Socket Demuxer (v1.5.0)**: Eliminates Winsock socket collisions on port 5000 by utilizing a singleton 8MB UDP socket demultiplexing streams by transmitter source IP (`Adv_VOIPS_Sample` aligned architecture).
+- **Tolerant Scanline Reassembly (v1.5.0)**: Renders live preview smoothly across packet loss via scanline interpolation without UI stalling or discarding full frames.
+- **AVAS-223 Multi-Link Management (v1.5.0)**: Robust chip_0 exclusive targeting with companion correlation and auto-probing REST port resolution (`[8090, 8080, 80]`).
 - **Strict Hardware Filtering**: Automatically targets **AVAS-223 primary chip** (`Vendor ID: 105`, `Product ID: 81`, `ChipIndex: 0`, `IsTransmitter: true`), rejecting `chip_1` aggregators, receivers, and third-party SDVoE endpoints.
-- **Dynamic Multicast Pool Management**: Collision-free allocation of multicast IPs from configurable pool (`224.1.3.1` – `224.1.3.225`) and base UDP port (`5000`). Drops multicast memberships when the sidebar is collapsed or the app closes.
+- **Dynamic Multicast Pool Management**: Collision-free allocation of multicast IPs from configurable pool (`225.1.1.1` – `225.1.1.254`, safely outside reserved SDVoE core band) and base UDP port (`5000`). Drops multicast memberships when the sidebar is collapsed or the app closes.
 - **High-Performance Direct Rasterization**: Q10 fixed-point SIMD-friendly YUV422 $\to$ BGR24 conversion directly into WPF `WriteableBitmap.BackBuffer` with backpressure drop gates to eliminate UI freezes and GC churn.
 - **Touchscreen Optimized**: Designed for medical carts and surgical touchscreens with 36px–44px touch targets, native direct touch flick/drag scrolling (`PanningMode="VerticalOnly"`), high-contrast pressed states (`IsPressed`), and 14px draggable splitter grip.
 - **100% Portable**: Zero-install operation; portable settings stored in `appsettings.json`, and WebView2 profile isolated in `.\WebView2_UserData`.
@@ -27,7 +29,7 @@ A high-performance, portable native Windows desktop application that wraps the *
 
 ```
 +-----------------------------------------------------------------------------------------------+
-| AVAS ROUTING SW [v1.3.0]                                            URL: http://localhost:80 [⚙] |
+| AVAS ROUTING SW [v1.5.0]                                            URL: http://localhost:80 [⚙] |
 +---------------------------------------------------------------------------------------+-------+
 |                                                                                       | ◀     |
 |                                                                                       | P     |

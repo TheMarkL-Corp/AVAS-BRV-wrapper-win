@@ -281,9 +281,9 @@ namespace AvasRoutingApp.ViewModels
             _receiver.FpsUpdated += OnFpsUpdated;
             _receiver.BitmapUpdated += OnBitmapUpdated;
 
-            if (_receiver is RtpMulticastReceiver mcastReceiver && mcastReceiver.Bitmap != null)
+            if (_receiver.Bitmap != null)
             {
-                PreviewBitmap = mcastReceiver.Bitmap;
+                PreviewBitmap = _receiver.Bitmap;
             }
 
             IsStreaming = true;
