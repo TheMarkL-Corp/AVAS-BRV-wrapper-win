@@ -1,13 +1,15 @@
 using System;
+using System.Text;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using AvasRoutingApp.Rtp;
+using AvasRoutingApp.Sdvoe;
 
 namespace AvasRoutingApp.ViewModels
 {
     /// <summary>
     /// ViewModel representing a single AVAS-223 chip_0 encoder preview card.
-    /// Manages the video viewport WriteableBitmap, device telemetry, and color-coded FPS indicator.
+    /// Manages the video viewport WriteableBitmap, device telemetry, activation badge, and color-coded FPS indicator.
     /// </summary>
     public class EncoderCardViewModel : ViewModelBase, IDisposable
     {
@@ -16,6 +18,11 @@ namespace AvasRoutingApp.ViewModels
         private static readonly SolidColorBrush DualLinkBrush = new(Color.FromRgb(0x25, 0x63, 0xEB));
         private static readonly SolidColorBrush SingleLinkBrush = new(Color.FromRgb(0x47, 0x55, 0x69));
         private static readonly SolidColorBrush UnknownLinkBrush = new(Color.FromRgb(0x33, 0x41, 0x55));
+        private static readonly SolidColorBrush OnlineGreenBrush = new(Color.FromRgb(0x10, 0xB9, 0x81));
+        private static readonly SolidColorBrush WarningAmberBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
+        private static readonly SolidColorBrush NeutralGrayBrush = new(Color.FromRgb(0x64, 0x74, 0x8B));
+        private static readonly SolidColorBrush VegaBadgeBrush = new(Color.FromRgb(0x7C, 0x3A, 0xED)); // Violet / Purple test badge
+        private static readonly SolidColorBrush VegaTextBrush = new(Color.FromRgb(0xFF, 0xFF, 0xFF));
 
         static EncoderCardViewModel()
         {
@@ -24,10 +31,20 @@ namespace AvasRoutingApp.ViewModels
             DualLinkBrush.Freeze();
             SingleLinkBrush.Freeze();
             UnknownLinkBrush.Freeze();
+            OnlineGreenBrush.Freeze();
+            WarningAmberBrush.Freeze();
+            NeutralGrayBrush.Freeze();
+            VegaBadgeBrush.Freeze();
+            VegaTextBrush.Freeze();
         }
 
         private string _macAddress = string.Empty;
         private string _deviceName = string.Empty;
+        private DeviceActivationState _activationState = DeviceActivationState.Unknown;
+        private DeviceFamily _family = DeviceFamily.Avas;
+        private string _firmwareVersion = string.Empty;
+        private string _hardwareVersion = string.Empty;
+        private string _factorySerialNumber = string.Empty;
         private string _unicastIp = string.Empty;
         private string _multicastIp = string.Empty;
         private int _port = 5000;
@@ -261,6 +278,115 @@ namespace AvasRoutingApp.ViewModels
         {
             get => _companionIsActive;
             set => SetProperty(ref _companionIsActive, value);
+        }
+
+        public DeviceActivationState ActivationState
+        {
+            get => _activationState;
+            set
+            {
+                if (SetProperty(ref _activationState, value))
+                {
+                    OnPropertyChanged(nameof(IsActivated));
+                    OnPropertyChanged(nameof(ActivationBadgeText));
+                    OnPropertyChanged(nameof(ActivationBadgeBrush));
+                    OnPropertyChanged(nameof(McuTooltipText));
+                }
+            }
+        }
+
+        public DeviceFamily Family
+        {
+            get => _family;
+            set
+            {
+                if (SetProperty(ref _family, value))
+                {
+                    OnPropertyChanged(nameof(IsVegaDevice));
+                    OnPropertyChanged(nameof(BadgeText));
+                    OnPropertyChanged(nameof(BadgeBackgroundBrush));
+                    OnPropertyChanged(nameof(BadgeForegroundBrush));
+                    OnPropertyChanged(nameof(IsMaintenanceAvailable));
+                }
+            }
+        }
+
+        public bool IsVegaDevice => _family == DeviceFamily.Vega;
+
+        public string BadgeText => _family switch
+        {
+            DeviceFamily.Vega => "[VEGA-1100 (Test)]",
+            _ => "chip_0 (TX)"
+        };
+
+        public SolidColorBrush? BadgeBackgroundBrush => _family == DeviceFamily.Vega ? VegaBadgeBrush : null;
+        public SolidColorBrush? BadgeForegroundBrush => _family == DeviceFamily.Vega ? VegaTextBrush : null;
+
+        public bool IsMaintenanceAvailable => _family == DeviceFamily.Avas;
+
+        public bool IsActivated => _activationState == DeviceActivationState.Activated;
+
+        public string ActivationBadgeText => _activationState switch
+        {
+            DeviceActivationState.Activated => "Activated",
+            DeviceActivationState.Unactivated => "Unactivated",
+            _ => "Checking..."
+        };
+
+        public SolidColorBrush ActivationBadgeBrush => _activationState switch
+        {
+            DeviceActivationState.Activated => OnlineGreenBrush,
+            DeviceActivationState.Unactivated => WarningAmberBrush,
+            _ => NeutralGrayBrush
+        };
+
+        public string FirmwareVersion
+        {
+            get => _firmwareVersion;
+            set
+            {
+                if (SetProperty(ref _firmwareVersion, value))
+                {
+                    OnPropertyChanged(nameof(McuTooltipText));
+                }
+            }
+        }
+
+        public string HardwareVersion
+        {
+            get => _hardwareVersion;
+            set
+            {
+                if (SetProperty(ref _hardwareVersion, value))
+                {
+                    OnPropertyChanged(nameof(McuTooltipText));
+                }
+            }
+        }
+
+        public string FactorySerialNumber
+        {
+            get => _factorySerialNumber;
+            set
+            {
+                if (SetProperty(ref _factorySerialNumber, value))
+                {
+                    OnPropertyChanged(nameof(McuTooltipText));
+                }
+            }
+        }
+
+        public string McuTooltipText
+        {
+            get
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine($"Activation: {ActivationBadgeText}");
+                if (!string.IsNullOrWhiteSpace(_firmwareVersion)) sb.AppendLine($"MCU FW: {_firmwareVersion}");
+                if (!string.IsNullOrWhiteSpace(_hardwareVersion)) sb.AppendLine($"Hardware: {_hardwareVersion}");
+                if (!string.IsNullOrWhiteSpace(_factorySerialNumber)) sb.AppendLine($"Serial No: {_factorySerialNumber}");
+                return sb.ToString().TrimEnd();
+            }
         }
 
         public IRtpStreamReceiver? Receiver

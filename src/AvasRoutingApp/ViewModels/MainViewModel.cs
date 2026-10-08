@@ -602,11 +602,42 @@ namespace AvasRoutingApp.ViewModels
                     StatusMessage = started ? "Streaming" : "Stream start request unacknowledged",
                     LinkMode = linkMode,
                     CompanionMac = companionMac,
-                    CompanionIsActive = compActive
+                    CompanionIsActive = compActive,
+                    Family = dev.Family,
+                    ActivationState = dev.Family == DeviceFamily.Vega ? DeviceActivationState.Activated : DeviceActivationState.Unknown,
+                    FirmwareVersion = string.Empty,
+                    HardwareVersion = string.Empty,
+                    FactorySerialNumber = string.Empty
                 };
 
-                // Bind to UnifiedRtpDemuxReceiver channel by sender Unicast IP
-                var channel = UnifiedRtpDemuxReceiver.Instance.GetOrCreateChannel(dev.IpAddress, mcastIp);
+                // Asynchronously query MCU telemetry & activation (AVAS devices only)
+                var sdvoeClient = _discoveryService as SdvoeClient ?? _multicastController as SdvoeClient;
+                if (sdvoeClient != null && dev.Family == DeviceFamily.Avas)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            var mcuInfo = await sdvoeClient.QueryMcuDeviceInfoAsync(dev.MacAddress);
+                            card.ActivationState = mcuInfo.ActivationState;
+                            if (!string.IsNullOrEmpty(mcuInfo.FirmwareVersion)) card.FirmwareVersion = mcuInfo.FirmwareVersion;
+                            if (!string.IsNullOrEmpty(mcuInfo.HardwareVersion)) card.HardwareVersion = mcuInfo.HardwareVersion;
+                            if (!string.IsNullOrEmpty(mcuInfo.FactorySerialNumber)) card.FactorySerialNumber = mcuInfo.FactorySerialNumber;
+                        }
+                        catch
+                        {
+                            card.ActivationState = DeviceActivationState.Unknown;
+                        }
+                    });
+                }
+
+                // Bind to UnifiedRtpDemuxReceiver channel by sender Unicast IP and companion MAC alias
+                var aliases = new List<string>();
+                if (!string.IsNullOrEmpty(companionMac) && !string.Equals(companionMac, "NONE", StringComparison.OrdinalIgnoreCase))
+                {
+                    aliases.Add(companionMac);
+                }
+                var channel = UnifiedRtpDemuxReceiver.Instance.GetOrCreateChannel(dev.IpAddress, mcastIp, aliases);
                 card.AttachReceiver(channel);
 
                 try
@@ -703,7 +734,12 @@ namespace AvasRoutingApp.ViewModels
                     previewCard.IsStreaming = started;
                     previewCard.StatusMessage = started ? "Streaming" : "Stream restart pending";
 
-                    var channel = UnifiedRtpDemuxReceiver.Instance.GetOrCreateChannel(previewCard.UnicastIp, mcastIp);
+                    var restartAliases = new List<string>();
+                    if (!string.IsNullOrEmpty(previewCard.CompanionMac) && !string.Equals(previewCard.CompanionMac, "NONE", StringComparison.OrdinalIgnoreCase))
+                    {
+                        restartAliases.Add(previewCard.CompanionMac);
+                    }
+                    var channel = UnifiedRtpDemuxReceiver.Instance.GetOrCreateChannel(previewCard.UnicastIp, mcastIp, restartAliases);
                     previewCard.AttachReceiver(channel);
                     try
                     {

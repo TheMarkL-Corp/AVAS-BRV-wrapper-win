@@ -24,11 +24,38 @@
                     <TextBlock Text="{Binding DeviceName}" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="280" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <!-- Activation Status Badge with MCU Telemetry Tooltip -->
+                    <Border Background="{Binding ActivationBadgeBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0" VerticalAlignment="Center"
+                            ToolTip="{Binding McuTooltipText}" Cursor="Help">
+                        <TextBlock Text="{Binding ActivationBadgeText}" Foreground="White" FontSize="10" FontWeight="Bold" />
+                    </Border>
                     <Border Background="{Binding LinkModeBrush}" CornerRadius="3" Padding="5,2" Margin="0,0,6,0" VerticalAlignment="Center">
                         <TextBlock Text="{Binding LinkModeBadgeText}" Foreground="White" FontSize="10" FontWeight="Bold" />
                     </Border>
-                    <Border Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="3" Padding="6,2" VerticalAlignment="Center">
-                        <TextBlock Text="chip_0 (TX)" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" FontWeight="SemiBold" />
+                    <Border CornerRadius="3" Padding="6,2" VerticalAlignment="Center">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{DynamicResource ThemePillBackgroundBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsVegaDevice}" Value="True">
+                                        <Setter Property="Background" Value="{Binding BadgeBackgroundBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding BadgeText}" FontSize="10" FontWeight="SemiBold">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{DynamicResource ThemeTextSecondaryBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsVegaDevice}" Value="True">
+                                            <Setter Property="Foreground" Value="{Binding BadgeForegroundBrush}" />
+                                            <Setter Property="FontWeight" Value="Bold" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </Border>
                 </StackPanel>
             </DockPanel>

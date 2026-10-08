@@ -80,6 +80,7 @@ namespace AvasRoutingApp.Views
             TxtMulticastEndIp.Text = config.MulticastEndIp;
             TxtBasePort.Text = config.BasePort.ToString();
             TxtLocalNetworkInterfaceIp.Text = config.LocalNetworkInterfaceIp;
+            ChkEnableVegaDevices.IsChecked = config.EnableVegaDevices;
             BorderErrors.Visibility = Visibility.Collapsed;
         }
 
@@ -163,7 +164,8 @@ namespace AvasRoutingApp.Views
                 MulticastStartIp = TxtMulticastStartIp.Text.Trim(),
                 MulticastEndIp = TxtMulticastEndIp.Text.Trim(),
                 BasePort = basePort,
-                LocalNetworkInterfaceIp = TxtLocalNetworkInterfaceIp.Text.Trim()
+                LocalNetworkInterfaceIp = TxtLocalNetworkInterfaceIp.Text.Trim(),
+                EnableVegaDevices = ChkEnableVegaDevices.IsChecked ?? false
             };
 
             var (isValid, validatorErrors) = ConfigValidator.Validate(candidateConfig);
