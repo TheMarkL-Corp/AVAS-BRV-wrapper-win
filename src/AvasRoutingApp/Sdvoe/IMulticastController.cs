@@ -13,5 +13,7 @@ namespace AvasRoutingApp.Sdvoe
         void ReleaseMulticastIp(string macAddress);
         Task<bool> StartPreviewStreamAsync(string macAddress, string multicastIp, int port, CancellationToken ct = default);
         Task<bool> StopPreviewStreamAsync(string macAddress, CancellationToken ct = default);
+        Task<bool> StartVegaPreviewStreamAsync(string macAddress, string multicastIp, int port, CancellationToken ct = default);
+        Task<bool> StopVegaPreviewStreamAsync(string macAddress, CancellationToken ct = default);
     }
 }

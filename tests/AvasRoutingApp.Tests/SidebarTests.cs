@@ -59,6 +59,18 @@ namespace AvasRoutingApp.Tests
             StoppedStreams.Add(macAddress);
             return Task.FromResult(true);
         }
+
+        public Task<bool> StartVegaPreviewStreamAsync(string macAddress, string multicastIp, int port, CancellationToken ct = default)
+        {
+            StartedStreams.Add((macAddress, multicastIp, port));
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> StopVegaPreviewStreamAsync(string macAddress, CancellationToken ct = default)
+        {
+            StoppedStreams.Add(macAddress);
+            return Task.FromResult(true);
+        }
     }
 
     /// <summary>

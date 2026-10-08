@@ -409,8 +409,199 @@ namespace AvasRoutingApp.Sdvoe
         }
 
         /// <summary>
+        /// Ensures the device MCU UART port (stream_index 1 / port_index 1) is switched to API mode:
+        /// {"stream_type":"rs232","stream_index":1,"op":"switch:api"}.
+        /// Mandatory before issuing in-band MCU commands or RTP preview commands.
+        /// </summary>
+        public async Task<bool> EnsureUartApiModeAsync(string chip0Mac, CancellationToken ct = default)
+        {
+            try
+            {
+                string normMac = NormalizeMac(chip0Mac);
+                string path = $"/api/device/{normMac}";
+                var payload = new
+                {
+                    stream_type = "rs232",
+                    stream_index = 1,
+                    op = "switch:api"
+                };
+
+                using var resp = await PostDeviceRestAsync(path, payload, ct);
+                if (resp != null && resp.IsSuccessStatusCode)
+                {
+                    string body = await resp.Content.ReadAsStringAsync(ct);
+                    AppLogger.Info("SdvoeClient", $"EnsureUartApiModeAsync for {normMac} response: {body}");
+                    return IsRestResponseSuccess(body);
+                }
+
+                // If REST is not connected or fails, try Telnet fallback
+                if (IsTelnetConnected)
+                {
+                    string telnetCmd = $"set {normMac} configuration:rs232:1:mode api";
+                    string tResp = await SendTelnetCommandAsync(telnetCmd, ct);
+                    AppLogger.Info("SdvoeClient", $"EnsureUartApiModeAsync via Telnet for {normMac}: {tResp}");
+                    return tResp.Contains("\"status\":\"SUCCESS\"", StringComparison.OrdinalIgnoreCase);
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Warn("SdvoeClient", $"EnsureUartApiModeAsync exception for {chip0Mac}: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Sends an in-band MCU command over UART 1 (RS-232 port index 1) to chip_0.
+        /// Automatically ensures UART 1 is in API mode beforehand.
+        /// </summary>
+        public async Task<string> SendMcuCommandAsync(string chip0Mac, string command, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(command)) return string.Empty;
+
+            try
+            {
+                string normMac = NormalizeMac(chip0Mac);
+                await EnsureUartApiModeAsync(normMac, ct);
+
+                string dataStr = command;
+                if (!dataStr.EndsWith("\r\n"))
+                {
+                    dataStr = dataStr.EndsWith("\r") || dataStr.EndsWith("\n") ? dataStr.TrimEnd('\r', '\n') + "\r\n" : dataStr + "\r\n";
+                }
+
+                string path = $"/api/device/{normMac}";
+                var payload = new
+                {
+                    op = "send:rs232",
+                    port_index = 1,
+                    data_string = dataStr
+                };
+
+                using var resp = await PostDeviceRestAsync(path, payload, ct);
+                if (resp != null && resp.IsSuccessStatusCode)
+                {
+                    string body = await resp.Content.ReadAsStringAsync(ct);
+                    AppLogger.Debug("SdvoeClient", $"SendMcuCommandAsync for {normMac} ('{command.Trim()}'): {body}");
+                    return body;
+                }
+
+                // Telnet fallback if REST fails
+                if (IsTelnetConnected)
+                {
+                    string telnetCmd = $"send {normMac} rs232 1 \"{command.Trim()}\"";
+                    string tResp = await SendTelnetCommandAsync(telnetCmd, ct);
+                    AppLogger.Debug("SdvoeClient", $"SendMcuCommandAsync via Telnet for {normMac}: {tResp}");
+                    return tResp;
+                }
+
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Warn("SdvoeClient", $"SendMcuCommandAsync exception for {chip0Mac}: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Queries device authorization/activation state via MCU UART 1: \rget authorize\r\n.
+        /// Parses:
+        /// 'status : Authorize on' -> DeviceActivationState.Activated
+        /// 'status : Authorize off' -> DeviceActivationState.Unactivated
+        /// </summary>
+        public async Task<DeviceActivationState> QueryDeviceActivationAsync(string chip0Mac, CancellationToken ct = default)
+        {
+            try
+            {
+                string normMac = NormalizeMac(chip0Mac);
+                string response = await SendMcuCommandAsync(normMac, "\rget authorize\r\n", ct);
+                return ParseActivationState(response);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Warn("SdvoeClient", $"QueryDeviceActivationAsync exception for {chip0Mac}: {ex.Message}");
+                return DeviceActivationState.Unknown;
+            }
+        }
+
+        public static DeviceActivationState ParseActivationState(string rawResponse)
+        {
+            if (string.IsNullOrWhiteSpace(rawResponse))
+            {
+                return DeviceActivationState.Unknown;
+            }
+
+            if (System.Text.RegularExpressions.Regex.IsMatch(rawResponse, @"Authorize\s*:?\s*on\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            {
+                return DeviceActivationState.Activated;
+            }
+
+            if (System.Text.RegularExpressions.Regex.IsMatch(rawResponse, @"Authorize\s*:?\s*off\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            {
+                return DeviceActivationState.Unactivated;
+            }
+
+            return DeviceActivationState.Unknown;
+        }
+
+        /// <summary>
+        /// Queries essential MCU hardware information (firmware version, hardware version, factory serial number, and activation state).
+        /// </summary>
+        public async Task<McuDeviceInfo> QueryMcuDeviceInfoAsync(string chip0Mac, CancellationToken ct = default)
+        {
+            var info = new McuDeviceInfo { MacAddress = chip0Mac };
+            try
+            {
+                string normMac = NormalizeMac(chip0Mac);
+                info.ActivationState = await QueryDeviceActivationAsync(normMac, ct);
+
+                string fwResp = await SendMcuCommandAsync(normMac, "get fw ver", ct);
+                info.FirmwareVersion = ParseMcuField(fwResp, "fw ver", string.Empty);
+
+                string hwResp = await SendMcuCommandAsync(normMac, "get hw ver", ct);
+                info.HardwareVersion = ParseMcuField(hwResp, "hw ver", string.Empty);
+
+                string snResp = await SendMcuCommandAsync(normMac, "get fac sn", ct);
+                info.FactorySerialNumber = ParseMcuField(snResp, "fac sn", string.Empty);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Warn("SdvoeClient", $"QueryMcuDeviceInfoAsync error for {chip0Mac}: {ex.Message}");
+            }
+            return info;
+        }
+
+        public static string ParseMcuField(string raw, string prefix, string fallback = "")
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return fallback;
+            string unescaped = raw.Replace("\\r\\n", "\n").Replace("\\n", "\n").Replace("\\r", "\n").Replace("\"", "");
+            var lines = unescaped.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in lines)
+            {
+                int colonIdx = line.IndexOf(':');
+                if (colonIdx >= 0 && colonIdx < line.Length - 1)
+                {
+                    string key = line.Substring(0, colonIdx).Trim();
+                    if (!string.IsNullOrEmpty(prefix) && key.IndexOf(prefix, StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        continue;
+                    }
+
+                    string val = line.Substring(colonIdx + 1).Trim();
+                    if (!string.IsNullOrEmpty(val) && !val.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return val;
+                    }
+                }
+            }
+            return fallback;
+        }
+
+        /// <summary>
         /// Starts AVAS-223 AVP thumbnail streaming via RS-232 tunneling (MCU port index 1).
-        /// Sends 'set rtp igmp <multicastIp>' then 'set rtp ON'.
+        /// Ensures UART 1 API mode, sends 'set rtp igmp <multicastIp>' then 'set rtp ON'.
         /// Note: The hardware streams directly to UDP port 5000 without requiring a port parameter.
         /// </summary>
         public async Task<bool> StartPreviewStreamViaAvpRs232Async(string mac, string multicastIp, CancellationToken ct = default)
@@ -419,6 +610,9 @@ namespace AvasRoutingApp.Sdvoe
             {
                 string normMac = NormalizeMac(mac);
                 string path = $"/api/device/{normMac}";
+
+                // Step 0: Ensure UART 1 is in API mode
+                await EnsureUartApiModeAsync(normMac, ct);
 
                 // Step 1: Set multicast IP address for RTP stream
                 var setPayload = new
@@ -532,6 +726,84 @@ namespace AvasRoutingApp.Sdvoe
             }
 
             return await StartPreviewStreamViaRestAsync(macAddress, multicastIp, ct);
+        }
+
+        /// <summary>
+        /// Starts preview streaming for Advantech VEGA-1100 transceivers using standard BlueRiver SDVoE thumbnail commands.
+        /// Bypasses CYP MCU UART (set rtp igmp).
+        /// </summary>
+        public async Task<bool> StartVegaPreviewStreamAsync(
+            string macAddress,
+            string multicastIp,
+            int port,
+            CancellationToken ct = default)
+        {
+            try
+            {
+                string normMac = NormalizeMac(macAddress);
+                AppLogger.Info("SdvoeClient", $"Configuring standard SDVoE thumbnail for VEGA-1100: {normMac} -> {multicastIp}:{port}");
+                
+                await ConfigureThumbnailStreamAsync(normMac, 20.0, 100, port, ct);
+
+                string cmd = $"start {normMac}:thumbnail:0 {multicastIp}";
+                try
+                {
+                    if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
+                    string resp = await SendTelnetCommandAsync(cmd, ct);
+                    if (IsCommandSuccessful(resp))
+                    {
+                        AppLogger.Info("SdvoeClient", $"Successfully started VEGA-1100 thumbnail stream via Telnet: {normMac}");
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // Fallback to REST
+                }
+
+                return await StartPreviewStreamViaRestAsync(normMac, multicastIp, ct);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Warn("SdvoeClient", $"StartVegaPreviewStreamAsync exception for {macAddress}: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Stops preview streaming for Advantech VEGA-1100 transceivers using standard BlueRiver thumbnail stop commands.
+        /// Bypasses CYP MCU UART.
+        /// </summary>
+        public async Task<bool> StopVegaPreviewStreamAsync(string macAddress, CancellationToken ct = default)
+        {
+            try
+            {
+                string normMac = NormalizeMac(macAddress);
+                string cmd = $"stop {normMac}:thumbnail:0 free";
+                bool success = false;
+
+                try
+                {
+                    if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
+                    string resp = await SendTelnetCommandAsync(cmd, ct);
+                    if (IsCommandSuccessful(resp))
+                    {
+                        success = true;
+                    }
+                }
+                catch
+                {
+                    success = await StopPreviewStreamViaRestAsync(normMac, true, ct);
+                }
+
+                _ipManager.ReleaseMulticastIp(normMac);
+                return success;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Warn("SdvoeClient", $"StopVegaPreviewStreamAsync exception for {macAddress}: {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>
