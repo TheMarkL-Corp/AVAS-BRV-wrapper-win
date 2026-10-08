@@ -19,6 +19,7 @@ namespace AvasRoutingApp.Configuration
         public string Theme { get; set; } = "Light";
         public double SidebarWidth { get; set; } = 400.0;
         public string SidebarFontSize { get; set; } = "Normal";
+        public bool EnableVegaDevices { get; set; } = false;
 
         /// <summary>
         /// Returns the typography scale multiplier for the configured sidebar font size.
@@ -61,7 +62,8 @@ namespace AvasRoutingApp.Configuration
                 LocalNetworkInterfaceIp = this.LocalNetworkInterfaceIp,
                 Theme = this.Theme,
                 SidebarWidth = this.SidebarWidth,
-                SidebarFontSize = this.SidebarFontSize
+                SidebarFontSize = this.SidebarFontSize,
+                EnableVegaDevices = this.EnableVegaDevices
             };
         }
     }

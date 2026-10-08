@@ -2,12 +2,25 @@ using System;
 
 namespace AvasRoutingApp.Sdvoe
 {
+    public enum DeviceFamily
+    {
+        Avas,
+        Vega,
+        GenericSdvoe
+    }
+
     /// <summary>
-    /// Represents an AVAS device discovered on the SDVoE network.
+    /// Represents an AVAS or supported SDVoE device discovered on the network.
     /// Conforms to PROJECT.md § Interface Contracts.
     /// </summary>
     public class AvasDevice
     {
+        public DeviceFamily Family => VendorId switch
+        {
+            105 => DeviceFamily.Avas,
+            192 when ProductId == 11 => DeviceFamily.Vega,
+            _ => DeviceFamily.GenericSdvoe
+        };
         public string MacAddress { get; set; } = "";
         public string DeviceName { get; set; } = "";
         public string IpAddress { get; set; } = "";
