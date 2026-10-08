@@ -57,6 +57,16 @@
                             </TextBlock.Style>
                         </TextBlock>
                     </Border>
+                    <!-- Diagnostics Button (Strictly for AVAS devices, hidden for VEGA) -->
+                    <Button Command="{Binding OpenDiagnosticsCommand}"
+                            Visibility="{Binding IsMaintenanceAvailable, Converter={StaticResource BoolToVisConverter}}"
+                            Background="{DynamicResource ThemePillBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}"
+                            Padding="6,2" Margin="6,0,0,0" VerticalAlignment="Center" Cursor="Hand" ToolTip="AVAS Hardware Diagnostics &amp; Maintenance">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="⚙" FontSize="10" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,3,0" />
+                            <TextBlock Text="Diag" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextSecondaryBrush}" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </DockPanel>
 

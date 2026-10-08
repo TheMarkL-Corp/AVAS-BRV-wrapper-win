@@ -610,6 +610,22 @@ namespace AvasRoutingApp.ViewModels
                     FactorySerialNumber = string.Empty
                 };
 
+                // Wire Diagnostics Action (Restricted to AVAS devices)
+                var currentDev = dev;
+                card.OpenDiagnosticsAction = _ =>
+                {
+                    if (currentDev.Family != DeviceFamily.Avas) return;
+                    System.Windows.Application.Current?.Dispatcher?.Invoke(() =>
+                    {
+                        var diagVm = new MaintenanceViewModel(currentDev, _multicastController);
+                        var dlg = new Views.MaintenanceDialog(diagVm)
+                        {
+                            Owner = System.Windows.Application.Current?.MainWindow
+                        };
+                        dlg.ShowDialog();
+                    });
+                };
+
                 // Asynchronously query MCU telemetry & activation (AVAS devices only)
                 var sdvoeClient = _discoveryService as SdvoeClient ?? _multicastController as SdvoeClient;
                 if (sdvoeClient != null && dev.Family == DeviceFamily.Avas)

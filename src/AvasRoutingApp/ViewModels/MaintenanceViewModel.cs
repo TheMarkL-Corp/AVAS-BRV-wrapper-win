@@ -1,0 +1,201 @@
+using System;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using AvasRoutingApp.Logging;
+using AvasRoutingApp.Sdvoe;
+
+namespace AvasRoutingApp.ViewModels
+{
+    public enum TargetChipSelection
+    {
+        Chip0,
+        Chip1,
+        Both
+    }
+
+    /// <summary>
+    /// ViewModel for AVAS-223 Hardware Diagnostics and Maintenance.
+    /// Provides independent silicon (AVP) and MCU factory reset operations, chip targeting, and execution logging.
+    /// Strictly restricted to AVAS devices (Vendor ID 105).
+    /// </summary>
+    public class MaintenanceViewModel : ViewModelBase
+    {
+        private readonly AvasDevice _device;
+        private readonly IMulticastController _multicastController;
+        private TargetChipSelection _selectedTarget = TargetChipSelection.Chip0;
+        private bool _isBusy;
+        private string _statusLog = string.Empty;
+
+        public string DeviceName => _device.DeviceName;
+        public string Chip0Mac => _device.MacAddress;
+        public string Chip1Mac => IsChip1Available ? _device.CompanionMac : "N/A";
+        public string LinkMode => _device.LinkMode;
+        public bool IsChip1Available => !string.IsNullOrEmpty(_device.CompanionMac) &&
+                                        !string.Equals(_device.CompanionMac, "NONE", StringComparison.OrdinalIgnoreCase);
+
+        public TargetChipSelection SelectedTarget
+        {
+            get => _selectedTarget;
+            set
+            {
+                if (value == TargetChipSelection.Chip1 && !IsChip1Available)
+                {
+                    value = TargetChipSelection.Chip0;
+                }
+                if (value == TargetChipSelection.Both && !IsChip1Available)
+                {
+                    value = TargetChipSelection.Chip0;
+                }
+                SetProperty(ref _selectedTarget, value);
+            }
+        }
+
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set => SetProperty(ref _isBusy, value);
+        }
+
+        public string StatusLog
+        {
+            get => _statusLog;
+            set => SetProperty(ref _statusLog, value);
+        }
+
+        public Func<bool>? ConfirmActionCallback { get; set; }
+
+        public ICommand FactoryResetAvpCommand { get; }
+        public ICommand FactoryResetMcuCommand { get; }
+        public ICommand RebootCommand { get; }
+
+        public MaintenanceViewModel(AvasDevice device, IMulticastController multicastController)
+        {
+            _device = device ?? throw new ArgumentNullException(nameof(device));
+            _multicastController = multicastController ?? throw new ArgumentNullException(nameof(multicastController));
+
+            FactoryResetAvpCommand = new RelayCommand(async () => await ExecuteFactoryResetAvpAsync(), () => !IsBusy);
+            FactoryResetMcuCommand = new RelayCommand(async () => await ExecuteFactoryResetMcuAsync(), () => !IsBusy);
+            RebootCommand = new RelayCommand(async () => await ExecuteRebootAsync(), () => !IsBusy);
+
+            AppendLog($"Initialized Diagnostics panel for {DeviceName} ({Chip0Mac}). Link mode: {LinkMode}.");
+        }
+
+        private void AppendLog(string message)
+        {
+            var line = $"[{DateTime.Now:HH:mm:ss}] {message}";
+            if (string.IsNullOrEmpty(_statusLog))
+            {
+                StatusLog = line;
+            }
+            else
+            {
+                StatusLog += Environment.NewLine + line;
+            }
+            AppLogger.Info("Maintenance", message);
+        }
+
+        public async Task ExecuteFactoryResetAvpAsync()
+        {
+            if (ConfirmActionCallback != null && !ConfirmActionCallback())
+            {
+                AppendLog("AVP Factory Reset aborted by user.");
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                AppendLog($"Starting AVP silicon factory reset (Target: {_selectedTarget})...");
+                if (_selectedTarget == TargetChipSelection.Chip0 || _selectedTarget == TargetChipSelection.Both)
+                {
+                    AppendLog($"Resetting Chip 0 ({Chip0Mac})...");
+                    bool ok0 = await _multicastController.FactoryResetAvpAsync(_device, Chip0Mac);
+                    AppendLog(ok0 ? "Chip 0 AVP reset SUCCESS." : "Chip 0 AVP reset FAILED.");
+                }
+
+                if (_selectedTarget == TargetChipSelection.Chip1 || _selectedTarget == TargetChipSelection.Both)
+                {
+                    if (IsChip1Available)
+                    {
+                        AppendLog($"Resetting Chip 1 ({Chip1Mac})...");
+                        bool ok1 = await _multicastController.FactoryResetAvpAsync(_device, Chip1Mac);
+                        AppendLog(ok1 ? "Chip 1 AVP reset SUCCESS." : "Chip 1 AVP reset FAILED.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"AVP reset exception: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        public async Task ExecuteFactoryResetMcuAsync()
+        {
+            if (ConfirmActionCallback != null && !ConfirmActionCallback())
+            {
+                AppendLog("MCU Factory Reset aborted by user.");
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                AppendLog($"Starting MCU factory reset via Chip 0 ({Chip0Mac})...");
+                bool ok = await _multicastController.FactoryResetMcuAsync(_device);
+                AppendLog(ok ? "MCU factory reset SUCCESS (EEPROM restored to factory defaults)." : "MCU factory reset FAILED.");
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"MCU reset exception: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        public async Task ExecuteRebootAsync()
+        {
+            if (ConfirmActionCallback != null && !ConfirmActionCallback())
+            {
+                AppendLog("Reboot aborted by user.");
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                AppendLog($"Starting device reboot (Target: {_selectedTarget})...");
+                if (_selectedTarget == TargetChipSelection.Chip0 || _selectedTarget == TargetChipSelection.Both)
+                {
+                    AppendLog($"Rebooting Chip 0 ({Chip0Mac})...");
+                    bool ok0 = await _multicastController.RebootChipAsync(_device, Chip0Mac);
+                    AppendLog(ok0 ? "Chip 0 reboot SUCCESS." : "Chip 0 reboot FAILED.");
+                }
+
+                if (_selectedTarget == TargetChipSelection.Chip1 || _selectedTarget == TargetChipSelection.Both)
+                {
+                    if (IsChip1Available)
+                    {
+                        AppendLog($"Rebooting Chip 1 ({Chip1Mac})...");
+                        bool ok1 = await _multicastController.RebootChipAsync(_device, Chip1Mac);
+                        AppendLog(ok1 ? "Chip 1 reboot SUCCESS." : "Chip 1 reboot FAILED.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"Reboot exception: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+    }
+}

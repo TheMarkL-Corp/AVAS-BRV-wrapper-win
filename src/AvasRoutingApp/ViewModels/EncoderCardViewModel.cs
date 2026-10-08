@@ -78,11 +78,21 @@ namespace AvasRoutingApp.ViewModels
 
         public System.Windows.Input.ICommand CopyMacCommand { get; }
         public System.Windows.Input.ICommand CopyMulticastCommand { get; }
+        public System.Windows.Input.ICommand OpenDiagnosticsCommand { get; }
+
+        public Action<EncoderCardViewModel>? OpenDiagnosticsAction { get; set; }
 
         public EncoderCardViewModel()
         {
             CopyMacCommand = new RelayCommand(ExecuteCopyMac);
             CopyMulticastCommand = new RelayCommand(ExecuteCopyMulticast);
+            OpenDiagnosticsCommand = new RelayCommand(ExecuteOpenDiagnostics, () => IsMaintenanceAvailable);
+        }
+
+        private void ExecuteOpenDiagnostics()
+        {
+            if (!IsMaintenanceAvailable) return;
+            OpenDiagnosticsAction?.Invoke(this);
         }
 
         private async void ExecuteCopyMac()
