@@ -19,10 +19,6 @@
 
             <!-- Card Header: Device Name & Mode Badge -->
             <DockPanel Grid.Row="0" Margin="0,0,0,8">
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                    <TextBlock Text="●" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,6,0" VerticalAlignment="Center" FontSize="10" />
-                    <TextBlock Text="{Binding DeviceName}" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="280" />
-                </StackPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <!-- Activation Status Badge with MCU Telemetry Tooltip -->
                     <Border Background="{Binding ActivationBadgeBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0" VerticalAlignment="Center"
@@ -60,13 +56,24 @@
                     <!-- Diagnostics Button (Strictly for AVAS devices, hidden for VEGA) -->
                     <Button Command="{Binding OpenDiagnosticsCommand}"
                             Visibility="{Binding IsMaintenanceAvailable, Converter={StaticResource BoolToVisConverter}}"
-                            Background="{DynamicResource ThemePillBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}"
-                            Padding="6,2" Margin="6,0,0,0" VerticalAlignment="Center" Cursor="Hand" ToolTip="AVAS Hardware Diagnostics &amp; Maintenance">
+                            Background="{DynamicResource ThemePillBackgroundBrush}"
+                            BorderThickness="1"
+                            BorderBrush="{DynamicResource ThemeAccentBrush}"
+                            Padding="8,3"
+                            Margin="6,0,0,0"
+                            MinHeight="26"
+                            VerticalAlignment="Center"
+                            Cursor="Hand"
+                            ToolTip="AVAS Hardware Diagnostics &amp; Maintenance">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="⚙" FontSize="10" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,3,0" />
-                            <TextBlock Text="Diag" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextSecondaryBrush}" />
+                            <TextBlock Text="⚙" FontSize="11" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,4,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Diag" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                    <TextBlock Text="●" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,6,0" VerticalAlignment="Center" FontSize="10" />
+                    <TextBlock Text="{Binding DeviceName}" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="280" />
                 </StackPanel>
             </DockPanel>
 

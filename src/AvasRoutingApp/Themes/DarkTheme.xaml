@@ -63,4 +63,59 @@
     <SolidColorBrush x:Key="ThemeStatusErrorBrush" Color="#EF4444" />
     <SolidColorBrush x:Key="ThemeStatusErrorBackgroundBrush" Color="#3E1517" />
     <SolidColorBrush x:Key="ThemeSurfaceOverlayBrush" Color="#A0000000" />
+
+    <!-- Standard Button Styles -->
+    <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource ThemeAccentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource ThemeAccentForegroundBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border" Property="Opacity" Value="0.9" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Border" Property="Opacity" Value="0.75" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource ThemeButtonBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource ThemeButtonForegroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ThemeButtonBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource ThemeButtonHoverBackgroundBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Border" Property="Opacity" Value="0.75" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

@@ -68,16 +68,16 @@ namespace AvasRoutingApp
             if (app == null) return;
 
             string themeFile = string.Equals(themeName, "Light", StringComparison.OrdinalIgnoreCase)
-                ? "Themes/LightTheme.xaml"
-                : "Themes/DarkTheme.xaml";
+                ? "/AvasRoutingApp;component/Themes/LightTheme.xaml"
+                : "/AvasRoutingApp;component/Themes/DarkTheme.xaml";
 
             try
             {
-                var uri = new Uri(themeFile, UriKind.Relative);
+                var uri = new Uri(themeFile, UriKind.RelativeOrAbsolute);
                 var newDict = new ResourceDictionary { Source = uri };
 
                 app.Resources.MergedDictionaries.Clear();
-                app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("Themes/Icons.xaml", UriKind.Relative) });
+                app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("/AvasRoutingApp;component/Themes/Icons.xaml", UriKind.RelativeOrAbsolute) });
                 app.Resources.MergedDictionaries.Add(newDict);
                 AppLogger.Info("Theme", $"Theme applied: {themeName} ({themeFile})");
             }
