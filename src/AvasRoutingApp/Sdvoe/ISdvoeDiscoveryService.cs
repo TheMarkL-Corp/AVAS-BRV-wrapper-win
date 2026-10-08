@@ -11,7 +11,8 @@ namespace AvasRoutingApp.Sdvoe
     /// </summary>
     public interface ISdvoeDiscoveryService
     {
-        Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(CancellationToken ct = default);
+        Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(bool enableVegaDevices = false, CancellationToken ct = default);
+        Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(CancellationToken ct) => DiscoverAvas223DevicesAsync(false, ct);
         event Action<IReadOnlyList<AvasDevice>>? DevicesDiscovered;
     }
 }

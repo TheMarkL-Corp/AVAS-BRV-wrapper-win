@@ -20,6 +20,9 @@ namespace AvasRoutingApp.Tests
         public event Action<IReadOnlyList<AvasDevice>>? DevicesDiscovered;
 
         public Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(CancellationToken ct = default)
+            => DiscoverAvas223DevicesAsync(false, ct);
+
+        public Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(bool enableVegaDevices = false, CancellationToken ct = default)
         {
             IReadOnlyList<AvasDevice> list = DevicesToReturn.ToList();
             DevicesDiscovered?.Invoke(list);

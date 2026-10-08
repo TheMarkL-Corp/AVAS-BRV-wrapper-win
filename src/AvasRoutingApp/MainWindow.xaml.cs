@@ -281,6 +281,11 @@ namespace AvasRoutingApp
                 {
                     NavigateToConfiguredUrl();
                 }
+
+                if (ViewModel?.RefreshDevicesCommand != null && ViewModel.RefreshDevicesCommand.CanExecute(null))
+                {
+                    ViewModel.RefreshDevicesCommand.Execute(null);
+                }
             }
         }
 

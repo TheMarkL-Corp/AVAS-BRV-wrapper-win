@@ -486,7 +486,8 @@ namespace AvasRoutingApp.ViewModels
             try
             {
                 AppLogger.Info("Discovery", "Querying SDVoE Control Server for connected endpoints...");
-                devices = await _discoveryService.DiscoverAvas223DevicesAsync(ct);
+                bool enableVega = _configService.Current.EnableVegaDevices;
+                devices = await _discoveryService.DiscoverAvas223DevicesAsync(enableVega, ct);
                 AppLogger.Info("Discovery", $"Discovered {devices.Count} total endpoints from SDVoE server.");
             }
             catch (Exception ex)
@@ -496,13 +497,12 @@ namespace AvasRoutingApp.ViewModels
                 return;
             }
 
-            // Strictly filter for AVAS-223 chip_0 transmitters (VID 105, PID 81, chip_0)
-            var filteredEncoders = devices
-                .Where(SdvoeDiscoveryFilter.IsTargetAvas223Tx)
-                .ToList();
+            // Filter for target encoders (AVAS-223 chip_0 transmitters and optionally VEGA-1100)
+            bool enableVegaFilter = _configService.Current.EnableVegaDevices;
+            var filteredEncoders = SdvoeDiscoveryFilter.FilterTargetDevices(devices, enableVegaFilter);
 
             DiscoveredEncoderCount = filteredEncoders.Count;
-            AppLogger.Info("Discovery", $"Filtered for AVAS-223 chip_0 TX encoders: {DiscoveredEncoderCount} matching device(s).");
+            AppLogger.Info("Discovery", $"Filtered for target encoders: {DiscoveredEncoderCount} matching device(s) (enableVega={enableVegaFilter}).");
 
             // Query Multi-Link topology to populate MultiLinkCards and enrich preview cards
             IReadOnlyList<MultiLinkInfo> multiLinkPairs = Array.Empty<MultiLinkInfo>();
@@ -586,8 +586,10 @@ namespace AvasRoutingApp.ViewModels
                 AppLogger.Info("StreamControl", $"Allocated Multicast IP {mcastIp}:{basePort} for MAC {dev.MacAddress} ({dev.DeviceName})");
 
                 // Command SDVoE Control Server to start thumbnail streaming
-                bool started = await _multicastController.StartPreviewStreamAsync(dev.MacAddress, mcastIp, basePort, ct);
-                AppLogger.Info("StreamControl", $"Start preview stream response for {dev.MacAddress}: {(started ? "SUCCESS" : "FAILED / UNSUPPORTED")}");
+                bool started = dev.Family == DeviceFamily.Vega
+                    ? await _multicastController.StartVegaPreviewStreamAsync(dev.MacAddress, mcastIp, basePort, ct)
+                    : await _multicastController.StartPreviewStreamAsync(dev.MacAddress, mcastIp, basePort, ct);
+                AppLogger.Info("StreamControl", $"Start preview stream response for {dev.MacAddress} ({dev.Family}): {(started ? "SUCCESS" : "FAILED / UNSUPPORTED")}");
 
                 // Build Card ViewModel
                 var card = new EncoderCardViewModel
@@ -693,7 +695,14 @@ namespace AvasRoutingApp.ViewModels
                     }
                     UnifiedRtpDemuxReceiver.Instance.RemoveChannel(previewCard.UnicastIp);
 
-                    await _multicastController.StopPreviewStreamAsync(previewCard.MacAddress, CancellationToken.None);
+                    if (previewCard.Family == DeviceFamily.Vega)
+                    {
+                        await _multicastController.StopVegaPreviewStreamAsync(previewCard.MacAddress, CancellationToken.None);
+                    }
+                    else
+                    {
+                        await _multicastController.StopPreviewStreamAsync(previewCard.MacAddress, CancellationToken.None);
+                    }
                     _multicastController.ReleaseMulticastIp(previewCard.MacAddress);
 
                     previewCard.IsStreaming = false;
@@ -805,8 +814,15 @@ namespace AvasRoutingApp.ViewModels
                 try
                 {
                     // 2. Command encoder to stop streaming
-                    AppLogger.Debug("StreamControl", $"Stopping preview stream on hardware for {card.MacAddress}");
-                    await _multicastController.StopPreviewStreamAsync(card.MacAddress, ct);
+                    AppLogger.Debug("StreamControl", $"Stopping preview stream on hardware for {card.MacAddress} ({card.Family})");
+                    if (card.Family == DeviceFamily.Vega)
+                    {
+                        await _multicastController.StopVegaPreviewStreamAsync(card.MacAddress, ct);
+                    }
+                    else
+                    {
+                        await _multicastController.StopPreviewStreamAsync(card.MacAddress, ct);
+                    }
                 }
                 catch (Exception ex)
                 {

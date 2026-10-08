@@ -186,11 +186,17 @@ namespace AvasRoutingApp.Sdvoe
         #region Device Discovery & Filtering
 
         /// <summary>
+        /// Backward-compatible overload for discovering AVAS-223 chip_0 encoders.
+        /// </summary>
+        public Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(CancellationToken ct) 
+            => DiscoverAvas223DevicesAsync(false, ct);
+
+        /// <summary>
         /// Discovers all devices on the network and filters strictly for AVAS-223 chip_0 encoders
-        /// (Vendor ID 105, Product ID 81, IsTransmitter == true, ChipIndex == 0).
+        /// (and optionally Advantech VEGA-1100 transceivers when enableVegaDevices is true).
         /// Fires DevicesDiscovered event on completion.
         /// </summary>
-        public async Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(CancellationToken ct = default)
+        public async Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(bool enableVegaDevices = false, CancellationToken ct = default)
         {
             IReadOnlyList<AvasDevice> allDevices;
 
@@ -204,7 +210,7 @@ namespace AvasRoutingApp.Sdvoe
                 allDevices = await DiscoverDevicesViaRestAsync(ct);
             }
 
-            var filtered = SdvoeDiscoveryFilter.FilterTargetDevices(allDevices);
+            var filtered = SdvoeDiscoveryFilter.FilterTargetDevices(allDevices, enableVegaDevices);
 
             // Sync currently allocated multicast IPs
             foreach (var dev in filtered)
