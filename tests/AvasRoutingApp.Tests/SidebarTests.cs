@@ -71,6 +71,21 @@ namespace AvasRoutingApp.Tests
             StoppedStreams.Add(macAddress);
             return Task.FromResult(true);
         }
+
+        public Task<bool> FactoryResetAvpAsync(AvasDevice device, string targetMac, CancellationToken ct = default)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> FactoryResetMcuAsync(AvasDevice device, CancellationToken ct = default)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> RebootChipAsync(AvasDevice device, string targetMac, CancellationToken ct = default)
+        {
+            return Task.FromResult(true);
+        }
     }
 
     /// <summary>

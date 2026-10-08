@@ -807,6 +807,90 @@ namespace AvasRoutingApp.Sdvoe
         }
 
         /// <summary>
+        /// Sends AVP silicon factory reset command ('factory <targetMac>') for the target chip.
+        /// Strictly restricted to AVAS devices (Vendor ID 105).
+        /// </summary>
+        public async Task<bool> FactoryResetAvpAsync(AvasDevice device, string targetMac, CancellationToken ct = default)
+        {
+            if (device.Family != DeviceFamily.Avas)
+            {
+                throw new InvalidOperationException($"Hardware diagnostics and factory resets are restricted to AVAS devices. Device family: {device.Family}");
+            }
+
+            string normMac = NormalizeMac(targetMac);
+            string cmd = $"factory {normMac}";
+            AppLogger.Info("SdvoeClient", $"Issuing AVP factory reset to {normMac} (parent: {device.MacAddress})");
+
+            try
+            {
+                if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
+                string resp = await SendTelnetCommandAsync(cmd, ct);
+                return IsCommandSuccessful(resp);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("SdvoeClient", $"Error executing AVP factory reset on {normMac}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Sends MCU factory reset command ('send <chip0Mac> rs232:1 set factory default') to restore MCU EEPROM.
+        /// Strictly restricted to AVAS devices (Vendor ID 105) and always dispatched via Chip 0 MAC.
+        /// </summary>
+        public async Task<bool> FactoryResetMcuAsync(AvasDevice device, CancellationToken ct = default)
+        {
+            if (device.Family != DeviceFamily.Avas)
+            {
+                throw new InvalidOperationException($"Hardware diagnostics and factory resets are restricted to AVAS devices. Device family: {device.Family}");
+            }
+
+            string chip0Mac = NormalizeMac(device.MacAddress);
+            string cmd = $"send {chip0Mac} rs232:1 set factory default";
+            AppLogger.Info("SdvoeClient", $"Issuing MCU factory reset to {chip0Mac}");
+
+            try
+            {
+                if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
+                string resp = await SendTelnetCommandAsync(cmd, ct);
+                return IsCommandSuccessful(resp);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("SdvoeClient", $"Error executing MCU factory reset on {chip0Mac}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Sends BlueRiver reboot command ('reboot <targetMac>') to power-cycle the target AVP chip.
+        /// Strictly restricted to AVAS devices (Vendor ID 105).
+        /// </summary>
+        public async Task<bool> RebootChipAsync(AvasDevice device, string targetMac, CancellationToken ct = default)
+        {
+            if (device.Family != DeviceFamily.Avas)
+            {
+                throw new InvalidOperationException($"Hardware diagnostics and factory resets are restricted to AVAS devices. Device family: {device.Family}");
+            }
+
+            string normMac = NormalizeMac(targetMac);
+            string cmd = $"reboot {normMac}";
+            AppLogger.Info("SdvoeClient", $"Issuing reboot command to {normMac}");
+
+            try
+            {
+                if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
+                string resp = await SendTelnetCommandAsync(cmd, ct);
+                return IsCommandSuccessful(resp);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("SdvoeClient", $"Error executing reboot on {normMac}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Verifies whether a Semtech Telnet response status is SUCCESS/PROCESSING and contains no device-level errors.
         /// </summary>
         public static bool IsCommandSuccessful(string resp)

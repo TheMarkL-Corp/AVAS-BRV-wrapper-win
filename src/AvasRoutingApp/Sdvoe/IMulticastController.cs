@@ -15,5 +15,8 @@ namespace AvasRoutingApp.Sdvoe
         Task<bool> StopPreviewStreamAsync(string macAddress, CancellationToken ct = default);
         Task<bool> StartVegaPreviewStreamAsync(string macAddress, string multicastIp, int port, CancellationToken ct = default);
         Task<bool> StopVegaPreviewStreamAsync(string macAddress, CancellationToken ct = default);
+        Task<bool> FactoryResetAvpAsync(AvasDevice device, string targetMac, CancellationToken ct = default);
+        Task<bool> FactoryResetMcuAsync(AvasDevice device, CancellationToken ct = default);
+        Task<bool> RebootChipAsync(AvasDevice device, string targetMac, CancellationToken ct = default);
     }
 }
