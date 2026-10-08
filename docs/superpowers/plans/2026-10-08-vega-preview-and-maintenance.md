@@ -41,27 +41,27 @@
   - `SdvoeDiscoveryFilter.IsTargetVega1100(AvasDevice)`: `bool`
   - `SdvoeDiscoveryFilter.FilterTargetDevices(IEnumerable<AvasDevice>, bool)`: `IReadOnlyList<AvasDevice>`
 
-- [ ] **Step 1: Write failing unit tests for discovery filtering**
+- [x] **Step 1: Write failing unit tests for discovery filtering**
 Create tests in `tests/AvasRoutingApp.Tests/SdvoeDiscoveryFilterTests.cs` verifying:
 1. AVAS-223 Tx is always included.
 2. VEGA-1100 (VID 192, PID 11) is included when `enableVegaDevices = true`.
 3. VEGA-1100 is excluded when `enableVegaDevices = false`.
 4. Chip 1 secondary devices are excluded regardless of flag.
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 Run: `dotnet test tests/AvasRoutingApp.Tests/ --filter FullyQualifiedName~SdvoeDiscoveryFilterTests`
 Expected: FAIL with compilation error (missing members / signatures).
 
-- [ ] **Step 3: Implement minimal changes in AppConfig, AvasDevice, and SdvoeDiscoveryFilter**
+- [x] **Step 3: Implement minimal changes in AppConfig, AvasDevice, and SdvoeDiscoveryFilter**
 1. Add `public bool EnableVegaDevices { get; set; } = false;` to `AppConfig.cs`.
 2. Add `DeviceFamily` enum and `Family` getter property to `AvasDevice.cs`.
 3. Update `SdvoeDiscoveryFilter.cs` to add `IsTargetVega1100` and overload `FilterTargetDevices(devices, enableVega)`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 Run: `dotnet test tests/AvasRoutingApp.Tests/ --filter FullyQualifiedName~SdvoeDiscoveryFilterTests`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add src/AvasRoutingApp/Configuration/AppConfig.cs src/AvasRoutingApp/Sdvoe/AvasDevice.cs src/AvasRoutingApp/Sdvoe/SdvoeDiscoveryFilter.cs tests/AvasRoutingApp.Tests/SdvoeDiscoveryFilterTests.cs
 git commit -m "feat: add VEGA-1100 device model and discovery filter"
@@ -82,17 +82,17 @@ git commit -m "feat: add VEGA-1100 device model and discovery filter"
   - `SdvoeClient.StartVegaPreviewStreamAsync(string mac, string multicastIp, int port, CancellationToken)`: `Task<bool>`
   - `SdvoeClient.StopVegaPreviewStreamAsync(string mac, CancellationToken)`: `Task<bool>`
 
-- [ ] **Step 1: Write failing unit test for VEGA preview commands**
+- [x] **Step 1: Write failing unit test for VEGA preview commands**
 Create `tests/AvasRoutingApp.Tests/VegaPreviewPipelineTests.cs` validating:
 1. `StartVegaPreviewStreamAsync` sends `set <mac> thumbnail ssrc 100 fps 20 udp <ip>:<port>`.
 2. `StopVegaPreviewStreamAsync` sends `stop <mac>:thumbnail:0 free` or equivalent BlueRiver stop command.
 3. No UART RS232 `set rtp igmp` packets are sent for VEGA devices.
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 Run: `dotnet test tests/AvasRoutingApp.Tests/ --filter FullyQualifiedName~VegaPreviewPipelineTests`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement VEGA preview methods in `SdvoeClient.cs`**
+- [x] **Step 3: Implement VEGA preview methods in `SdvoeClient.cs`**
 Add `StartVegaPreviewStreamAsync` and `StopVegaPreviewStreamAsync`. In `StartPreviewStreamAsync`, route automatically:
 ```csharp
 if (device.Family == DeviceFamily.Vega)
@@ -102,11 +102,11 @@ if (device.Family == DeviceFamily.Vega)
 return await StartPreviewStreamViaAvpRs232Async(device.MacAddress, multicastIp, ct);
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 Run: `dotnet test tests/AvasRoutingApp.Tests/ --filter FullyQualifiedName~VegaPreviewPipelineTests`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add src/AvasRoutingApp/Sdvoe/SdvoeClient.cs src/AvasRoutingApp/Sdvoe/ISdvoeDiscoveryService.cs tests/AvasRoutingApp.Tests/VegaPreviewPipelineTests.cs
 git commit -m "feat: implement pure SDVoE preview streaming for VEGA-1100"
@@ -127,24 +127,24 @@ git commit -m "feat: implement pure SDVoE preview streaming for VEGA-1100"
   - `SdvoeClient.FactoryResetMcuAsync(AvasDevice device, CancellationToken)`: `Task<bool>`
   - `SdvoeClient.RebootChipAsync(AvasDevice device, string targetMac, CancellationToken)`: `Task<bool>`
 
-- [ ] **Step 1: Write failing unit test for AVAS diagnostics commands**
+- [x] **Step 1: Write failing unit test for AVAS diagnostics commands**
 Create `tests/AvasRoutingApp.Tests/AvasDiagnosticsCommandTests.cs` validating:
 1. `FactoryResetAvpAsync` sends `factory <targetMac>\r`.
 2. `FactoryResetMcuAsync` sends `send <chip0Mac> rs232:1 set factory default\r`.
 3. Calling these on a VEGA or non-AVAS device throws `InvalidOperationException` and does not transmit commands.
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 Run: `dotnet test tests/AvasRoutingApp.Tests/ --filter FullyQualifiedName~AvasDiagnosticsCommandTests`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement maintenance methods in `SdvoeClient.cs`**
+- [x] **Step 3: Implement maintenance methods in `SdvoeClient.cs`**
 Enforce `if (device.Family != DeviceFamily.Avas) throw new InvalidOperationException("Maintenance commands are restricted to AVAS devices.");` and dispatch Telnet commands.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 Run: `dotnet test tests/AvasRoutingApp.Tests/ --filter FullyQualifiedName~AvasDiagnosticsCommandTests`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add src/AvasRoutingApp/Sdvoe/SdvoeClient.cs src/AvasRoutingApp/Sdvoe/IMulticastController.cs tests/AvasRoutingApp.Tests/AvasDiagnosticsCommandTests.cs
 git commit -m "feat: implement AVAS-only AVP and MCU factory reset commands"
@@ -169,19 +169,19 @@ git commit -m "feat: implement AVAS-only AVP and MCU factory reset commands"
   - `EncoderCardViewModel.BadgeText`: `string`
   - `EncoderCardViewModel.IsMaintenanceAvailable`: `bool`
 
-- [ ] **Step 1: Write unit tests for EncoderCardViewModel properties**
+- [x] **Step 1: Write unit tests for EncoderCardViewModel properties**
 Verify `IsVegaDevice == true`, `BadgeText == "[VEGA-1100 (Test)]"`, and `IsMaintenanceAvailable == false` for VEGA devices, and `IsMaintenanceAvailable == true` for AVAS devices.
 
-- [ ] **Step 2: Implement ViewModel properties and XAML badge binding**
+- [x] **Step 2: Implement ViewModel properties and XAML badge binding**
 1. Update `EncoderCardViewModel.cs` with `BadgeText`, `IsVegaDevice`, and `IsMaintenanceAvailable`.
 2. In `EncoderCardView.xaml`, bind header badge to `BadgeText` with styled pill background for VEGA devices.
 3. In `SettingsDialog.xaml`, add "Enable VEGA Devices" toggle bound to config.
 
-- [ ] **Step 3: Verify tests pass**
+- [x] **Step 3: Verify tests pass**
 Run: `dotnet test tests/AvasRoutingApp.Tests/ --filter FullyQualifiedName~EncoderCardViewModelTests`
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 ```bash
 git add src/AvasRoutingApp/Views/SettingsDialog.xaml src/AvasRoutingApp/Views/SettingsDialog.xaml.cs src/AvasRoutingApp/ViewModels/EncoderCardViewModel.cs src/AvasRoutingApp/Views/EncoderCardView.xaml src/AvasRoutingApp/ViewModels/MainViewModel.cs tests/AvasRoutingApp.Tests/EncoderCardViewModelTests.cs
 git commit -m "feat: add Enable VEGA Devices setting toggle and VEGA-1100 UI badge"
@@ -206,23 +206,23 @@ git commit -m "feat: add Enable VEGA Devices setting toggle and VEGA-1100 UI bad
   - `MaintenanceViewModel.McuResetCommand`: `ICommand`
   - `MaintenanceViewModel.RebootCommand`: `ICommand`
 
-- [ ] **Step 1: Write unit tests for MaintenanceViewModel**
+- [x] **Step 1: Write unit tests for MaintenanceViewModel**
 Verify:
 1. Target selection defaults to `Chip0`.
 2. Selecting `Chip1` is disabled if `CompanionMac == "NONE"`.
 3. Executing Factory Reset on `Both` calls `FactoryResetAvpAsync` on Chip 0 then Chip 1.
 4. MCU reset always passes Chip 0 MAC.
 
-- [ ] **Step 2: Create MaintenanceViewModel and MaintenanceDialog XAML**
+- [x] **Step 2: Create MaintenanceViewModel and MaintenanceDialog XAML**
 1. Implement `MaintenanceViewModel.cs` with commands, status log output, and confirmation callbacks.
 2. Build `MaintenanceDialog.xaml` with styled chip selector radio buttons, action buttons, and live log console.
 3. Wire "Diagnostics" button in `EncoderCardView.xaml` to open `MaintenanceDialog`.
 
-- [ ] **Step 3: Run tests to verify**
+- [x] **Step 3: Run tests to verify**
 Run: `dotnet test tests/AvasRoutingApp.Tests/ --filter FullyQualifiedName~MaintenanceViewModelTests`
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 ```bash
 git add src/AvasRoutingApp/ViewModels/MaintenanceViewModel.cs src/AvasRoutingApp/Views/MaintenanceDialog.xaml src/AvasRoutingApp/Views/MaintenanceDialog.xaml.cs src/AvasRoutingApp/ViewModels/EncoderCardViewModel.cs tests/AvasRoutingApp.Tests/MaintenanceViewModelTests.cs
 git commit -m "feat: create AVAS advanced diagnostics dialog with dual-chip selection"
@@ -235,15 +235,15 @@ git commit -m "feat: create AVAS advanced diagnostics dialog with dual-chip sele
 **Files:**
 - Test: `tests/AvasRoutingApp.Tests/` (all test suites)
 
-- [ ] **Step 1: Run full automated test suite**
+- [x] **Step 1: Run full automated test suite**
 Run: `dotnet test tests/AvasRoutingApp.Tests/ -v normal`
 Expected: All tests pass with zero regressions.
 
-- [ ] **Step 2: Build complete solution**
+- [x] **Step 2: Build complete solution**
 Run: `dotnet build src/AvasRoutingApp/AvasRoutingApp.csproj -c Release`
 Expected: Build succeeds with 0 errors.
 
-- [ ] **Step 3: Commit final integration touches**
+- [x] **Step 3: Commit final integration touches**
 ```bash
 git commit -am "chore: verify full test suite and clean release build for bump-up version"
 ```
