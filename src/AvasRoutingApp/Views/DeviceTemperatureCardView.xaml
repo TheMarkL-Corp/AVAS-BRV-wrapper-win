@@ -69,6 +69,24 @@
                                    FontSize="9" 
                                    FontWeight="SemiBold" />
                     </Border>
+
+                    <!-- Diagnostics Button (Strictly for AVAS devices) -->
+                    <Button Command="{Binding OpenDiagnosticsCommand}"
+                            Visibility="{Binding IsMaintenanceAvailable, Converter={StaticResource BoolToVisConverter}}"
+                            Background="{DynamicResource ThemePillBackgroundBrush}"
+                            BorderThickness="1"
+                            BorderBrush="{DynamicResource ThemeAccentBrush}"
+                            Padding="6,2"
+                            Margin="6,0,0,0"
+                            Height="22"
+                            VerticalAlignment="Center"
+                            Cursor="Hand"
+                            ToolTip="AVAS Hardware Diagnostics &amp; Maintenance">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="⚙" FontSize="10" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,3,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Diag" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </DockPanel>
 

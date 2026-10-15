@@ -18,7 +18,8 @@ namespace AvasRoutingApp.ViewModels
     {
         Previews,
         MultiLink,
-        Temperature
+        Temperature,
+        Diagnostics
     }
 
     /// <summary>
@@ -58,6 +59,9 @@ namespace AvasRoutingApp.ViewModels
         public ObservableCollection<DeviceTemperatureCardViewModel> TemperatureCards { get; } = new();
         public ObservableCollection<DeviceTemperatureCardViewModel> FilteredTxCards { get; } = new();
         public ObservableCollection<DeviceTemperatureCardViewModel> FilteredRxCards { get; } = new();
+        public ObservableCollection<MaintenanceCardViewModel> MaintenanceCards { get; } = new();
+        public ObservableCollection<MaintenanceCardViewModel> FilteredTxMaintenanceCards { get; } = new();
+        public ObservableCollection<MaintenanceCardViewModel> FilteredRxMaintenanceCards { get; } = new();
 
         public SidebarTab SelectedTab
         {
@@ -69,6 +73,7 @@ namespace AvasRoutingApp.ViewModels
                     OnPropertyChanged(nameof(IsPreviewsTabSelected));
                     OnPropertyChanged(nameof(IsMultiLinkTabSelected));
                     OnPropertyChanged(nameof(IsTemperatureTabSelected));
+                    OnPropertyChanged(nameof(IsDiagnosticsTabSelected));
                     UpdateTemperaturePollingState();
                 }
             }
@@ -77,6 +82,7 @@ namespace AvasRoutingApp.ViewModels
         public bool IsPreviewsTabSelected => _selectedTab == SidebarTab.Previews;
         public bool IsMultiLinkTabSelected => _selectedTab == SidebarTab.MultiLink;
         public bool IsTemperatureTabSelected => _selectedTab == SidebarTab.Temperature;
+        public bool IsDiagnosticsTabSelected => _selectedTab == SidebarTab.Diagnostics;
 
         public bool IsSidebarExpanded
         {
@@ -202,6 +208,50 @@ namespace AvasRoutingApp.ViewModels
             set => SetProperty(ref _isRefreshingTemperatures, value);
         }
 
+        private string _selectedDiagnosticsFilter = "ALL";
+        private bool _isTxDiagnosticsSectionExpanded = true;
+        private bool _isRxDiagnosticsSectionExpanded = true;
+
+        public string SelectedDiagnosticsFilter
+        {
+            get => _selectedDiagnosticsFilter;
+            set
+            {
+                if (SetProperty(ref _selectedDiagnosticsFilter, value))
+                {
+                    OnPropertyChanged(nameof(IsFilterAllDiagnosticsSelected));
+                    OnPropertyChanged(nameof(IsFilterTxDiagnosticsSelected));
+                    OnPropertyChanged(nameof(IsFilterRxDiagnosticsSelected));
+                    OnPropertyChanged(nameof(ShowTxDiagnosticsSection));
+                    OnPropertyChanged(nameof(ShowRxDiagnosticsSection));
+                    UpdateFilteredMaintenanceCards();
+                }
+            }
+        }
+
+        public bool IsFilterAllDiagnosticsSelected => string.Equals(_selectedDiagnosticsFilter, "ALL", StringComparison.OrdinalIgnoreCase);
+        public bool IsFilterTxDiagnosticsSelected => string.Equals(_selectedDiagnosticsFilter, "TX", StringComparison.OrdinalIgnoreCase);
+        public bool IsFilterRxDiagnosticsSelected => string.Equals(_selectedDiagnosticsFilter, "RX", StringComparison.OrdinalIgnoreCase);
+
+        public bool ShowTxDiagnosticsSection => !string.Equals(_selectedDiagnosticsFilter, "RX", StringComparison.OrdinalIgnoreCase);
+        public bool ShowRxDiagnosticsSection => !string.Equals(_selectedDiagnosticsFilter, "TX", StringComparison.OrdinalIgnoreCase);
+
+        public bool IsTxDiagnosticsSectionExpanded
+        {
+            get => _isTxDiagnosticsSectionExpanded;
+            set => SetProperty(ref _isTxDiagnosticsSectionExpanded, value);
+        }
+
+        public bool IsRxDiagnosticsSectionExpanded
+        {
+            get => _isRxDiagnosticsSectionExpanded;
+            set => SetProperty(ref _isRxDiagnosticsSectionExpanded, value);
+        }
+
+        public int TotalDiagnosticsDeviceCount => MaintenanceCards.Count;
+        public int TxDiagnosticsCount => MaintenanceCards.Count(c => c.IsTransmitter);
+        public int RxDiagnosticsCount => MaintenanceCards.Count(c => c.IsReceiver);
+
         public ICommand ToggleSidebarCommand { get; }
         public ICommand RefreshDevicesCommand { get; }
         public ICommand StopAllStreamsCommand { get; }
@@ -209,12 +259,18 @@ namespace AvasRoutingApp.ViewModels
         public ICommand SelectPreviewsTabCommand { get; }
         public ICommand SelectMultiLinkTabCommand { get; }
         public ICommand SelectTemperatureTabCommand { get; }
+        public ICommand SelectDiagnosticsTabCommand { get; }
         public ICommand SetFilterAllCommand { get; }
         public ICommand SetFilterTxCommand { get; }
         public ICommand SetFilterRxCommand { get; }
         public ICommand ToggleTxSectionCommand { get; }
         public ICommand ToggleRxSectionCommand { get; }
         public ICommand RefreshTemperaturesCommand { get; }
+        public ICommand SetFilterAllDiagnosticsCommand { get; }
+        public ICommand SetFilterTxDiagnosticsCommand { get; }
+        public ICommand SetFilterRxDiagnosticsCommand { get; }
+        public ICommand ToggleTxDiagnosticsSectionCommand { get; }
+        public ICommand ToggleRxDiagnosticsSectionCommand { get; }
 
         public MainViewModel(
             ISdvoeDiscoveryService? discoveryService = null,
@@ -254,6 +310,7 @@ namespace AvasRoutingApp.ViewModels
             SelectPreviewsTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.Previews);
             SelectMultiLinkTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.MultiLink);
             SelectTemperatureTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.Temperature);
+            SelectDiagnosticsTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.Diagnostics);
 
             SetFilterAllCommand = new RelayCommand(() => SelectedTemperatureFilter = "ALL");
             SetFilterTxCommand = new RelayCommand(() => SelectedTemperatureFilter = "TX");
@@ -261,6 +318,12 @@ namespace AvasRoutingApp.ViewModels
             ToggleTxSectionCommand = new RelayCommand(() => IsTxSectionExpanded = !IsTxSectionExpanded);
             ToggleRxSectionCommand = new RelayCommand(() => IsRxSectionExpanded = !IsRxSectionExpanded);
             RefreshTemperaturesCommand = new RelayCommand(async () => await RefreshTemperaturesAsync());
+
+            SetFilterAllDiagnosticsCommand = new RelayCommand(() => SelectedDiagnosticsFilter = "ALL");
+            SetFilterTxDiagnosticsCommand = new RelayCommand(() => SelectedDiagnosticsFilter = "TX");
+            SetFilterRxDiagnosticsCommand = new RelayCommand(() => SelectedDiagnosticsFilter = "RX");
+            ToggleTxDiagnosticsSectionCommand = new RelayCommand(() => IsTxDiagnosticsSectionExpanded = !IsTxDiagnosticsSectionExpanded);
+            ToggleRxDiagnosticsSectionCommand = new RelayCommand(() => IsRxDiagnosticsSectionExpanded = !IsRxDiagnosticsSectionExpanded);
 
             try
             {
@@ -551,6 +614,64 @@ namespace AvasRoutingApp.ViewModels
                 }
             }
 
+            // Synchronize MaintenanceCards (all AVAS chip_0 endpoints: both TX and RX)
+            try
+            {
+                var allDevs = await _discoveryService.DiscoverAllDevicesAsync(ct);
+                var avasEndpoints = allDevs
+                    .Where(d => d.Family == DeviceFamily.Avas && d.ChipIndex == 0)
+                    .ToList();
+
+                foreach (var d in avasEndpoints)
+                {
+                    if (pairLookup.TryGetValue(d.MacAddress, out var p))
+                    {
+                        d.LinkMode = p.LinkMode;
+                        d.CompanionMac = p.CompanionMac;
+                        d.CompanionName = p.CompanionName;
+                        d.CompanionIsActive = p.CompanionIsActive;
+                    }
+                }
+
+                Action updateMaintenanceUi = () =>
+                {
+                    MaintenanceCards.Clear();
+                    foreach (var dev in avasEndpoints)
+                    {
+                        var mCard = new MaintenanceCardViewModel(dev)
+                        {
+                            OpenDiagnosticsAction = card => OpenDiagnosticsDialog(card.Device)
+                        };
+                        MaintenanceCards.Add(mCard);
+                    }
+                    UpdateFilteredMaintenanceCards();
+                    OnPropertyChanged(nameof(TotalDiagnosticsDeviceCount));
+                    OnPropertyChanged(nameof(TxDiagnosticsCount));
+                    OnPropertyChanged(nameof(RxDiagnosticsCount));
+                };
+
+                if (System.Windows.Application.Current?.Dispatcher != null &&
+                    !System.Windows.Application.Current.Dispatcher.CheckAccess())
+                {
+                    try
+                    {
+                        System.Windows.Application.Current.Dispatcher.Invoke(updateMaintenanceUi);
+                    }
+                    catch
+                    {
+                        updateMaintenanceUi();
+                    }
+                }
+                else
+                {
+                    updateMaintenanceUi();
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Warn("Maintenance", $"Failed populating maintenance devices: {ex.Message}");
+            }
+
             int startedCount = 0;
             int basePort = _configService.Current.BasePort;
             string localNic = _configService.Current.LocalNetworkInterfaceIp;
@@ -618,19 +739,7 @@ namespace AvasRoutingApp.ViewModels
 
                 // Wire Diagnostics Action (Restricted to AVAS devices)
                 var currentDev = dev;
-                card.OpenDiagnosticsAction = _ =>
-                {
-                    if (currentDev.Family != DeviceFamily.Avas) return;
-                    System.Windows.Application.Current?.Dispatcher?.Invoke(() =>
-                    {
-                        var diagVm = new MaintenanceViewModel(currentDev, _multicastController);
-                        var dlg = new Views.MaintenanceDialog(diagVm)
-                        {
-                            Owner = System.Windows.Application.Current?.MainWindow
-                        };
-                        dlg.ShowDialog();
-                    });
-                };
+                card.OpenDiagnosticsAction = _ => OpenDiagnosticsDialog(currentDev);
 
                 // For AVAS devices only: Attach Unified RTP demux receiver channel and query MCU telemetry
                 if (dev.Family == DeviceFamily.Avas)
@@ -919,11 +1028,39 @@ namespace AvasRoutingApp.ViewModels
                         if (existingLookup.TryGetValue(reading.DeviceId, out var existingCard))
                         {
                             existingCard.Update(reading);
+                            if (existingCard.OpenDiagnosticsAction == null)
+                            {
+                                WireTemperatureDiag(existingCard);
+                            }
                         }
                         else
                         {
-                            TemperatureCards.Add(new DeviceTemperatureCardViewModel(reading));
+                            var newCard = new DeviceTemperatureCardViewModel(reading);
+                            WireTemperatureDiag(newCard);
+                            TemperatureCards.Add(newCard);
                         }
+                    }
+
+                    void WireTemperatureDiag(DeviceTemperatureCardViewModel card)
+                    {
+                        card.OpenDiagnosticsAction = tc =>
+                        {
+                            var existing = MaintenanceCards.FirstOrDefault(m => string.Equals(m.MacAddress, tc.DeviceId, StringComparison.OrdinalIgnoreCase))?.Device;
+                            var dev = existing ?? new AvasDevice
+                            {
+                                MacAddress = tc.DeviceId,
+                                DeviceName = tc.DeviceName,
+                                IpAddress = tc.IpAddress,
+                                IsTransmitter = tc.IsTransmitter,
+                                IsReceiver = tc.IsReceiver,
+                                LinkMode = tc.LinkMode,
+                                CompanionMac = tc.Model.CompanionDeviceId,
+                                VendorId = tc.Model.VendorId,
+                                ProductId = tc.Model.ProductId,
+                                ChipIndex = 0
+                            };
+                            OpenDiagnosticsDialog(dev);
+                        };
                     }
 
                     // Remove devices no longer present
@@ -993,6 +1130,53 @@ namespace AvasRoutingApp.ViewModels
 
             OnPropertyChanged(nameof(ShowTxSection));
             OnPropertyChanged(nameof(ShowRxSection));
+        }
+
+        public void UpdateFilteredMaintenanceCards()
+        {
+            FilteredTxMaintenanceCards.Clear();
+            FilteredRxMaintenanceCards.Clear();
+
+            bool showTx = !string.Equals(_selectedDiagnosticsFilter, "RX", StringComparison.OrdinalIgnoreCase);
+            bool showRx = !string.Equals(_selectedDiagnosticsFilter, "TX", StringComparison.OrdinalIgnoreCase);
+
+            if (showTx)
+            {
+                foreach (var card in MaintenanceCards.Where(c => c.IsTransmitter))
+                {
+                    FilteredTxMaintenanceCards.Add(card);
+                }
+            }
+
+            if (showRx)
+            {
+                foreach (var card in MaintenanceCards.Where(c => c.IsReceiver))
+                {
+                    FilteredRxMaintenanceCards.Add(card);
+                }
+            }
+
+            OnPropertyChanged(nameof(ShowTxDiagnosticsSection));
+            OnPropertyChanged(nameof(ShowRxDiagnosticsSection));
+        }
+
+        public void OpenDiagnosticsDialog(AvasDevice device)
+        {
+            if (device.Family != DeviceFamily.Avas) return;
+            System.Windows.Application.Current?.Dispatcher?.Invoke(() =>
+            {
+                var avasDevices = MaintenanceCards.Select(c => c.Device).ToList();
+                if (!avasDevices.Any(d => string.Equals(d.MacAddress, device.MacAddress, StringComparison.OrdinalIgnoreCase)))
+                {
+                    avasDevices.Insert(0, device);
+                }
+                var diagVm = new MaintenanceViewModel(device, _multicastController, avasDevices);
+                var dlg = new Views.MaintenanceDialog(diagVm)
+                {
+                    Owner = System.Windows.Application.Current?.MainWindow
+                };
+                dlg.ShowDialog();
+            });
         }
 
         #endregion

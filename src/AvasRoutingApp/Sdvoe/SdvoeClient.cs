@@ -298,6 +298,23 @@ namespace AvasRoutingApp.Sdvoe
             return ParseDevicesJson(getJson);
         }
 
+        /// <summary>
+        /// Discovers all devices (both transmitters and receivers) across the SDVoE network without filtering.
+        /// </summary>
+        public async Task<IReadOnlyList<AvasDevice>> DiscoverAllDevicesAsync(CancellationToken ct = default)
+        {
+            IReadOnlyList<AvasDevice> allDevices;
+            try
+            {
+                allDevices = await DiscoverDevicesViaTelnetAsync(ct);
+            }
+            catch
+            {
+                allDevices = await DiscoverDevicesViaRestAsync(ct);
+            }
+            return allDevices;
+        }
+
         #endregion
 
         #region Multicast Allocation & Stream Control (IMulticastController)

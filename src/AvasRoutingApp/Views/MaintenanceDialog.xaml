@@ -24,12 +24,96 @@
 
         <!-- Header: Title and Device Info -->
         <DockPanel Grid.Row="0" Margin="0,0,0,12">
-            <Border Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="4" Padding="8,4" DockPanel.Dock="Right" VerticalAlignment="Center">
-                <TextBlock Text="{Binding LinkMode, StringFormat='Mode: {0}'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource ThemeAccentBrush}" />
-            </Border>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                <Border Background="{DynamicResource ThemePillBackgroundBrush}" CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding LinkMode, StringFormat='Mode: {0}'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource ThemeAccentBrush}" />
+                </Border>
+            </StackPanel>
+            
             <StackPanel Orientation="Vertical">
-                <TextBlock Text="AVAS Device Diagnostics" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" />
-                <TextBlock Text="{Binding DeviceName}" FontSize="12" Foreground="{DynamicResource ThemeTextSecondaryBrush}" Margin="0,2,0,0" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border CornerRadius="3" Padding="5,1" Margin="0,0,6,0" VerticalAlignment="Center">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#3B82F6" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsReceiver}" Value="True">
+                                        <Setter Property="Background" Value="#8B5CF6" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock Text="{Binding DeviceTypeBadge}" Foreground="White" FontSize="10" FontWeight="Bold" />
+                    </Border>
+                    <TextBlock Text="AVAS Device Diagnostics" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Single Device Name display -->
+                <TextBlock Text="{Binding DeviceName}" FontSize="12" Foreground="{DynamicResource ThemeTextSecondaryBrush}" Margin="0,2,0,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasMultipleDevices}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <!-- Multi-Device Switcher Dropdown -->
+                <ComboBox ItemsSource="{Binding AvailableDevices}"
+                          SelectedItem="{Binding SelectedDevice}"
+                          Margin="0,4,0,0"
+                          Height="26"
+                          FontSize="11"
+                          VerticalAlignment="Center">
+                    <ComboBox.Style>
+                        <Style TargetType="ComboBox">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasMultipleDevices}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ComboBox.Style>
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Border CornerRadius="2" Padding="4,0" Margin="0,0,6,0" VerticalAlignment="Center">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#3B82F6" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsReceiver}" Value="True">
+                                                    <Setter Property="Background" Value="#8B5CF6" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding DeviceName}" FontSize="9" FontWeight="Bold" Foreground="White">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="TX" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsReceiver}" Value="True">
+                                                        <Setter Property="Text" Value="RX" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                                <TextBlock Text="{Binding DeviceName}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                <TextBlock Text=" (" Foreground="{DynamicResource ThemeTextMutedBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding MacAddress}" FontFamily="Consolas, Courier New" Foreground="{DynamicResource ThemeTextSecondaryBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text=")" Foreground="{DynamicResource ThemeTextMutedBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
             </StackPanel>
         </DockPanel>
 

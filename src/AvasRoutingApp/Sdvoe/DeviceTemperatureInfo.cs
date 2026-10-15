@@ -49,6 +49,26 @@ namespace AvasRoutingApp.Sdvoe
         /// </summary>
         public bool IsActive { get; set; } = true;
 
+        /// <summary>
+        /// Vendor ID (105 for AVAS, 192 for Advantech VEGA).
+        /// </summary>
+        public int VendorId { get; set; } = 105;
+
+        /// <summary>
+        /// Product ID (81 for AVAS-223, 11 for VEGA-1100).
+        /// </summary>
+        public int ProductId { get; set; } = 81;
+
+        /// <summary>
+        /// Hardware device family.
+        /// </summary>
+        public DeviceFamily Family => VendorId switch
+        {
+            105 => DeviceFamily.Avas,
+            192 when ProductId == 11 => DeviceFamily.Vega,
+            _ => DeviceFamily.GenericSdvoe
+        };
+
         #region Chip 0 Telemetry
 
         /// <summary>

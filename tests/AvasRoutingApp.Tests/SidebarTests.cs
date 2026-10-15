@@ -28,6 +28,11 @@ namespace AvasRoutingApp.Tests
             DevicesDiscovered?.Invoke(list);
             return Task.FromResult(list);
         }
+
+        public Task<IReadOnlyList<AvasDevice>> DiscoverAllDevicesAsync(CancellationToken ct = default)
+        {
+            return Task.FromResult<IReadOnlyList<AvasDevice>>(DevicesToReturn.ToList());
+        }
     }
 
     public class MockMulticastController : IMulticastController
@@ -280,6 +285,60 @@ namespace AvasRoutingApp.Tests
         }
 
         [Fact]
+        public async Task Sidebar_RefreshDevices_StopsExistingStreams_BeforeStartingNewStreams()
+        {
+            var mockDiscovery = new MockDiscoveryService();
+            var mockController = new MockMulticastController();
+            mockDiscovery.DevicesToReturn.AddRange(new[]
+            {
+                CreateDevice("00:0B:AB:11:11:11", "TX 1", "192.168.1.10"),
+                CreateDevice("00:0B:AB:22:22:22", "TX 2", "192.168.1.20")
+            });
+
+            using var vm = new MainViewModel(mockDiscovery, mockController);
+
+            // 1. Expand sidebar - 2 streams active
+            await vm.ExpandSidebarAsync();
+            Assert.Equal(2, vm.ActiveStreamCount);
+            Assert.Equal(2, mockController.StartedStreams.Count);
+            Assert.Empty(mockController.StoppedStreams);
+
+            // 2. Click Discover / RefreshDevices
+            await vm.RefreshDevicesAsync();
+
+            // Verify: Previous streams were stopped before new ones were started
+            Assert.Equal(2, mockController.StoppedStreams.Count);
+            Assert.Contains("00:0B:AB:11:11:11", mockController.StoppedStreams);
+            Assert.Contains("00:0B:AB:22:22:22", mockController.StoppedStreams);
+            Assert.Equal(2, mockController.ReleasedMacs.Count);
+
+            // And refreshed streams were restarted
+            Assert.Equal(4, mockController.StartedStreams.Count); // 2 initial + 2 after refresh
+            Assert.Equal(2, vm.ActiveStreamCount);
+        }
+
+        [Fact]
+        public async Task Sidebar_Dispose_StopsAllStreamsAndFreesIps()
+        {
+            var mockDiscovery = new MockDiscoveryService();
+            var mockController = new MockMulticastController();
+            mockDiscovery.DevicesToReturn.Add(CreateDevice("00:0B:AB:33:33:33", "TX 3", "192.168.1.30"));
+
+            var vm = new MainViewModel(mockDiscovery, mockController);
+            await vm.ExpandSidebarAsync();
+            Assert.Equal(1, vm.ActiveStreamCount);
+
+            // Dispose ViewModel (as happens when closing application)
+            vm.Dispose();
+
+            // Verify hardware stop and IP release was triggered
+            Assert.Single(mockController.StoppedStreams);
+            Assert.Equal("00:0B:AB:33:33:33", mockController.StoppedStreams[0]);
+            Assert.Single(mockController.ReleasedMacs);
+            Assert.Equal("00:0B:AB:33:33:33", mockController.ReleasedMacs[0]);
+        }
+
+        [Fact]
         public void EncoderCardViewModel_TelemetryAndColorCodedFps_ReflectsThresholds()
         {
             using var card = new EncoderCardViewModel
@@ -455,6 +514,78 @@ namespace AvasRoutingApp.Tests
                     }
                 }
             });
+        }
+
+        [Fact]
+        public void SelectDiagnosticsTabCommand_SetsSelectedTabAndDiagnosticsFlag()
+        {
+            var vm = new MainViewModel(new MockDiscoveryService(), new MockMulticastController());
+
+            Assert.Equal(SidebarTab.Previews, vm.SelectedTab);
+            Assert.True(vm.IsPreviewsTabSelected);
+            Assert.False(vm.IsDiagnosticsTabSelected);
+
+            vm.SelectDiagnosticsTabCommand.Execute(null);
+
+            Assert.Equal(SidebarTab.Diagnostics, vm.SelectedTab);
+            Assert.True(vm.IsDiagnosticsTabSelected);
+            Assert.False(vm.IsPreviewsTabSelected);
+            Assert.False(vm.IsMultiLinkTabSelected);
+            Assert.False(vm.IsTemperatureTabSelected);
+        }
+
+        [Fact]
+        public void DiagnosticsFiltering_FiltersTxAndRxSections()
+        {
+            var vm = new MainViewModel(new MockDiscoveryService(), new MockMulticastController());
+
+            // Add dummy TX and RX maintenance cards
+            var devTx = new AvasDevice { MacAddress = "00:14:95:11:11:11", VendorId = 105, IsTransmitter = true, IsReceiver = false };
+            var devRx = new AvasDevice { MacAddress = "00:14:95:22:22:22", VendorId = 105, IsTransmitter = false, IsReceiver = true };
+
+            vm.MaintenanceCards.Add(new MaintenanceCardViewModel(devTx));
+            vm.MaintenanceCards.Add(new MaintenanceCardViewModel(devRx));
+            vm.UpdateFilteredMaintenanceCards();
+
+            // Default ALL
+            Assert.True(vm.IsFilterAllDiagnosticsSelected);
+            Assert.True(vm.ShowTxDiagnosticsSection);
+            Assert.True(vm.ShowRxDiagnosticsSection);
+            Assert.Single(vm.FilteredTxMaintenanceCards);
+            Assert.Single(vm.FilteredRxMaintenanceCards);
+
+            // Filter TX only
+            vm.SetFilterTxDiagnosticsCommand.Execute(null);
+            Assert.True(vm.IsFilterTxDiagnosticsSelected);
+            Assert.True(vm.ShowTxDiagnosticsSection);
+            Assert.False(vm.ShowRxDiagnosticsSection);
+            Assert.Single(vm.FilteredTxMaintenanceCards);
+            Assert.Empty(vm.FilteredRxMaintenanceCards);
+
+            // Filter RX only
+            vm.SetFilterRxDiagnosticsCommand.Execute(null);
+            Assert.True(vm.IsFilterRxDiagnosticsSelected);
+            Assert.False(vm.ShowTxDiagnosticsSection);
+            Assert.True(vm.ShowRxDiagnosticsSection);
+            Assert.Empty(vm.FilteredTxMaintenanceCards);
+            Assert.Single(vm.FilteredRxMaintenanceCards);
+        }
+
+        [Fact]
+        public async Task StartAllStreams_PopulatesMaintenanceCardsWithTxAndRx()
+        {
+            var discovery = new MockDiscoveryService();
+            var devTx = new AvasDevice { MacAddress = "00:14:95:11:11:11", VendorId = 105, ChipIndex = 0, IsTransmitter = true, IsReceiver = false };
+            var devRx = new AvasDevice { MacAddress = "00:14:95:22:22:22", VendorId = 105, ChipIndex = 0, IsTransmitter = false, IsReceiver = true };
+            discovery.DevicesToReturn.Add(devTx);
+            discovery.DevicesToReturn.Add(devRx);
+
+            var vm = new MainViewModel(discovery, new MockMulticastController());
+            await vm.ExpandSidebarAsync();
+
+            Assert.Equal(2, vm.MaintenanceCards.Count);
+            Assert.Single(vm.MaintenanceCards, c => c.IsTransmitter && c.DeviceTypeBadge == "TX");
+            Assert.Single(vm.MaintenanceCards, c => c.IsReceiver && c.DeviceTypeBadge == "RX");
         }
     }
 }

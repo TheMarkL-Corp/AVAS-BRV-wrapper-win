@@ -176,6 +176,11 @@ namespace AvasRoutingApp.Tests
                 DevicesDiscovered?.Invoke(filtered);
                 return Task.FromResult(filtered);
             }
+
+            public Task<IReadOnlyList<AvasDevice>> DiscoverAllDevicesAsync(CancellationToken ct = default)
+            {
+                return Task.FromResult<IReadOnlyList<AvasDevice>>(AllDevices.ToList());
+            }
         }
 
         private class TrackingMulticastController : IMulticastController

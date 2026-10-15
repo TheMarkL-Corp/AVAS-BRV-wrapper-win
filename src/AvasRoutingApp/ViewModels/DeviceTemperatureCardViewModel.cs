@@ -41,6 +41,7 @@ namespace AvasRoutingApp.ViewModels
         {
             _info = info ?? throw new ArgumentNullException(nameof(info));
             CopyDeviceIdCommand = new RelayCommand(ExecuteCopyDeviceId);
+            OpenDiagnosticsCommand = new RelayCommand(ExecuteOpenDiagnostics, () => IsMaintenanceAvailable);
         }
 
         public DeviceTemperatureInfo Model => _info;
@@ -54,6 +55,17 @@ namespace AvasRoutingApp.ViewModels
         public bool IsDualLink => _info.IsDualLink;
         public string IpAddress => _info.IpAddress;
         public bool IsActive => _info.IsActive;
+
+        public bool IsMaintenanceAvailable => _info.VendorId == 105;
+
+        public Action<DeviceTemperatureCardViewModel>? OpenDiagnosticsAction { get; set; }
+        public ICommand OpenDiagnosticsCommand { get; }
+
+        private void ExecuteOpenDiagnostics()
+        {
+            if (!IsMaintenanceAvailable) return;
+            OpenDiagnosticsAction?.Invoke(this);
+        }
 
         public Brush DeviceTypeBrush => IsTransmitter ? TxBrush : RxBrush;
 

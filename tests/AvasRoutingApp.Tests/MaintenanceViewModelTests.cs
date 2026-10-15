@@ -148,5 +148,130 @@ namespace AvasRoutingApp.Tests
             Assert.Single(controller.RebootCalls);
             Assert.Equal("00:14:95:11:22:34", controller.RebootCalls[0]);
         }
+
+        [Fact]
+        public void MaintenanceCardViewModel_AvasTxDevice_EnablesDiagnosticsAndSetsTxBadge()
+        {
+            var device = new AvasDevice
+            {
+                MacAddress = "00:14:95:11:22:33",
+                DeviceName = "TX_UNIT_1",
+                VendorId = 105,
+                ProductId = 81,
+                IsTransmitter = true,
+                IsReceiver = false,
+                LinkMode = "DUAL",
+                CompanionMac = "00:14:95:11:22:34"
+            };
+
+            var card = new MaintenanceCardViewModel(device);
+
+            Assert.Equal("TX", card.DeviceTypeBadge);
+            Assert.True(card.IsTransmitter);
+            Assert.False(card.IsReceiver);
+            Assert.True(card.IsMaintenanceAvailable);
+            Assert.True(card.OpenDiagnosticsCommand.CanExecute(null));
+
+            bool actionFired = false;
+            card.OpenDiagnosticsAction = _ => actionFired = true;
+            card.OpenDiagnosticsCommand.Execute(null);
+            Assert.True(actionFired);
+        }
+
+        [Fact]
+        public void MaintenanceCardViewModel_AvasRxDevice_EnablesDiagnosticsAndSetsRxBadge()
+        {
+            var device = new AvasDevice
+            {
+                MacAddress = "00:14:95:AA:BB:CC",
+                DeviceName = "RX_UNIT_1",
+                VendorId = 105,
+                ProductId = 81,
+                IsTransmitter = false,
+                IsReceiver = true,
+                LinkMode = "SINGLE",
+                CompanionMac = "NONE"
+            };
+
+            var card = new MaintenanceCardViewModel(device);
+
+            Assert.Equal("RX", card.DeviceTypeBadge);
+            Assert.False(card.IsTransmitter);
+            Assert.True(card.IsReceiver);
+            Assert.True(card.IsMaintenanceAvailable);
+            Assert.True(card.OpenDiagnosticsCommand.CanExecute(null));
+
+            bool actionFired = false;
+            card.OpenDiagnosticsAction = _ => actionFired = true;
+            card.OpenDiagnosticsCommand.Execute(null);
+            Assert.True(actionFired);
+        }
+
+        [Fact]
+        public void MaintenanceCardViewModel_VegaDevice_DisablesDiagnostics()
+        {
+            var device = new AvasDevice
+            {
+                MacAddress = "00:16:C0:58:9C:1E",
+                DeviceName = "VEGA_1100",
+                VendorId = 192,
+                ProductId = 11,
+                IsTransmitter = true,
+                IsReceiver = false
+            };
+
+            var card = new MaintenanceCardViewModel(device);
+
+            Assert.False(card.IsMaintenanceAvailable);
+            Assert.False(card.OpenDiagnosticsCommand.CanExecute(null));
+
+            bool actionFired = false;
+            card.OpenDiagnosticsAction = _ => actionFired = true;
+            card.OpenDiagnosticsCommand.Execute(null);
+            Assert.False(actionFired);
+        }
+
+        [Fact]
+        public void MaintenanceViewModel_DevicePicker_SwitchesActiveDevice()
+        {
+            var controller = new MockDiagnosticsController();
+            var devTx = new AvasDevice
+            {
+                MacAddress = "00:14:95:11:22:33",
+                DeviceName = "TX_UNIT",
+                VendorId = 105,
+                IsTransmitter = true,
+                IsReceiver = false,
+                LinkMode = "SINGLE"
+            };
+            var devRx = new AvasDevice
+            {
+                MacAddress = "00:14:95:AA:BB:CC",
+                DeviceName = "RX_UNIT",
+                VendorId = 105,
+                IsTransmitter = false,
+                IsReceiver = true,
+                LinkMode = "DUAL",
+                CompanionMac = "00:14:95:AA:BB:CD"
+            };
+
+            var available = new List<AvasDevice> { devTx, devRx };
+            var vm = new MaintenanceViewModel(devTx, controller, available);
+
+            Assert.True(vm.HasMultipleDevices);
+            Assert.Equal("TX_UNIT", vm.DeviceName);
+            Assert.Equal("TX", vm.DeviceTypeBadge);
+            Assert.False(vm.IsChip1Available);
+
+            // Switch to RX device
+            vm.SelectedDevice = devRx;
+
+            Assert.Equal("RX_UNIT", vm.DeviceName);
+            Assert.Equal("RX", vm.DeviceTypeBadge);
+            Assert.Equal("00:14:95:AA:BB:CC", vm.Chip0Mac);
+            Assert.Equal("00:14:95:AA:BB:CD", vm.Chip1Mac);
+            Assert.True(vm.IsChip1Available);
+            Assert.Contains("Target device switched to RX_UNIT", vm.StatusLog);
+        }
     }
 }

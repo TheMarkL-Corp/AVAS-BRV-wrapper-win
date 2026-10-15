@@ -17,6 +17,30 @@ namespace AvasRoutingApp.Views
             DataContext = _viewModel;
 
             _viewModel.ConfirmActionCallback = PromptConfirmation;
+            _viewModel.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(MaintenanceViewModel.SelectedTarget))
+                {
+                    SyncTargetRadioButtons();
+                }
+            };
+        }
+
+        private void SyncTargetRadioButtons()
+        {
+            if (RbChip0 == null || RbChip1 == null || RbBoth == null) return;
+            switch (_viewModel.SelectedTarget)
+            {
+                case TargetChipSelection.Chip0:
+                    RbChip0.IsChecked = true;
+                    break;
+                case TargetChipSelection.Chip1:
+                    RbChip1.IsChecked = true;
+                    break;
+                case TargetChipSelection.Both:
+                    RbBoth.IsChecked = true;
+                    break;
+            }
         }
 
         private bool PromptConfirmation()
