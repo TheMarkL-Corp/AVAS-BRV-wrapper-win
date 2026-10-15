@@ -113,6 +113,8 @@ namespace AvasRoutingApp.Sdvoe
                         LinkMode = p.LinkMode,
                         IpAddress = p.IpAddress,
                         IsActive = p.IsActive,
+                        VendorId = p.VendorId,
+                        ProductId = p.ProductId,
                         Chip0Id = p.DeviceId,
                         Chip0SdvoeTemp = p.SdvoeTemperature,
                         Chip0VoipSdkTemp = voipTemps.TryGetValue(p.DeviceId, out var c0Voip) ? c0Voip : null
@@ -356,7 +358,7 @@ namespace AvasRoutingApp.Sdvoe
                     if (!string.IsNullOrEmpty(s)) parsed.Name = s;
                 }
 
-                // Identity (is_transmitter, is_receiver, chip_id)
+                // Identity (is_transmitter, is_receiver, chip_id, vendor_id, product_id)
                 if (dev.TryGetProperty("identity", out var idElem))
                 {
                     if (idElem.TryGetProperty("is_transmitter", out var txProp))
@@ -367,6 +369,12 @@ namespace AvasRoutingApp.Sdvoe
 
                     if (idElem.TryGetProperty("chip_id", out var cp))
                         parsed.ChipId = cp.GetInt32();
+
+                    if (idElem.TryGetProperty("vendor_id", out var vp) && vp.TryGetInt32(out int vid))
+                        parsed.VendorId = vid;
+
+                    if (idElem.TryGetProperty("product_id", out var pp) && pp.TryGetInt32(out int pid))
+                        parsed.ProductId = pid;
                 }
 
                 // Status (active, temperature)
@@ -640,5 +648,7 @@ namespace AvasRoutingApp.Sdvoe
         public int? SdvoeTemperature { get; set; }
         public string LinkMode { get; set; } = "Single Link";
         public string CompanionId { get; set; } = "NONE";
+        public int VendorId { get; set; } = 105;
+        public int ProductId { get; set; } = 81;
     }
 }

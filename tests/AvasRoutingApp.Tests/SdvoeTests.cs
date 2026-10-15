@@ -645,7 +645,7 @@ namespace AvasRoutingApp.Tests
             var receivedBodies = new List<string>();
             var listenTask = Task.Run(async () =>
             {
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i < 4; i++)
                 {
                     var ctx = await listener.GetContextAsync();
                     using var r = new System.IO.StreamReader(ctx.Request.InputStream, Encoding.UTF8);
@@ -672,11 +672,12 @@ namespace AvasRoutingApp.Tests
 
                 await listenTask;
 
-                Assert.Equal(3, receivedBodies.Count);
-                Assert.Contains("\"data_string\":\"set rtp igmp 224.1.3.1\\r\\n\"", receivedBodies[0]);
-                Assert.Contains("\"op\":\"send:rs232\"", receivedBodies[0]);
-                Assert.Contains("\"data_string\":\"set rtp ON\\r\\n\"", receivedBodies[1]);
-                Assert.Contains("\"data_string\":\"set rtp OFF\\r\\n\"", receivedBodies[2]);
+                Assert.Equal(4, receivedBodies.Count);
+                Assert.Contains("\"op\":\"switch:api\"", receivedBodies[0]);
+                Assert.Contains("\"data_string\":\"set rtp igmp 224.1.3.1\\r\\n\"", receivedBodies[1]);
+                Assert.Contains("\"op\":\"send:rs232\"", receivedBodies[1]);
+                Assert.Contains("\"data_string\":\"set rtp ON\\r\\n\"", receivedBodies[2]);
+                Assert.Contains("\"data_string\":\"set rtp OFF\\r\\n\"", receivedBodies[3]);
             }
             finally
             {

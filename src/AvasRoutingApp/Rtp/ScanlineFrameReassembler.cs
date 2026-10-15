@@ -35,7 +35,7 @@ namespace AvasRoutingApp.Rtp
         private uint _currentTimestamp = 0;
         private uint _currentSsrc = 0;
         private int _scanlineLength = 0;
-        private int _lastSeenLineNo = -1;
+        private int _maxSeenLineNo = -1;
         private readonly object _lock = new();
 
         public bool AllowPartialFrames { get; set; }
@@ -56,19 +56,34 @@ namespace AvasRoutingApp.Rtp
         {
             lock (_lock)
             {
+                // Calculate timestamp distance (tolerates 32-bit wrap)
+                long tsDiff = _scanlines.Count > 0 ? Math.Abs((long)packet.Timestamp - _currentTimestamp) : 0;
+
+                // Handle duplicate scanlines:
+                // If this scanline was already received and timestamp is within current frame tolerance (<= 1000),
+                // ignore duplicate datagram without nuking the frame in progress.
+                if (_scanlines.ContainsKey(packet.LineNo))
+                {
+                    if (tsDiff < 1000 && packet.LineNo <= _maxSeenLineNo && !(_maxSeenLineNo >= 10 && packet.LineNo <= 2 && _maxSeenLineNo - packet.LineNo > 10))
+                    {
+                        return null; // Ignore duplicate packet
+                    }
+                }
+
                 // Detect new frame boundary before previous finished:
-                // Triggered if line 0 arrives when line 0 was already received, or if a large timestamp jump occurred (> 1000).
+                // Triggered if line number wraps backwards to start of frame (e.g. from >10 to 0..2)
+                // or if a timestamp jump occurred (>= 1000).
                 // Note: Advantech AVAS-223 hardware increments packet timestamp by 1 per packet within the same frame.
-                bool isNewFrame = _scanlines.Count > 0 &&
-                    ((_scanlines.ContainsKey(packet.LineNo) && packet.LineNo == 0) ||
-                     Math.Abs((long)packet.Timestamp - _currentTimestamp) > 1000);
+                bool isLineWrap = _scanlines.Count > 0 && _maxSeenLineNo >= 10 && packet.LineNo <= 2 && (_maxSeenLineNo - packet.LineNo > 10);
+                bool isTimestampLeap = _scanlines.Count > 0 && tsDiff >= 1000;
+                bool isNewFrame = isLineWrap || isTimestampLeap;
 
                 AssembledFrame? recoveredFrame = null;
                 if (isNewFrame)
                 {
-                    if (AllowPartialFrames && _scanlines.Count >= 10 && _lastSeenLineNo > 0 && _scanlineLength > 0)
+                    if (AllowPartialFrames && _scanlines.Count >= 10 && _maxSeenLineNo > 0 && _scanlineLength > 0)
                     {
-                        int expHeight = _lastSeenLineNo + 1;
+                        int expHeight = _maxSeenLineNo + 1;
                         int expWidth = _scanlineLength / 2;
                         if (expHeight > 0 && expWidth > 0)
                         {
@@ -96,13 +111,13 @@ namespace AvasRoutingApp.Rtp
                         FramesDropped++;
                     }
                     _scanlines.Clear();
-                    _lastSeenLineNo = -1;
+                    _maxSeenLineNo = -1;
                 }
 
                 _currentTimestamp = packet.Timestamp;
                 _currentSsrc = packet.Ssrc;
                 _scanlineLength = packet.Length;
-                _lastSeenLineNo = packet.LineNo;
+                _maxSeenLineNo = Math.Max(_maxSeenLineNo, (int)packet.LineNo);
 
                 // Direct slotting into scanline dictionary (absorbs jitter & out-of-order packets)
                 byte[] lineData = packet.Payload.ToArray();
@@ -150,7 +165,7 @@ namespace AvasRoutingApp.Rtp
                         FramesCompleted++;
                         _scanlines.Clear();
                         _currentTimestamp = 0;
-                        _lastSeenLineNo = -1;
+                        _maxSeenLineNo = -1;
 
                         return new AssembledFrame(fullYuv, expectedWidth, expectedHeight, packet.Timestamp, _currentSsrc);
                     }
@@ -160,7 +175,7 @@ namespace AvasRoutingApp.Rtp
                         FramesDropped++;
                         _scanlines.Clear();
                         _currentTimestamp = 0;
-                        _lastSeenLineNo = -1;
+                        _maxSeenLineNo = -1;
                         return null;
                     }
                 }
@@ -180,7 +195,7 @@ namespace AvasRoutingApp.Rtp
                 _currentTimestamp = 0;
                 _currentSsrc = 0;
                 _scanlineLength = 0;
-                _lastSeenLineNo = -1;
+                _maxSeenLineNo = -1;
             }
         }
     }

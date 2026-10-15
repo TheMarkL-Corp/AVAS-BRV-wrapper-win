@@ -28,7 +28,9 @@ namespace AvasRoutingApp.Rtp
         public static UnifiedRtpDemuxReceiver Instance => _lazyInstance.Value;
 
         private readonly ConcurrentDictionary<string, DemuxChannel> _channels = new(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, DemuxChannel> _aliases = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _joinedMulticastGroups = new(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, IPAddress?> _groupLocalNics = new(StringComparer.OrdinalIgnoreCase);
         private readonly object _socketLock = new();
 
         private UdpClient? _udpClient;
@@ -41,6 +43,7 @@ namespace AvasRoutingApp.Rtp
         public int Port => _port;
         public bool IsListening => _isListening;
         public int ChannelCount => _channels.Count;
+        public int AliasCount => _aliases.Count;
 
         public UnifiedRtpDemuxReceiver(int port = 5000)
         {
@@ -48,10 +51,19 @@ namespace AvasRoutingApp.Rtp
         }
 
         /// <summary>
-        /// Gets or creates a channel receiver associated with an encoder's unicast IP and multicast group.
-        /// The returned channel implements IRtpStreamReceiver and can be attached directly to an EncoderCardViewModel.
+        /// Gets or creates a channel receiver associated with an encoder's unicast IP, multicast group,
+        /// and optional secondary aliases (such as companion MAC or 10G SFP IP).
         /// </summary>
         public IRtpStreamReceiver GetOrCreateChannel(string unicastIp, string multicastIp = "")
+        {
+            return GetOrCreateChannel(unicastIp, multicastIp, (IEnumerable<string>?)null);
+        }
+
+        /// <summary>
+        /// Gets or creates a channel receiver associated with an encoder's unicast IP, multicast group,
+        /// and optional secondary aliases (such as companion MAC or 10G SFP IP).
+        /// </summary>
+        public IRtpStreamReceiver GetOrCreateChannel(string unicastIp, string multicastIp, IEnumerable<string>? aliases)
         {
             if (string.IsNullOrWhiteSpace(unicastIp))
             {
@@ -64,17 +76,58 @@ namespace AvasRoutingApp.Rtp
                 channel.MulticastIp = multicastIp;
                 EnsureMulticastGroupJoined(multicastIp);
             }
+
+            if (aliases != null)
+            {
+                foreach (var alias in aliases)
+                {
+                    if (!string.IsNullOrWhiteSpace(alias))
+                    {
+                        RegisterAlias(alias, channel);
+                    }
+                }
+            }
+
             return channel;
         }
 
         /// <summary>
-        /// Removes and disposes an existing channel for the specified unicast IP.
+        /// Registers a secondary IP, companion MAC, or alternative endpoint to route to the channel.
+        /// </summary>
+        public void RegisterAlias(string alias, string primaryUnicastIp)
+        {
+            if (string.IsNullOrWhiteSpace(alias) || string.IsNullOrWhiteSpace(primaryUnicastIp)) return;
+            if (_channels.TryGetValue(primaryUnicastIp, out var channel))
+            {
+                RegisterAlias(alias, channel);
+            }
+        }
+
+        /// <summary>
+        /// Registers an alias directly to an existing DemuxChannel instance.
+        /// </summary>
+        public void RegisterAlias(string alias, DemuxChannel channel)
+        {
+            if (string.IsNullOrWhiteSpace(alias) || channel == null) return;
+            _aliases[alias] = channel;
+            AppLogger.Debug("UnifiedDemux", $"Registered alias '{alias}' -> channel '{channel.UnicastIp}'");
+        }
+
+        /// <summary>
+        /// Removes and disposes an existing channel for the specified unicast IP and clears its aliases.
         /// </summary>
         public void RemoveChannel(string unicastIp)
         {
             if (string.IsNullOrWhiteSpace(unicastIp)) return;
             if (_channels.TryRemove(unicastIp, out var channel))
             {
+                foreach (var kvp in _aliases)
+                {
+                    if (ReferenceEquals(kvp.Value, channel))
+                    {
+                        _aliases.TryRemove(kvp.Key, out _);
+                    }
+                }
                 channel.Dispose();
             }
 
@@ -113,7 +166,8 @@ namespace AvasRoutingApp.Rtp
                     // Re-join any previously tracked multicast groups
                     foreach (var mcastIp in _joinedMulticastGroups)
                     {
-                        JoinMulticastGroupInternal(mcastIp);
+                        _groupLocalNics.TryGetValue(mcastIp, out var localNic);
+                        JoinMulticastGroupInternal(mcastIp, localNic);
                     }
 
                     var token = _cts.Token;
@@ -130,30 +184,65 @@ namespace AvasRoutingApp.Rtp
         }
 
         /// <summary>
-        /// Joins the specified multicast group across all available local IPv4 network interfaces.
+        /// Joins the specified multicast group across the specified local NIC or all available local IPv4 network interfaces.
         /// </summary>
-        public void EnsureMulticastGroupJoined(string multicastIp)
+        public void EnsureMulticastGroupJoined(string multicastIp, string localInterfaceIp = "")
+        {
+            IPAddress? nicAddr = null;
+            if (!string.IsNullOrWhiteSpace(localInterfaceIp) && IPAddress.TryParse(localInterfaceIp, out var parsed))
+            {
+                nicAddr = parsed;
+            }
+            EnsureMulticastGroupJoined(multicastIp, nicAddr);
+        }
+
+        /// <summary>
+        /// Joins the specified multicast group across the specified local NIC address.
+        /// </summary>
+        public void EnsureMulticastGroupJoined(string multicastIp, IPAddress? localNicAddress)
         {
             if (string.IsNullOrWhiteSpace(multicastIp)) return;
             lock (_socketLock)
             {
+                if (localNicAddress != null)
+                {
+                    _groupLocalNics[multicastIp] = localNicAddress;
+                }
+
                 if (!_joinedMulticastGroups.Contains(multicastIp))
                 {
                     _joinedMulticastGroups.Add(multicastIp);
-                    if (_isListening && _udpClient != null)
-                    {
-                        JoinMulticastGroupInternal(multicastIp);
-                    }
+                }
+
+                if (_isListening && _udpClient != null)
+                {
+                    _groupLocalNics.TryGetValue(multicastIp, out var nic);
+                    JoinMulticastGroupInternal(multicastIp, nic ?? localNicAddress);
                 }
             }
         }
 
-        private void JoinMulticastGroupInternal(string multicastIp)
+        private void JoinMulticastGroupInternal(string multicastIp, IPAddress? localNicAddress = null)
         {
             if (_udpClient == null) return;
             if (!IPAddress.TryParse(multicastIp, out var mcastAddr)) return;
             byte firstByte = mcastAddr.GetAddressBytes()[0];
             if (firstByte < 224 || firstByte > 239) return;
+
+            // Direct binding: If a specific local NIC IP was designated, prioritize it
+            if (localNicAddress != null)
+            {
+                try
+                {
+                    _udpClient.JoinMulticastGroup(mcastAddr, localNicAddress);
+                    AppLogger.Info("UnifiedDemux", $"Joined multicast {multicastIp} on dedicated NIC {localNicAddress}");
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    AppLogger.Warn("UnifiedDemux", $"Failed to join multicast {multicastIp} on dedicated NIC {localNicAddress}: {ex.Message}. Falling back to multi-adapter sweep.");
+                }
+            }
 
             bool joinedAny = false;
             try
@@ -212,7 +301,7 @@ namespace AvasRoutingApp.Rtp
         }
 
         /// <summary>
-        /// Demultiplexes a datagram to the appropriate channel based on sender IP address.
+        /// Demultiplexes a datagram to the appropriate channel based on sender IP address or registered alias.
         /// </summary>
         public void DemuxPacket(string senderIp, ReadOnlySpan<byte> datagram)
         {
@@ -220,6 +309,38 @@ namespace AvasRoutingApp.Rtp
             {
                 channel.ProcessDatagram(datagram);
                 return;
+            }
+
+            if (_aliases.TryGetValue(senderIp, out var aliasChannel))
+            {
+                aliasChannel.ProcessDatagram(datagram);
+                return;
+            }
+
+            // Subnet fallback: Match ONLY if exactly one registered channel belongs to this /24 subnet.
+            // If multiple channels share the subnet, we cannot unambiguously infer the target channel.
+            if (IPAddress.TryParse(senderIp, out var senderAddr) && senderAddr.AddressFamily == AddressFamily.InterNetwork)
+            {
+                string senderPrefix = GetSubnet24Prefix(senderIp);
+                DemuxChannel? matchCandidate = null;
+                int matchCount = 0;
+
+                foreach (var kvp in _channels)
+                {
+                    if (GetSubnet24Prefix(kvp.Key) == senderPrefix)
+                    {
+                        matchCandidate = kvp.Value;
+                        matchCount++;
+                    }
+                }
+
+                if (matchCount == 1 && matchCandidate != null)
+                {
+                    // Auto-alias this IP for future zero-latency routing
+                    _aliases[senderIp] = matchCandidate;
+                    matchCandidate.ProcessDatagram(datagram);
+                    return;
+                }
             }
 
             // Fallback: If only one active channel is registered, route packet to it
@@ -232,6 +353,12 @@ namespace AvasRoutingApp.Rtp
                     return;
                 }
             }
+        }
+
+        private static string GetSubnet24Prefix(string ip)
+        {
+            int lastDot = ip.LastIndexOf('.');
+            return lastDot > 0 ? ip.Substring(0, lastDot) : ip;
         }
 
         public void StopListening()
@@ -275,6 +402,8 @@ namespace AvasRoutingApp.Rtp
                 ch.Dispose();
             }
             _channels.Clear();
+            _aliases.Clear();
+            _groupLocalNics.Clear();
             _joinedMulticastGroups.Clear();
         }
 
@@ -330,7 +459,7 @@ namespace AvasRoutingApp.Rtp
                 if (!string.IsNullOrEmpty(multicastIp))
                 {
                     MulticastIp = multicastIp;
-                    _parent.EnsureMulticastGroupJoined(multicastIp);
+                    _parent.EnsureMulticastGroupJoined(multicastIp, localInterfaceIp);
                 }
 
                 _isListening = true;

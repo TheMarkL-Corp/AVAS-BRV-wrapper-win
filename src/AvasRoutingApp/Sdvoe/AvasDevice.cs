@@ -40,5 +40,6 @@ namespace AvasRoutingApp.Sdvoe
         public string CompanionMac { get; set; } = "NONE";
         public string CompanionName { get; set; } = "";
         public bool CompanionIsActive { get; set; } = false;
+        public string McuIpAddress { get; set; } = string.Empty;
     }
 }

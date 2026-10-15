@@ -273,6 +273,42 @@ namespace AvasRoutingApp.Tests
         }
 
         [Fact]
+        public void Reassembler_AvasHardwareIncrementingTimestamp_AssemblesFullFrame()
+        {
+            var reassembler = new ScanlineFrameReassembler();
+            int height = 180;
+            int width = 320;
+            ushort lineBytes = (ushort)(width * 2);
+            uint baseTimestamp = 55000;
+
+            AssembledFrame? resultFrame = null;
+
+            for (ushort line = 0; line < height; line++)
+            {
+                bool isMarker = (line == height - 1);
+                byte[] linePayload = new byte[lineBytes];
+                Array.Fill(linePayload, (byte)(line % 256));
+
+                // Real AVAS-223 hardware increments timestamp by 1 per packet line
+                uint packetTs = baseTimestamp + line;
+                byte[] packet = CreateRtpVideoPacket(line, packetTs, 100, line, 0, lineBytes, isMarker, customPayload: linePayload);
+                Assert.True(RtpHeader.TryParse(packet, out var header));
+
+                var frame = reassembler.ProcessPacket(in header);
+                if (isMarker)
+                {
+                    resultFrame = frame;
+                }
+            }
+
+            Assert.NotNull(resultFrame);
+            Assert.Equal(width, resultFrame.Width);
+            Assert.Equal(height, resultFrame.Height);
+            Assert.Equal(1, reassembler.FramesCompleted);
+            Assert.Equal(0, reassembler.FramesDropped);
+        }
+
+        [Fact]
         public void Reassembler_MissingScanline_DropsFrameOnMarker()
         {
             var reassembler = new ScanlineFrameReassembler();

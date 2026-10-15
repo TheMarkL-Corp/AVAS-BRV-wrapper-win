@@ -371,8 +371,35 @@ namespace AvasRoutingApp
             TxtCurrentUrlDisplay.Text = $"URL: {config.BlueRiverUrl}";
         }
 
-        protected override void OnClosing(CancelEventArgs e)
+        private bool _isClosingGracefully = false;
+
+        protected override async void OnClosing(CancelEventArgs e)
         {
+            if (!_isClosingGracefully && ViewModel != null && ViewModel.ActiveStreamCount > 0)
+            {
+                e.Cancel = true;
+                _isClosingGracefully = true;
+
+                // Hide the window immediately so the UI closes instantly for the user
+                Hide();
+
+                try
+                {
+                    AppLogger.Info("MainWindow", "Application closing: stopping all active preview and thumbnail streams...");
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    await ViewModel.StopAllStreamsAsync(cts.Token);
+                }
+                catch (Exception ex)
+                {
+                    AppLogger.Warn("MainWindow", $"Exception during graceful stream stop on shutdown: {ex.Message}");
+                }
+                finally
+                {
+                    Close();
+                }
+                return;
+            }
+
             _configService.ConfigChanged -= OnConfigChanged;
             ViewModel?.Dispose();
             MainWebView?.Dispose();
