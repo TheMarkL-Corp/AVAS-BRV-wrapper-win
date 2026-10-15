@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AvasRoutingApp.Configuration;
 using AvasRoutingApp.Logging;
+using VOIPS_LIB;
 
 namespace AvasRoutingApp.Sdvoe
 {
@@ -561,16 +562,94 @@ namespace AvasRoutingApp.Sdvoe
             try
             {
                 string normMac = NormalizeMac(chip0Mac);
+
+                // 1. Primary path: Use VoIP SDK engine for asynchronous RS-232 telemetry & event resolution
+                try
+                {
+                    var voips = new VOIPS_LIB.VOIPS();
+                    voips.SET_CONTROL_SERVER(_serverIp);
+                    voips.SET_HTTP_PORT(_restPort);
+
+                    var verTask = voips.GET_MCU_VERSION(normMac);
+                    var ipTask = voips.GET_MCU_IP(normMac);
+                    var snTask = voips.GET_SN(normMac);
+
+                    await Task.WhenAll(verTask, ipTask, snTask);
+
+                    if (!string.IsNullOrWhiteSpace(verTask.Result)) info.FirmwareVersion = verTask.Result;
+                    if (!string.IsNullOrWhiteSpace(ipTask.Result)) info.McuIpAddress = ipTask.Result;
+                    if (!string.IsNullOrWhiteSpace(snTask.Result)) info.FactorySerialNumber = snTask.Result;
+
+                    // Query Authorization state via in-band UART & event lookup
+                    voips.SWITCH_RS232_CONTROL_SERVER(normMac, 1);
+                    var latestEvents = voips.QueryEvent(0, 1000);
+                    int lastId = 0;
+                    if (latestEvents?.result?.events != null && latestEvents.result.events.Count > 0)
+                    {
+                        lastId = latestEvents.result.events[^1].event_id;
+                    }
+                    voips.UART_SEND(normMac, 1, "get authorize\r\n");
+                    await Task.Delay(350, ct);
+
+                    var evs = voips.QueryEvent(lastId, 10);
+                    if (evs?.result?.events != null)
+                    {
+                        foreach (var e in evs.result.events)
+                        {
+                            if (string.Equals(e.event_type, "RS232_RECEIVED", StringComparison.OrdinalIgnoreCase) && e.request_id.HasValue)
+                            {
+                                var req = voips.GET_REQUEST((int)e.request_id.Value);
+                                if (req?.result?.rs232 != null)
+                                {
+                                    foreach (var r in req.result.rs232)
+                                    {
+                                        var parsed = ParseActivationState(r.rs232_data);
+                                        if (parsed != DeviceActivationState.Unknown)
+                                        {
+                                            info.ActivationState = parsed;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (info.ActivationState != DeviceActivationState.Unknown)
+                    {
+                        return info;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppLogger.Debug("SdvoeClient", $"VoIP SDK query fallback: {ex.Message}");
+                }
+
+                // 2. Fallback path: In-band REST / Telnet commands
                 info.ActivationState = await QueryDeviceActivationAsync(normMac, ct);
 
                 string fwResp = await SendMcuCommandAsync(normMac, "get fw ver", ct);
-                info.FirmwareVersion = ParseMcuField(fwResp, "fw ver", string.Empty);
+                if (string.IsNullOrEmpty(info.FirmwareVersion))
+                    info.FirmwareVersion = ParseMcuField(fwResp, "fw ver", string.Empty);
 
                 string hwResp = await SendMcuCommandAsync(normMac, "get hw ver", ct);
-                info.HardwareVersion = ParseMcuField(hwResp, "hw ver", string.Empty);
+                if (string.IsNullOrEmpty(info.HardwareVersion))
+                    info.HardwareVersion = ParseMcuField(hwResp, "hw ver", string.Empty);
 
                 string snResp = await SendMcuCommandAsync(normMac, "get fac sn", ct);
-                info.FactorySerialNumber = ParseMcuField(snResp, "fac sn", string.Empty);
+                if (string.IsNullOrEmpty(info.FactorySerialNumber))
+                    info.FactorySerialNumber = ParseMcuField(snResp, "fac sn", string.Empty);
+
+                string ipResp = await SendMcuCommandAsync(normMac, "get ipaddr", ct);
+                var ipMatch = System.Text.RegularExpressions.Regex.Match(ipResp, @"ipaddr\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (ipMatch.Success)
+                {
+                    info.McuIpAddress = ipMatch.Groups[1].Value;
+                }
+                else if (string.IsNullOrEmpty(info.McuIpAddress))
+                {
+                    info.McuIpAddress = ParseMcuField(ipResp, "ipaddr", string.Empty);
+                }
             }
             catch (Exception ex)
             {
@@ -590,15 +669,35 @@ namespace AvasRoutingApp.Sdvoe
                 if (colonIdx >= 0 && colonIdx < line.Length - 1)
                 {
                     string key = line.Substring(0, colonIdx).Trim();
-                    if (!string.IsNullOrEmpty(prefix) && key.IndexOf(prefix, StringComparison.OrdinalIgnoreCase) < 0)
+                    string val = line.Substring(colonIdx + 1).Trim();
+
+                    // Ignore command echoes
+                    if (key.Equals("echo", StringComparison.OrdinalIgnoreCase))
                     {
                         continue;
                     }
 
-                    string val = line.Substring(colonIdx + 1).Trim();
-                    if (!string.IsNullOrEmpty(val) && !val.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase))
+                    // Key matches prefix directly (e.g. "fw ver : V2.23")
+                    if (!string.IsNullOrEmpty(prefix) && key.IndexOf(prefix, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        return val;
+                        if (!val.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return val;
+                        }
+                    }
+
+                    // Status line contains value (e.g. "status : ipaddr 10.32.32.14" or "status : fw ver 2.0.0")
+                    if (key.Equals("status", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(prefix))
+                    {
+                        int pIdx = val.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
+                        if (pIdx >= 0)
+                        {
+                            string afterPrefix = val.Substring(pIdx + prefix.Length).Trim(' ', ':');
+                            if (!string.IsNullOrEmpty(afterPrefix) && !afterPrefix.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase))
+                            {
+                                return afterPrefix;
+                            }
+                        }
                     }
                 }
             }
@@ -683,11 +782,26 @@ namespace AvasRoutingApp.Sdvoe
                     data_string = "set rtp OFF\r\n"
                 };
                 using var resp = await PostDeviceRestAsync(path, offPayload, ct);
-                if (resp == null || !resp.IsSuccessStatusCode) return false;
+                if (resp != null && resp.IsSuccessStatusCode)
+                {
+                    string body = await resp.Content.ReadAsStringAsync(ct);
+                    AppLogger.Info("SdvoeClient", $"RS-232 'set rtp OFF' response: {body}");
+                    if (IsRestResponseSuccess(body))
+                    {
+                        return true;
+                    }
+                }
 
-                string body = await resp.Content.ReadAsStringAsync(ct);
-                AppLogger.Info("SdvoeClient", $"RS-232 'set rtp OFF' response: {body}");
-                return IsRestResponseSuccess(body);
+                // Telnet fallback if REST fails or returns unacknowledged
+                if (IsTelnetConnected)
+                {
+                    string telnetCmd = $"send {normMac} rs232 1 \"set rtp OFF\"";
+                    string tResp = await SendTelnetCommandAsync(telnetCmd, ct);
+                    AppLogger.Info("SdvoeClient", $"RS-232 'set rtp OFF' via Telnet response: {tResp}");
+                    return IsCommandSuccessful(tResp);
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
@@ -954,19 +1068,20 @@ namespace AvasRoutingApp.Sdvoe
         /// </summary>
         public async Task<bool> StopPreviewStreamAsync(string macAddress, bool free, CancellationToken ct = default)
         {
+            string normMac = NormalizeMac(macAddress);
+
             // 1. Attempt AVAS-223 AVP RS-232 stop ('set rtp OFF')
-            bool avpStopped = await StopPreviewStreamViaAvpRs232Async(macAddress, ct);
+            bool avpStopped = await StopPreviewStreamViaAvpRs232Async(normMac, ct);
 
             // 2. Also attempt Semtech BlueRiver thumbnail stop command
-            string cmd = free ? $"stop {macAddress}:thumbnail:0 free" : $"stop {macAddress}:thumbnail:0";
+            string cmd = free ? $"stop {normMac}:thumbnail:0 free" : $"stop {normMac}:thumbnail:0";
             bool semtechSuccess = false;
 
             try
             {
                 if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
                 string resp = await SendTelnetCommandAsync(cmd, ct);
-                if (resp.Contains("\"status\":\"SUCCESS\"", StringComparison.OrdinalIgnoreCase) ||
-                    resp.Contains("\"status\":\"PROCESSING\"", StringComparison.OrdinalIgnoreCase))
+                if (IsCommandSuccessful(resp))
                 {
                     semtechSuccess = true;
                 }
@@ -974,12 +1089,12 @@ namespace AvasRoutingApp.Sdvoe
             catch
             {
                 // Fallback to REST
-                semtechSuccess = await StopPreviewStreamViaRestAsync(macAddress, free, ct);
+                semtechSuccess = await StopPreviewStreamViaRestAsync(normMac, free, ct);
             }
 
             if (free)
             {
-                _ipManager.ReleaseMulticastIp(macAddress);
+                _ipManager.ReleaseMulticastIp(normMac);
             }
 
             return avpStopped || semtechSuccess;

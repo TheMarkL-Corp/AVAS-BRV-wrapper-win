@@ -15,6 +15,7 @@ namespace AvasRoutingApp.Tests
             Assert.True(card.IsVegaDevice);
             Assert.Equal("[VEGA-1100 (Test)]", card.BadgeText);
             Assert.False(card.IsMaintenanceAvailable);
+            Assert.False(card.ShowActivationBadge);
         }
 
         [Fact]
@@ -26,6 +27,7 @@ namespace AvasRoutingApp.Tests
             Assert.False(card.IsVegaDevice);
             Assert.Equal("chip_0 (TX)", card.BadgeText);
             Assert.True(card.IsMaintenanceAvailable);
+            Assert.True(card.ShowActivationBadge);
         }
 
         [Fact]
@@ -37,6 +39,7 @@ namespace AvasRoutingApp.Tests
             Assert.False(card.IsVegaDevice);
             Assert.Equal("chip_0 (TX)", card.BadgeText);
             Assert.True(card.IsMaintenanceAvailable);
+            Assert.True(card.ShowActivationBadge);
         }
     }
 }

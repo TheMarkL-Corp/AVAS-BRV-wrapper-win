@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -599,14 +601,16 @@ namespace AvasRoutingApp.ViewModels
                     UnicastIp = dev.IpAddress,
                     MulticastIp = mcastIp,
                     Port = basePort,
-                    Resolution = "320x180",
-                    IsStreaming = started,
-                    StatusMessage = started ? "Streaming" : "Stream start request unacknowledged",
-                    LinkMode = linkMode,
+                    Resolution = dev.Family == DeviceFamily.Vega ? "HDMI (10G)" : "320x180",
+                    IsStreaming = dev.Family == DeviceFamily.Vega ? false : started,
+                    StatusMessage = dev.Family == DeviceFamily.Vega
+                        ? "Full 10G Stream Only (Preview N/A)"
+                        : (started ? "Streaming" : "Stream start request unacknowledged"),
+                    LinkMode = dev.Family == DeviceFamily.Vega ? "10G Native" : linkMode,
                     CompanionMac = companionMac,
                     CompanionIsActive = compActive,
                     Family = dev.Family,
-                    ActivationState = dev.Family == DeviceFamily.Vega ? DeviceActivationState.Activated : DeviceActivationState.Unknown,
+                    ActivationState = DeviceActivationState.Unknown,
                     FirmwareVersion = string.Empty,
                     HardwareVersion = string.Empty,
                     FactorySerialNumber = string.Empty
@@ -628,45 +632,62 @@ namespace AvasRoutingApp.ViewModels
                     });
                 };
 
-                // Asynchronously query MCU telemetry & activation (AVAS devices only)
-                var sdvoeClient = _discoveryService as SdvoeClient ?? _multicastController as SdvoeClient;
-                if (sdvoeClient != null && dev.Family == DeviceFamily.Avas)
+                // For AVAS devices only: Attach Unified RTP demux receiver channel and query MCU telemetry
+                if (dev.Family == DeviceFamily.Avas)
                 {
-                    _ = Task.Run(async () =>
+                    // Bind to UnifiedRtpDemuxReceiver channel by sender Unicast IP and companion MAC/MCU IP aliases
+                    var aliases = new List<string>();
+                    if (!string.IsNullOrEmpty(companionMac) && !string.Equals(companionMac, "NONE", StringComparison.OrdinalIgnoreCase))
                     {
-                        try
+                        aliases.Add(companionMac);
+                    }
+                    if (IPAddress.TryParse(dev.IpAddress, out var avasIp) && avasIp.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        byte[] ipBytes = avasIp.GetAddressBytes();
+                        if (ipBytes[3] <= 253)
                         {
-                            var mcuInfo = await sdvoeClient.QueryMcuDeviceInfoAsync(dev.MacAddress);
-                            card.ActivationState = mcuInfo.ActivationState;
-                            if (!string.IsNullOrEmpty(mcuInfo.FirmwareVersion)) card.FirmwareVersion = mcuInfo.FirmwareVersion;
-                            if (!string.IsNullOrEmpty(mcuInfo.HardwareVersion)) card.HardwareVersion = mcuInfo.HardwareVersion;
-                            if (!string.IsNullOrEmpty(mcuInfo.FactorySerialNumber)) card.FactorySerialNumber = mcuInfo.FactorySerialNumber;
+                            aliases.Add($"{ipBytes[0]}.{ipBytes[1]}.{ipBytes[2]}.{ipBytes[3] + 2}");
                         }
-                        catch
+                    }
+
+                    var channel = UnifiedRtpDemuxReceiver.Instance.GetOrCreateChannel(dev.IpAddress, mcastIp, aliases);
+                    card.AttachReceiver(channel);
+
+                    try
+                    {
+                        AppLogger.Info("Multicast", $"Binding Unified RTP channel for {dev.IpAddress} -> {mcastIp}:{basePort} (Local NIC: '{(string.IsNullOrEmpty(localNic) ? "ALL" : localNic)}')");
+                        channel.StartListening(mcastIp, basePort, localNic);
+                    }
+                    catch (Exception ex)
+                    {
+                        AppLogger.Error("Multicast", $"Socket bind error for {mcastIp}:{basePort}", ex);
+                        card.StatusMessage = $"Socket bind error: {ex.Message}";
+                    }
+
+                    // Asynchronously query MCU telemetry & activation
+                    var sdvoeClient = _discoveryService as SdvoeClient ?? _multicastController as SdvoeClient;
+                    if (sdvoeClient != null)
+                    {
+                        _ = Task.Run(async () =>
                         {
-                            card.ActivationState = DeviceActivationState.Unknown;
-                        }
-                    });
-                }
-
-                // Bind to UnifiedRtpDemuxReceiver channel by sender Unicast IP and companion MAC alias
-                var aliases = new List<string>();
-                if (!string.IsNullOrEmpty(companionMac) && !string.Equals(companionMac, "NONE", StringComparison.OrdinalIgnoreCase))
-                {
-                    aliases.Add(companionMac);
-                }
-                var channel = UnifiedRtpDemuxReceiver.Instance.GetOrCreateChannel(dev.IpAddress, mcastIp, aliases);
-                card.AttachReceiver(channel);
-
-                try
-                {
-                    AppLogger.Info("Multicast", $"Binding Unified RTP channel for {dev.IpAddress} -> {mcastIp}:{basePort} (Local NIC: '{(string.IsNullOrEmpty(localNic) ? "ALL" : localNic)}')");
-                    channel.StartListening(mcastIp, basePort, localNic);
-                }
-                catch (Exception ex)
-                {
-                    AppLogger.Error("Multicast", $"Socket bind error for {mcastIp}:{basePort}", ex);
-                    card.StatusMessage = $"Socket bind error: {ex.Message}";
+                            try
+                            {
+                                var mcuInfo = await sdvoeClient.QueryMcuDeviceInfoAsync(dev.MacAddress);
+                                card.ActivationState = mcuInfo.ActivationState;
+                                if (!string.IsNullOrEmpty(mcuInfo.FirmwareVersion)) card.FirmwareVersion = mcuInfo.FirmwareVersion;
+                                if (!string.IsNullOrEmpty(mcuInfo.HardwareVersion)) card.HardwareVersion = mcuInfo.HardwareVersion;
+                                if (!string.IsNullOrEmpty(mcuInfo.FactorySerialNumber)) card.FactorySerialNumber = mcuInfo.FactorySerialNumber;
+                                if (!string.IsNullOrEmpty(mcuInfo.McuIpAddress))
+                                {
+                                    UnifiedRtpDemuxReceiver.Instance.RegisterAlias(mcuInfo.McuIpAddress, dev.IpAddress);
+                                }
+                            }
+                            catch
+                            {
+                                card.ActivationState = DeviceActivationState.Unknown;
+                            }
+                        });
+                    }
                 }
 
                 EncoderCards.Add(card);
@@ -792,7 +813,7 @@ namespace AvasRoutingApp.ViewModels
             var cardsToStop = EncoderCards.ToList();
             AppLogger.Info("Sidebar", $"Stopping {cardsToStop.Count} active stream cards...");
 
-            foreach (var card in cardsToStop)
+            await Task.WhenAll(cardsToStop.Select(async card =>
             {
                 try
                 {
@@ -841,7 +862,7 @@ namespace AvasRoutingApp.ViewModels
                 }
 
                 card.Dispose();
-            }
+            }));
 
             UnifiedRtpDemuxReceiver.Instance.StopListening();
             EncoderCards.Clear();
@@ -988,7 +1009,7 @@ namespace AvasRoutingApp.ViewModels
             try
             {
                 var stopTask = Task.Run(async () => await StopAllStreamsInternalAsync(CancellationToken.None));
-                stopTask.Wait(1500);
+                stopTask.Wait(4000);
             }
             catch { }
 

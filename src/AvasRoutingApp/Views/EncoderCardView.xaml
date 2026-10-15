@@ -22,6 +22,7 @@
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <!-- Activation Status Badge with MCU Telemetry Tooltip -->
                     <Border Background="{Binding ActivationBadgeBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0" VerticalAlignment="Center"
+                            Visibility="{Binding ShowActivationBadge, Converter={StaticResource BoolToVisConverter}}"
                             ToolTip="{Binding McuTooltipText}" Cursor="Help">
                         <TextBlock Text="{Binding ActivationBadgeText}" Foreground="White" FontSize="10" FontWeight="Bold" />
                     </Border>

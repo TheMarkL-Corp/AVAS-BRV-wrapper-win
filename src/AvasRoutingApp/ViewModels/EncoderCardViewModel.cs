@@ -317,11 +317,14 @@ namespace AvasRoutingApp.ViewModels
                     OnPropertyChanged(nameof(BadgeBackgroundBrush));
                     OnPropertyChanged(nameof(BadgeForegroundBrush));
                     OnPropertyChanged(nameof(IsMaintenanceAvailable));
+                    OnPropertyChanged(nameof(ShowActivationBadge));
                 }
             }
         }
 
         public bool IsVegaDevice => _family == DeviceFamily.Vega;
+
+        public bool ShowActivationBadge => _family == DeviceFamily.Avas;
 
         public string BadgeText => _family switch
         {
