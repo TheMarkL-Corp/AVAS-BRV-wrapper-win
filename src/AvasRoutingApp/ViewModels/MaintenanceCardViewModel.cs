@@ -54,9 +54,21 @@ namespace AvasRoutingApp.ViewModels
         public bool IsDualLink => string.Equals(LinkMode, "DUAL", StringComparison.OrdinalIgnoreCase);
         public SolidColorBrush LinkModeBrush => IsDualLink ? DualLinkBrush : SingleLinkBrush;
 
-        public string CompanionMac => !string.IsNullOrEmpty(_device.CompanionMac) && !string.Equals(_device.CompanionMac, "NONE", StringComparison.OrdinalIgnoreCase)
-            ? _device.CompanionMac
-            : "N/A";
+        public string CompanionMac
+        {
+            get => !string.IsNullOrEmpty(_device.CompanionMac) && !string.Equals(_device.CompanionMac, "NONE", StringComparison.OrdinalIgnoreCase)
+                ? _device.CompanionMac
+                : "N/A";
+            set
+            {
+                if (_device.CompanionMac != value)
+                {
+                    _device.CompanionMac = value ?? "NONE";
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(HasCompanion));
+                }
+            }
+        }
 
         public bool HasCompanion => !string.IsNullOrEmpty(_device.CompanionMac) && !string.Equals(_device.CompanionMac, "NONE", StringComparison.OrdinalIgnoreCase);
 

@@ -40,6 +40,35 @@ namespace AvasRoutingApp.Tests
         }
 
         [WpfFact]
+        public void MaintenanceCardView_InstantiateWithDualLinkDevice_DoesNotThrowBindingError()
+        {
+            WpfTestHelper.Run(() =>
+            {
+                var app = Application.Current ?? new Application();
+                App.ApplyTheme("Light");
+
+                var dev = new AvasDevice
+                {
+                    MacAddress = "74fe488b07bb",
+                    CompanionMac = "74fe488b07bc",
+                    LinkMode = "DUAL",
+                    DeviceName = "TX2_DUAL LINK_SFPA",
+                    VendorId = 105,
+                    ProductId = 81,
+                    IsTransmitter = true
+                };
+                var vm = new MaintenanceCardViewModel(dev);
+                var view = new MaintenanceCardView
+                {
+                    DataContext = vm
+                };
+                view.Measure(new Size(400, 300));
+                view.Arrange(new Rect(0, 0, 400, 300));
+                view.UpdateLayout();
+            });
+        }
+
+        [WpfFact]
         public void MaintenanceDialog_Instantiate_DarkTheme_DoesNotThrow()
         {
             WpfTestHelper.Run(() =>

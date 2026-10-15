@@ -63,7 +63,7 @@
                     <DockPanel Visibility="{Binding HasCompanion, Converter={StaticResource BoolToVisConverter}}" Margin="0,2,0,0">
                         <TextBlock Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="10" TextTrimming="CharacterEllipsis">
                             <Run Text="Companion: " />
-                            <Run Text="{Binding CompanionMac}" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontFamily="Consolas, Courier New" />
+                            <Run Text="{Binding CompanionMac, Mode=OneWay}" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontFamily="Consolas, Courier New" />
                         </TextBlock>
                         <TextBlock Text="Chip 1" DockPanel.Dock="Right" HorizontalAlignment="Right" Foreground="{DynamicResource ThemeTextMutedBrush}" FontSize="9" />
                     </DockPanel>
