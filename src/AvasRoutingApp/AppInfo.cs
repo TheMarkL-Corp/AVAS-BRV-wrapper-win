@@ -43,7 +43,7 @@ namespace AvasRoutingApp
                 // Fallback safe default
             }
 
-            return "v1.5.0";
+            return "v1.6.0";
         }
     }
 }

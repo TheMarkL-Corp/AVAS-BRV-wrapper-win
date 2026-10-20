@@ -68,6 +68,7 @@ AVAS Routing SW is a high-performance portable native Windows desktop applicatio
 | 18 | R7.1 Device Temperature & Telemetry Monitoring | TX & RX temperature cards, dual-source SDVoE vs VoIP SDK discrepancy engine, companion chip_0 & chip_1 combining, >70°C bold red alerts, active-tab auto-polling | M8 | V1.4.0_GOAL |
 | 19 | R8.1 Sidebar Font Size Adjustment & Scaling | Discrete preset selector (Small, Normal, Large, ExtraLarge), live preview in Settings dialog, layout transform scaling, dynamic width adaptation | M9 | V1.4.0_GOAL |
 | 20 | R9.1 Unified Multicast Demuxer & Multi-Link Reliability | Adv_VOIPS_Sample aligned single port-5000 UDP socket with source IP demuxing, tolerant scanline reassembly with packet loss interpolation, chip_0 exclusive multi-link targeting with REST auto-probing, shifted 225.1.1.x multicast pool | M10 | V1.5.0_GOAL |
+| 21 | R10.1 Universal AVAS Diagnostics & VEGA-1100 Support | Dedicated 4th sidebar tab for AVAS Diagnostics (TX & RX), in-dialog target switcher, VEGA-1100 preview & discovery pipeline, graceful multicast stream teardown on exit | M11 | V1.6.0_GOAL |
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
@@ -83,6 +84,7 @@ AVAS Routing SW is a high-performance portable native Windows desktop applicatio
 | M8 | Device Temperature Monitoring (v1.4.0) | Sidebar Thermals tab, TX/RX grouping, chip_0 & chip_1 companion pairing, SDVoE vs VoIP SDK discrepancy testing, >70°C alert styling | M4, M7 | DONE (v1.4.0 Released) |
 | M9 | Sidebar Font Size Adjustment (v1.4.0) | Settings typography presets, live preview, layout transform scaling, dynamic width adaptation | M8 | DONE (v1.4.0 Released) |
 | M10 | Unified Multicast Demux & Multi-Link Fixes (v1.5.0) | Port 5000 source-IP demuxer, tolerant scanline interpolation, chip_0 exclusive multi-link targeting, auto-probing REST ports, 225.1.1.x pool, 462 tests passed | M7, M9 | DONE (v1.5.0 Released) |
+| M11 | Universal Diagnostics & VEGA-1100 Support (v1.6.0) | Dedicated Diagnostics sidebar tab (TX/RX), in-dialog target device switcher, VEGA-1100 direct SDVoE streaming, OneWay binding hardening, 544 tests passed | M10 | DONE (v1.6.0 Released) |
 
 ## Interface Contracts
 

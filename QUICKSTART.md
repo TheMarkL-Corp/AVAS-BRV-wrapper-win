@@ -1,4 +1,4 @@
-# AVAS Routing SW — Quickstart Guide (v1.5.0)
+# AVAS Routing SW — Quickstart Guide (v1.6.0)
 
 Welcome to **AVAS Routing SW** (`AVAS-BRV-wrapper-win`), a lightweight, high-performance native Windows desktop application designed to control and monitor SDVoE AV distribution networks.
 
@@ -19,12 +19,12 @@ This application provides a dual-capability management cockpit:
 
 ## 1. Quick Start: Choosing Your Installation Method
 
-AVAS Routing SW v1.5.0 provides two official distribution options:
+AVAS Routing SW v1.6.0 provides two official distribution options:
 
 ### Option A: Complete Offline Installer (Recommended)
 Download:
 ```
-releases/AVAS-Routing-SW-Installer-v1.5.0.zip
+releases/AVAS-Routing-SW-Installer-v1.6.0.zip
 ```
 1. Extract the zip archive and double-click `Install.bat` (or `AvasRoutingSetup.exe`).
 2. **Zero-Internet Runtime Validation**: The installer automatically checks if **.NET 8 Desktop Runtime** and **Microsoft Edge WebView2 Runtime** are installed. If missing, it silently installs them from local bundled packages (`redist/`) without requiring internet access.
@@ -35,7 +35,7 @@ releases/AVAS-Routing-SW-Installer-v1.5.0.zip
 ### Option B: Standalone Portable Application
 Download:
 ```
-releases/AVAS-Routing-SW-v1.5.0-win-x64.zip
+releases/AVAS-Routing-SW-v1.6.0-win-x64.zip
 ```
 1. Extract the archive anywhere on your system (e.g. `C:\Tools\AVAS-Routing-SW` or a portable USB drive).
 2. Launch `AvasRoutingApp.exe`. No installation or administrative privileges required.
@@ -96,23 +96,24 @@ When selected during installation (or via setup maintenance), the installer perf
 
 ## 5. Automated Test Suite & Verification
 
-AVAS Routing SW v1.5.0 is validated by two automated test suites comprising **462 automated tests** passing at **100%**:
+AVAS Routing SW v1.6.0 is validated by two automated test suites comprising **544 automated tests** passing at **100%**:
 
-- **`AvasRoutingApp.Tests`**: **275 / 275 Passed (100%)**
+- **`AvasRoutingApp.Tests`**: **357 / 357 Passed (100%)**
   - Configuration validation, resilience, stress, and corruption recovery
   - Multi-Link chip_0 exclusivity, companion pairing, and REST auto-probing
   - Unified port 5000 UDP demultiplexer and tolerant scanline reassembly
+  - Universal AVAS Diagnostics (TX & RX endpoints), in-dialog target switcher, and VEGA isolation
 - **`E2ETests`**: **187 / 187 Passed (100%)**
   - Full Tier 1–5 functional coverage, boundary corner cases, multi-device concurrency, and endurance loops
 
 ---
 
-## 6. Official Release Packages (v1.5.0)
+## 6. Official Release Packages (v1.6.0)
 
 | Package Asset | Size | Target Environment | Contents |
 |---|---|---|---|
-| **[AVAS-Routing-SW-Installer-v1.5.0.zip](https://github.com/TheMarkL-Corp/AVAS-BRV-wrapper-win/releases/download/v1.5.0/AVAS-Routing-SW-Installer-v1.5.0.zip)** | ~366.3 MB | Offline / Zero-Internet PC | Self-contained `AvasRoutingSetup.exe`, `Install.bat`, bundled `.NET 8 Desktop Runtime`, bundled `WebView2 Runtime`, Advantech white-labeling assets, and full app payload |
-| **[AVAS-Routing-SW-v1.5.0-win-x64.zip](https://github.com/TheMarkL-Corp/AVAS-BRV-wrapper-win/releases/download/v1.5.0/AVAS-Routing-SW-v1.5.0-win-x64.zip)** | ~1.55 MB | Pre-configured Windows x64 | Zero-install portable `AvasRoutingApp.exe`, DLLs, default config (`http://localhost:80`), and full documentation |
+| **[AVAS-Routing-SW-Installer-v1.6.0.zip](https://github.com/TheMarkL-Corp/AVAS-BRV-wrapper-win/releases/download/v1.6.0/AVAS-Routing-SW-Installer-v1.6.0.zip)** | ~366.3 MB | Offline / Zero-Internet PC | Self-contained `AvasRoutingSetup.exe`, `Install.bat`, bundled `.NET 8 Desktop Runtime`, bundled `WebView2 Runtime`, Advantech white-labeling assets, and full app payload |
+| **[AVAS-Routing-SW-v1.6.0-win-x64.zip](https://github.com/TheMarkL-Corp/AVAS-BRV-wrapper-win/releases/download/v1.6.0/AVAS-Routing-SW-v1.6.0-win-x64.zip)** | ~1.6 MB | Pre-configured Windows x64 | Zero-install portable `AvasRoutingApp.exe`, DLLs, default config (`http://localhost:80`), and full documentation |
 
 ---
 

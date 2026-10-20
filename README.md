@@ -2,9 +2,9 @@
 
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-blue.svg)](https://microsoft.com)
 [![Framework](https://img.shields.io/badge/.NET-8.0--windows-purple.svg)](https://dotnet.microsoft.com)
-[![Tests](https://img.shields.io/badge/tests-462%20passing%20(100%25)-brightgreen.svg)](#test-suite--qa-verification)
+[![Tests](https://img.shields.io/badge/tests-544%20passing%20(100%25)-brightgreen.svg)](#test-suite--qa-verification)
 [![Loop Stress](https://img.shields.io/badge/loop%20stress-4%2C005%2F4%2C005%20passed-success.svg)](./LOOP_TEST_RESULTS.md)
-[![Version](https://img.shields.io/badge/version-v1.5.0-informational.svg)](#)
+[![Version](https://img.shields.io/badge/version-v1.6.0-informational.svg)](#)
 
 A high-performance, portable native Windows desktop application that wraps the **Semtech BlueRiver AV Manager** web interface within an isolated **Microsoft WebView2** browser container, and provides a collapsible real-time overlay sidebar displaying live multicast video previews ($\ge 1$ FPS) of **Advantech AVAS-223 Encoders (`chip_0` only)** using SDVoE Control Server APIs and RFC 3550 / RFC 4175 UDP multicast ingestion.
 
@@ -29,7 +29,7 @@ A high-performance, portable native Windows desktop application that wraps the *
 
 ```
 +-----------------------------------------------------------------------------------------------+
-| AVAS ROUTING SW [v1.5.0]                                            URL: http://localhost:80 [⚙] |
+| AVAS ROUTING SW [v1.6.0]                                            URL: http://localhost:80 [⚙] |
 +---------------------------------------------------------------------------------------+-------+
 |                                                                                       | ◀     |
 |                                                                                       | P     |
