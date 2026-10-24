@@ -2,6 +2,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -27,23 +29,53 @@ namespace AvasRoutingApp.Rtp
 
         public static UnifiedRtpDemuxReceiver Instance => _lazyInstance.Value;
 
+        public static readonly int[] DefaultPorts = new[] { 5000, 5004 };
+
         private readonly ConcurrentDictionary<string, DemuxChannel> _channels = new(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, DemuxChannel> _aliases = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _joinedMulticastGroups = new(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, IPAddress?> _groupLocalNics = new(StringComparer.OrdinalIgnoreCase);
         private readonly object _socketLock = new();
 
-        private UdpClient? _udpClient;
+        private readonly List<UdpClient> _udpClients = new();
+        private readonly List<int> _listeningPorts = new();
         private CancellationTokenSource? _cts;
-        private Task? _receiveTask;
         private int _port = 5000;
         private bool _isListening;
         private bool _disposed;
+        private long _unmatchedPacketsCount;
 
-        public int Port => _port;
+        public int Port
+        {
+            get
+            {
+                lock (_socketLock)
+                {
+                    return _listeningPorts.Count > 0 ? _listeningPorts[0] : _port;
+                }
+            }
+        }
+
+        public IReadOnlyList<int> ListeningPorts
+        {
+            get
+            {
+                lock (_socketLock)
+                {
+                    return _listeningPorts.ToArray();
+                }
+            }
+        }
+
         public bool IsListening => _isListening;
         public int ChannelCount => _channels.Count;
         public int AliasCount => _aliases.Count;
+        public long UnmatchedPacketsCount => Interlocked.Read(ref _unmatchedPacketsCount);
+
+        public void ResetStats()
+        {
+            Interlocked.Exchange(ref _unmatchedPacketsCount, 0);
+        }
 
         public UnifiedRtpDemuxReceiver(int port = 5000)
         {
@@ -69,6 +101,7 @@ namespace AvasRoutingApp.Rtp
             {
                 unicastIp = "0.0.0.0";
             }
+            unicastIp = unicastIp.Trim();
 
             var channel = _channels.GetOrAdd(unicastIp, ip => new DemuxChannel(this, ip, multicastIp));
             if (!string.IsNullOrWhiteSpace(multicastIp))
@@ -83,7 +116,7 @@ namespace AvasRoutingApp.Rtp
                 {
                     if (!string.IsNullOrWhiteSpace(alias))
                     {
-                        RegisterAlias(alias, channel);
+                        RegisterAlias(alias.Trim(), channel);
                     }
                 }
             }
@@ -97,9 +130,10 @@ namespace AvasRoutingApp.Rtp
         public void RegisterAlias(string alias, string primaryUnicastIp)
         {
             if (string.IsNullOrWhiteSpace(alias) || string.IsNullOrWhiteSpace(primaryUnicastIp)) return;
-            if (_channels.TryGetValue(primaryUnicastIp, out var channel))
+            string key = primaryUnicastIp.Trim();
+            if (_channels.TryGetValue(key, out var channel))
             {
-                RegisterAlias(alias, channel);
+                RegisterAlias(alias.Trim(), channel);
             }
         }
 
@@ -109,8 +143,9 @@ namespace AvasRoutingApp.Rtp
         public void RegisterAlias(string alias, DemuxChannel channel)
         {
             if (string.IsNullOrWhiteSpace(alias) || channel == null) return;
-            _aliases[alias] = channel;
-            AppLogger.Debug("UnifiedDemux", $"Registered alias '{alias}' -> channel '{channel.UnicastIp}'");
+            string cleanAlias = alias.Trim();
+            _aliases[cleanAlias] = channel;
+            AppLogger.Debug("UnifiedDemux", $"Registered alias '{cleanAlias}' -> channel '{channel.UnicastIp}'");
         }
 
         /// <summary>
@@ -119,7 +154,8 @@ namespace AvasRoutingApp.Rtp
         public void RemoveChannel(string unicastIp)
         {
             if (string.IsNullOrWhiteSpace(unicastIp)) return;
-            if (_channels.TryRemove(unicastIp, out var channel))
+            string key = unicastIp.Trim();
+            if (_channels.TryRemove(key, out var channel))
             {
                 foreach (var kvp in _aliases)
                 {
@@ -141,42 +177,72 @@ namespace AvasRoutingApp.Rtp
         }
 
         /// <summary>
-        /// Starts the unified UDP listener on port 5000 if not already active.
+        /// Starts the unified UDP listener on the specified port if not already active.
         /// </summary>
-        public void EnsureStarted(int port = 5000)
+        public void EnsureStarted(int port)
+        {
+            EnsureStarted(new[] { port });
+        }
+
+        /// <summary>
+        /// Starts the unified UDP listeners on the specified ports (or DefaultPorts 5000 and 5004) if not already active.
+        /// </summary>
+        public void EnsureStarted(IEnumerable<int>? ports = null)
         {
             lock (_socketLock)
             {
                 if (_isListening) return;
 
-                _port = port;
+                var targetPorts = (ports != null && ports.Any()) ? ports.Distinct().ToArray() : DefaultPorts;
                 _cts = new CancellationTokenSource();
                 _isListening = true;
+                _udpClients.Clear();
+                _listeningPorts.Clear();
 
                 try
                 {
-                    _udpClient = new UdpClient();
-                    _udpClient.ExclusiveAddressUse = false;
-                    _udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                    _udpClient.Client.ReceiveBufferSize = 8 * 1024 * 1024; // 8MB buffer
+                    foreach (int p in targetPorts)
+                    {
+                        try
+                        {
+                            var client = new UdpClient();
+                            client.ExclusiveAddressUse = false;
+                            client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                            client.Client.ReceiveBufferSize = 8 * 1024 * 1024; // 8MB buffer
 
-                    var localEp = new IPEndPoint(IPAddress.Any, _port);
-                    _udpClient.Client.Bind(localEp);
+                            var localEp = new IPEndPoint(IPAddress.Any, p);
+                            client.Client.Bind(localEp);
 
-                    // Re-join any previously tracked multicast groups
+                            _udpClients.Add(client);
+                            _listeningPorts.Add(p);
+
+                            var token = _cts.Token;
+                            Task.Run(() => ReceiveLoopAsync(client, token), token);
+                            AppLogger.Info("UnifiedDemux", $"Unified RTP Demux listener active on port {p}");
+                        }
+                        catch (Exception ex)
+                        {
+                            AppLogger.Warn("UnifiedDemux", $"Failed to bind UDP port {p}: {ex.Message}");
+                        }
+                    }
+
+                    if (_udpClients.Count == 0)
+                    {
+                        throw new InvalidOperationException("Could not bind any UDP listening ports.");
+                    }
+
+                    _port = _listeningPorts[0];
+
+                    // Re-join any previously tracked multicast groups across all clients
                     foreach (var mcastIp in _joinedMulticastGroups)
                     {
                         _groupLocalNics.TryGetValue(mcastIp, out var localNic);
                         JoinMulticastGroupInternal(mcastIp, localNic);
                     }
-
-                    var token = _cts.Token;
-                    _receiveTask = Task.Run(() => ReceiveLoopAsync(_udpClient, token), token);
-                    AppLogger.Info("UnifiedDemux", $"Unified RTP Demux receiver active on port {_port}");
                 }
                 catch (Exception ex)
                 {
-                    AppLogger.Error("UnifiedDemux", $"Failed to bind unified RTP socket on port {_port}", ex);
+                    AppLogger.Error("UnifiedDemux", "Failed to initialize unified RTP sockets", ex);
                     StopListeningInternal();
                     throw;
                 }
@@ -214,7 +280,7 @@ namespace AvasRoutingApp.Rtp
                     _joinedMulticastGroups.Add(multicastIp);
                 }
 
-                if (_isListening && _udpClient != null)
+                if (_isListening && _udpClients.Count > 0)
                 {
                     _groupLocalNics.TryGetValue(multicastIp, out var nic);
                     JoinMulticastGroupInternal(multicastIp, nic ?? localNicAddress);
@@ -224,54 +290,57 @@ namespace AvasRoutingApp.Rtp
 
         private void JoinMulticastGroupInternal(string multicastIp, IPAddress? localNicAddress = null)
         {
-            if (_udpClient == null) return;
+            if (_udpClients.Count == 0) return;
             if (!IPAddress.TryParse(multicastIp, out var mcastAddr)) return;
             byte firstByte = mcastAddr.GetAddressBytes()[0];
             if (firstByte < 224 || firstByte > 239) return;
 
-            // Direct binding: If a specific local NIC IP was designated, prioritize it
-            if (localNicAddress != null)
+            foreach (var client in _udpClients)
             {
-                try
+                // Direct binding: If a specific local NIC IP was designated, prioritize it
+                if (localNicAddress != null)
                 {
-                    _udpClient.JoinMulticastGroup(mcastAddr, localNicAddress);
-                    AppLogger.Info("UnifiedDemux", $"Joined multicast {multicastIp} on dedicated NIC {localNicAddress}");
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    AppLogger.Warn("UnifiedDemux", $"Failed to join multicast {multicastIp} on dedicated NIC {localNicAddress}: {ex.Message}. Falling back to multi-adapter sweep.");
-                }
-            }
-
-            bool joinedAny = false;
-            try
-            {
-                var hostAddrs = Dns.GetHostAddresses(Dns.GetHostName());
-                foreach (var addr in hostAddrs)
-                {
-                    if (addr.AddressFamily == AddressFamily.InterNetwork)
+                    try
                     {
-                        try
-                        {
-                            _udpClient.JoinMulticastGroup(mcastAddr, addr);
-                            joinedAny = true;
-                        }
-                        catch { }
+                        client.JoinMulticastGroup(mcastAddr, localNicAddress);
+                        AppLogger.Info("UnifiedDemux", $"Joined multicast {multicastIp} on dedicated NIC {localNicAddress}");
+                        continue;
+                    }
+                    catch (Exception ex)
+                    {
+                        AppLogger.Warn("UnifiedDemux", $"Failed to join multicast {multicastIp} on dedicated NIC {localNicAddress}: {ex.Message}. Falling back to multi-adapter sweep.");
                     }
                 }
-            }
-            catch { }
 
-            if (!joinedAny)
-            {
+                bool joinedAny = false;
                 try
                 {
-                    _udpClient.JoinMulticastGroup(mcastAddr);
+                    var hostAddrs = Dns.GetHostAddresses(Dns.GetHostName());
+                    foreach (var addr in hostAddrs)
+                    {
+                        if (addr.AddressFamily == AddressFamily.InterNetwork)
+                        {
+                            try
+                            {
+                                client.JoinMulticastGroup(mcastAddr, addr);
+                                joinedAny = true;
+                            }
+                            catch { }
+                        }
+                    }
                 }
-                catch (SocketException)
+                catch { }
+
+                if (!joinedAny)
                 {
-                    // Allow unjoined listen in loopback or virtualized environments
+                    try
+                    {
+                        client.JoinMulticastGroup(mcastAddr);
+                    }
+                    catch (SocketException)
+                    {
+                        // Allow unjoined listen in loopback or virtualized environments
+                    }
                 }
             }
         }
@@ -283,11 +352,23 @@ namespace AvasRoutingApp.Rtp
                 try
                 {
                     var result = await client.ReceiveAsync(ct);
-                    if (result.Buffer != null && result.Buffer.Length >= RtpHeader.MinimumHeaderSize)
+                    if (result.Buffer == null || result.Buffer.Length < RtpHeader.MinimumHeaderSize)
                     {
-                        string senderIp = result.RemoteEndPoint.Address.ToString();
-                        DemuxPacket(senderIp, result.Buffer);
+                        continue;
                     }
+
+                    string senderIp = result.RemoteEndPoint.Address.ToString();
+
+                    // Source-IP Whitelist Filter (REA Report 06):
+                    // Discard immediately before parsing the 20-byte RFC 4175 header,
+                    // allocating scanline buffers, or processing frames if remote IP is not whitelisted.
+                    if (!TryResolveChannel(senderIp, out var channel))
+                    {
+                        Interlocked.Increment(ref _unmatchedPacketsCount);
+                        continue;
+                    }
+
+                    channel.ProcessDatagram(result.Buffer);
                 }
                 catch (OperationCanceledException) { break; }
                 catch (ObjectDisposedException) { break; }
@@ -301,27 +382,36 @@ namespace AvasRoutingApp.Rtp
         }
 
         /// <summary>
-        /// Demultiplexes a datagram to the appropriate channel based on sender IP address or registered alias.
+        /// Attempts to resolve an incoming sender IP address against active monitored channels or registered aliases.
+        /// Implements the source-IP whitelist filter defined in REA Report 06 (Approach 1).
         /// </summary>
-        public void DemuxPacket(string senderIp, ReadOnlySpan<byte> datagram)
+        public bool TryResolveChannel(string senderIp, [NotNullWhen(true)] out DemuxChannel? channel)
         {
-            if (_channels.TryGetValue(senderIp, out var channel))
+            if (string.IsNullOrWhiteSpace(senderIp))
             {
-                channel.ProcessDatagram(datagram);
-                return;
+                channel = null;
+                return false;
             }
 
-            if (_aliases.TryGetValue(senderIp, out var aliasChannel))
+            string cleanIp = senderIp.Trim();
+
+            // 1. Direct channel lookup (O(1))
+            if (_channels.TryGetValue(cleanIp, out channel))
             {
-                aliasChannel.ProcessDatagram(datagram);
-                return;
+                return true;
             }
 
-            // Subnet fallback: Match ONLY if exactly one registered channel belongs to this /24 subnet.
+            // 2. Direct alias lookup (O(1))
+            if (_aliases.TryGetValue(cleanIp, out channel))
+            {
+                return true;
+            }
+
+            // 3. Subnet /24 fallback: Match ONLY if exactly one registered channel belongs to this /24 subnet.
             // If multiple channels share the subnet, we cannot unambiguously infer the target channel.
-            if (IPAddress.TryParse(senderIp, out var senderAddr) && senderAddr.AddressFamily == AddressFamily.InterNetwork)
+            if (IPAddress.TryParse(cleanIp, out var senderAddr) && senderAddr.AddressFamily == AddressFamily.InterNetwork)
             {
-                string senderPrefix = GetSubnet24Prefix(senderIp);
+                string senderPrefix = GetSubnet24Prefix(cleanIp);
                 DemuxChannel? matchCandidate = null;
                 int matchCount = 0;
 
@@ -336,23 +426,46 @@ namespace AvasRoutingApp.Rtp
 
                 if (matchCount == 1 && matchCandidate != null)
                 {
-                    // Auto-alias this IP for future zero-latency routing
-                    _aliases[senderIp] = matchCandidate;
-                    matchCandidate.ProcessDatagram(datagram);
-                    return;
+                    // Auto-alias this IP for future zero-latency O(1) routing
+                    _aliases[cleanIp] = matchCandidate;
+                    channel = matchCandidate;
+                    return true;
                 }
             }
 
-            // Fallback: If only one active channel is registered, route packet to it
-            // (common in 1-TX test topologies where unicast IP is being bound or negotiated)
-            if (_channels.Count == 1)
+            // Unmatched sender IP -> drop datagram
+            channel = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Resolves an IP or registered alias to an IRtpStreamReceiver channel, if present.
+        /// </summary>
+        public bool TryGetChannel(string unicastOrAliasIp, [NotNullWhen(true)] out IRtpStreamReceiver? channel)
+        {
+            if (TryResolveChannel(unicastOrAliasIp, out var demuxChannel))
             {
-                foreach (var kvp in _channels)
-                {
-                    kvp.Value.ProcessDatagram(datagram);
-                    return;
-                }
+                channel = demuxChannel;
+                return true;
             }
+            channel = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Demultiplexes a datagram to the appropriate channel based on sender IP address or registered alias.
+        /// Returns true if accepted and routed; false if discarded as an unregistered source IP.
+        /// </summary>
+        public bool DemuxPacket(string senderIp, ReadOnlySpan<byte> datagram)
+        {
+            if (TryResolveChannel(senderIp, out var channel))
+            {
+                channel.ProcessDatagram(datagram);
+                return true;
+            }
+
+            Interlocked.Increment(ref _unmatchedPacketsCount);
+            return false;
         }
 
         private static string GetSubnet24Prefix(string ip)
@@ -378,17 +491,37 @@ namespace AvasRoutingApp.Rtp
             }
             catch { }
 
-            try
+            foreach (var client in _udpClients)
             {
-                _udpClient?.Close();
-                _udpClient?.Dispose();
-            }
-            catch { }
+                try
+                {
+                    foreach (var mcastIp in _joinedMulticastGroups)
+                    {
+                        if (IPAddress.TryParse(mcastIp, out var mcastAddr))
+                        {
+                            try
+                            {
+                                client.DropMulticastGroup(mcastAddr);
+                            }
+                            catch { }
+                        }
+                    }
+                }
+                catch { }
 
-            _udpClient = null;
+                try
+                {
+                    client.Close();
+                    client.Dispose();
+                }
+                catch { }
+            }
+
+            _udpClients.Clear();
+            _listeningPorts.Clear();
+
             _cts?.Dispose();
             _cts = null;
-            _receiveTask = null;
         }
 
         public void Dispose()
@@ -463,7 +596,14 @@ namespace AvasRoutingApp.Rtp
                 }
 
                 _isListening = true;
-                _parent.EnsureStarted(port > 0 ? port : 5000);
+                if (port > 0 && port != 5000 && port != 5004)
+                {
+                    _parent.EnsureStarted(new[] { port });
+                }
+                else
+                {
+                    _parent.EnsureStarted(DefaultPorts);
+                }
             }
 
             public void StopListening()

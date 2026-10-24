@@ -1,6 +1,8 @@
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -792,6 +794,151 @@ namespace AvasRoutingApp.Tests
             Assert.Equal(1, demuxer.ChannelCount);
             demuxer.RemoveChannel(ip2);
             Assert.Equal(0, demuxer.ChannelCount);
+        }
+
+        [Fact]
+        public void UnifiedRtpDemuxReceiver_RogueSenderIp_IsDiscardedWithoutProcessing()
+        {
+            using var demuxer = new UnifiedRtpDemuxReceiver(59990);
+            string registeredIp = "10.32.32.200";
+            var ch = demuxer.GetOrCreateChannel(registeredIp, "225.1.1.0");
+
+            byte[] packet = CreateRtpVideoPacket(0, 1000, 1, 0, 0, 8, false);
+
+            // Rogue device sending to same multicast group from unmonitored IP
+            string rogueIp = "10.99.99.50";
+            bool routed = demuxer.DemuxPacket(rogueIp, packet);
+
+            Assert.False(routed);
+            Assert.Equal(0, ((UnifiedRtpDemuxReceiver.DemuxChannel)ch).ReceivedPacketsCount);
+            Assert.Equal(1, demuxer.UnmatchedPacketsCount);
+        }
+
+        [Fact]
+        public void UnifiedRtpDemuxReceiver_RegisteredSourceIp_IsProcessedAndCounted()
+        {
+            using var demuxer = new UnifiedRtpDemuxReceiver(59991);
+            string registeredIp = "10.32.32.200";
+            var ch = demuxer.GetOrCreateChannel(registeredIp, "225.1.1.0");
+
+            byte[] packet = CreateRtpVideoPacket(0, 1000, 1, 0, 0, 8, false);
+
+            bool routed = demuxer.DemuxPacket(registeredIp, packet);
+
+            Assert.True(routed);
+            Assert.Equal(1, ((UnifiedRtpDemuxReceiver.DemuxChannel)ch).ReceivedPacketsCount);
+            Assert.Equal(0, demuxer.UnmatchedPacketsCount);
+        }
+
+        [Fact]
+        public void UnifiedRtpDemuxReceiver_AliasResolution_CompanionMacOrSecondaryIp_RoutesSuccessfully()
+        {
+            using var demuxer = new UnifiedRtpDemuxReceiver(59992);
+            string primaryIp = "10.32.32.10";
+            string companionMac = "00:14:95:AA:BB:CC";
+            string secondaryIp = "10.32.32.11";
+
+            var ch = demuxer.GetOrCreateChannel(primaryIp, "225.1.1.0", new[] { companionMac, secondaryIp });
+
+            byte[] p1 = CreateRtpVideoPacket(1, 1000, 1, 0, 0, 8, false);
+            byte[] p2 = CreateRtpVideoPacket(2, 2000, 1, 1, 0, 8, false);
+
+            bool routedSecondary = demuxer.DemuxPacket(secondaryIp, p1);
+            bool routedMac = demuxer.DemuxPacket(companionMac, p2);
+
+            Assert.True(routedSecondary);
+            Assert.True(routedMac);
+            Assert.Equal(2, ((UnifiedRtpDemuxReceiver.DemuxChannel)ch).ReceivedPacketsCount);
+            Assert.Equal(0, demuxer.UnmatchedPacketsCount);
+        }
+
+        [Fact]
+        public void UnifiedRtpDemuxReceiver_RemoveChannel_CleansAliasesAndRejectsFuturePackets()
+        {
+            using var demuxer = new UnifiedRtpDemuxReceiver(59993);
+            string primaryIp = "10.32.32.10";
+            string alias = "10.32.32.11";
+
+            var ch = demuxer.GetOrCreateChannel(primaryIp, "225.1.1.0", new[] { alias });
+            Assert.Equal(1, demuxer.ChannelCount);
+            Assert.Equal(1, demuxer.AliasCount);
+
+            demuxer.RemoveChannel(primaryIp);
+            Assert.Equal(0, demuxer.ChannelCount);
+            Assert.Equal(0, demuxer.AliasCount);
+
+            byte[] packet = CreateRtpVideoPacket(0, 1000, 1, 0, 0, 8, false);
+            bool routedPrimary = demuxer.DemuxPacket(primaryIp, packet);
+            bool routedAlias = demuxer.DemuxPacket(alias, packet);
+
+            Assert.False(routedPrimary);
+            Assert.False(routedAlias);
+            Assert.Equal(2, demuxer.UnmatchedPacketsCount);
+        }
+
+        [Fact]
+        public async Task UnifiedRtpDemuxReceiver_BindsDualPorts_AndIngestsFromBoth5000And5004()
+        {
+            using var receiver = new UnifiedRtpDemuxReceiver();
+            receiver.EnsureStarted(new[] { 5000, 5004 });
+
+            Assert.Contains(5000, receiver.ListeningPorts);
+            Assert.Contains(5004, receiver.ListeningPorts);
+            Assert.True(receiver.IsListening);
+
+            // Register test channel for local sender
+            var channel = (UnifiedRtpDemuxReceiver.DemuxChannel)receiver.GetOrCreateChannel("127.0.0.1", "225.0.0.1");
+
+            // Verify unknown/unregistered IPs on either port are discarded (UnmatchedPacketsCount increments)
+            receiver.DemuxPacket("192.168.99.99", CreateRtpVideoPacket(0, 1000, 1, 0, 0, 8, false));
+            Assert.Equal(1, receiver.UnmatchedPacketsCount);
+
+            // Send UDP datagram to port 5000 from loopback
+            using var senderClient = new UdpClient();
+            byte[] packet5000 = CreateRtpVideoPacket(1, 1000, 1, 0, 0, 8, marker: true);
+            await senderClient.SendAsync(packet5000, packet5000.Length, new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 5000));
+
+            // Send UDP datagram to port 5004 from loopback
+            byte[] packet5004 = CreateRtpVideoPacket(2, 2000, 1, 1, 0, 8, marker: true);
+            await senderClient.SendAsync(packet5004, packet5004.Length, new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 5004));
+
+            // Allow async receive loop to process datagrams
+            var timeoutCts = new CancellationTokenSource(3000);
+            while (channel.ReceivedPacketsCount < 2 && !timeoutCts.Token.IsCancellationRequested)
+            {
+                await Task.Delay(50);
+            }
+
+            Assert.Equal(2, channel.ReceivedPacketsCount);
+            // Verify unmatched packets count did not increase from valid packets
+            Assert.Equal(1, receiver.UnmatchedPacketsCount);
+
+            receiver.Dispose();
+        }
+
+        [Fact]
+        public void UnifiedRtpDemuxReceiver_DefaultPorts_And_EnsureStarted_BindsBothPorts()
+        {
+            Assert.Equal(new[] { 5000, 5004 }, UnifiedRtpDemuxReceiver.DefaultPorts);
+
+            using var receiver = new UnifiedRtpDemuxReceiver();
+            receiver.EnsureStarted(); // Parameterless defaults to DefaultPorts
+
+            Assert.True(receiver.IsListening);
+            Assert.Equal(2, receiver.ListeningPorts.Count);
+            Assert.Contains(5000, receiver.ListeningPorts);
+            Assert.Contains(5004, receiver.ListeningPorts);
+            Assert.Equal(5000, receiver.Port);
+
+            // Channel StartListening with default/0 port also ensures dual ports
+            var ch = (UnifiedRtpDemuxReceiver.DemuxChannel)receiver.GetOrCreateChannel("10.0.0.1", "225.0.0.1");
+            ch.StartListening("225.0.0.1", 0);
+            Assert.True(ch.IsListening);
+            Assert.Equal(2, receiver.ListeningPorts.Count);
+
+            receiver.Dispose();
+            Assert.False(receiver.IsListening);
+            Assert.Empty(receiver.ListeningPorts);
         }
 
         #endregion
