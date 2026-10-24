@@ -413,16 +413,25 @@ namespace AvasRoutingApp.Rtp
                 string senderPrefix = GetSubnet24Prefix(cleanIp);
                 var subnetMatches = _channels.Where(kvp => GetSubnet24Prefix(kvp.Key) == senderPrefix).Select(kvp => kvp.Value).ToList();
 
-                if (subnetMatches.Count > 0)
+                if (subnetMatches.Count == 1)
                 {
-                    // If exactly one channel on this subnet is actively listening, route to it
-                    var activeOnSubnet = subnetMatches.Where(c => c.IsListening).ToList();
-                    DemuxChannel candidate = activeOnSubnet.Count == 1 ? activeOnSubnet[0] : subnetMatches[0];
-
-                    // Auto-alias this IP for future zero-latency O(1) routing
+                    // Unambiguous: exactly one registered channel on this subnet
+                    var candidate = subnetMatches[0];
                     _aliases[cleanIp] = candidate;
                     channel = candidate;
                     return true;
+                }
+                else if (subnetMatches.Count > 1)
+                {
+                    // Disambiguate multi-device subnets: route ONLY if exactly one channel is actively listening
+                    var activeOnSubnet = subnetMatches.Where(c => c.IsListening).ToList();
+                    if (activeOnSubnet.Count == 1)
+                    {
+                        var candidate = activeOnSubnet[0];
+                        _aliases[cleanIp] = candidate;
+                        channel = candidate;
+                        return true;
+                    }
                 }
             }
 
