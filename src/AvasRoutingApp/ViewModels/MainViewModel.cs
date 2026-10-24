@@ -1108,9 +1108,11 @@ namespace AvasRoutingApp.ViewModels
 
         #region Temperature Monitoring & Dual-Source Discrepancy
 
+        public bool IsTemperaturePollingActive => _temperatureTimer?.IsEnabled == true;
+
         private void UpdateTemperaturePollingState()
         {
-            bool isThermalsActive = IsTemperatureTabSelected || (IsAdvancedTabSelected && IsAdvancedThermalsSelected);
+            bool isThermalsActive = (IsAdvancedTabSelected && IsAdvancedThermalsSelected);
             if (isThermalsActive && IsSidebarExpanded && !_disposed)
             {
                 if (_temperatureTimer != null && !_temperatureTimer.IsEnabled)
@@ -1119,7 +1121,7 @@ namespace AvasRoutingApp.ViewModels
                     _temperatureTimer.Start();
                 }
 
-                if (TemperatureCards.Count == 0)
+                if (!IsRefreshingTemperatures)
                 {
                     _ = RefreshTemperaturesAsync();
                 }

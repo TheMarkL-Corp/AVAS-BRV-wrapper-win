@@ -617,5 +617,29 @@ namespace AvasRoutingApp.Tests
             Assert.Contains(mockController.StopCalls, c => c.Mac == "74fe4887fdf4" && c.ChipIndex == 0);
             Assert.Contains(mockController.StartCalls, c => c.Mac == "74fe4887fdf5" && c.ChipIndex == 1);
         }
+
+        [Fact]
+        public void SelectingAdvancedThermals_WhenUnlockedAndSidebarOpen_ImmediatelyActivatesPolling()
+        {
+            var mockDiscovery = new MockDiscoveryService();
+            var mockController = new MockMulticastController();
+            var vm = new MainViewModel(mockDiscovery, mockController);
+
+            vm.IsSidebarExpanded = true;
+            bool unlocked = vm.UnlockAdvancedSettings(MainViewModel.DefaultAdvancedPin);
+            Assert.True(unlocked);
+            Assert.True(vm.IsAdvancedUnlocked);
+
+            // Navigate to Advanced -> Thermals
+            vm.SelectAdvancedThermalsCommand.Execute(null);
+
+            Assert.True(vm.IsAdvancedTabSelected);
+            Assert.True(vm.IsAdvancedThermalsSelected);
+            Assert.True(vm.IsTemperaturePollingActive);
+
+            // Switch away to Previews
+            vm.SelectPreviewsTabCommand.Execute(null);
+            Assert.False(vm.IsTemperaturePollingActive);
+        }
     }
 }
