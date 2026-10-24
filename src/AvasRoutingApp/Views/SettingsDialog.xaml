@@ -363,7 +363,7 @@
 
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="REST API Port:" FontSize="11" Foreground="{DynamicResource ThemeTextSecondaryBrush}" Margin="0,0,0,4" />
-                                <TextBox x:Name="TxtRestPort" Text="8090" />
+                                <TextBox x:Name="TxtRestPort" Text="8080" />
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
@@ -389,12 +389,12 @@
 
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Start Multicast IP:" FontSize="11" Foreground="{DynamicResource ThemeTextSecondaryBrush}" Margin="0,0,0,4" />
-                                <TextBox x:Name="TxtMulticastStartIp" Text="224.1.3.1" />
+                                <TextBox x:Name="TxtMulticastStartIp" Text="225.0.0.1" />
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="End Multicast IP:" FontSize="11" Foreground="{DynamicResource ThemeTextSecondaryBrush}" Margin="0,0,0,4" />
-                                <TextBox x:Name="TxtMulticastEndIp" Text="224.1.3.225" />
+                                <TextBox x:Name="TxtMulticastEndIp" Text="225.0.1.254" />
                             </StackPanel>
                         </Grid>
 
@@ -406,21 +406,120 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Group 4: Device Compatibility & Experimental Features -->
-                <Border Background="{DynamicResource ThemeCardBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,0,8">
+                <!-- Group 4: Advanced Settings (Technician Access) -->
+                <Border Background="{DynamicResource ThemeCardBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,0,12">
                     <StackPanel>
-                        <TextBlock Text="Device Compatibility &amp; Diagnostics" Style="{StaticResource HeaderLabelStyle}" Margin="0,0,0,4" />
-                        <TextBlock Text="Hardware compatibility toggles for non-standard SDVoE transceivers" Style="{StaticResource SubLabelStyle}" Margin="0,0,0,10" />
-
-                        <CheckBox x:Name="ChkEnableVegaDevices" Margin="0,4,0,4" VerticalContentAlignment="Center">
-                            <StackPanel Orientation="Vertical" Margin="4,0,0,0">
-                                <TextBlock Text="Enable VEGA Devices" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource ThemeTextPrimaryBrush}" />
-                                <TextBlock Text="Discovers Advantech VEGA-1100 SDVoE transceivers (Vendor ID 192, Product ID 11) for pure SDVoE preview streaming." 
-                                           FontSize="10" Foreground="{DynamicResource ThemeTextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                        <DockPanel Margin="0,0,0,4">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{DynamicResource IconGeometrySettings}" Fill="{DynamicResource ThemeAccentBrush}" Width="13" Height="13" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="Advanced Settings (Technician Access)" Style="{StaticResource HeaderLabelStyle}" Margin="0" VerticalAlignment="Center" />
                             </StackPanel>
-                        </CheckBox>
+                            <!-- Green badge when unlocked -->
+                            <Border x:Name="BadgeAdvancedUnlocked" Background="#1A10B981" BorderBrush="#10B981" BorderThickness="1" CornerRadius="4" Padding="8,3" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed">
+                                <TextBlock Text="✓ Advanced Settings Unlocked (Session Active)" Foreground="#10B981" FontSize="11" FontWeight="Bold" />
+                            </Border>
+                        </DockPanel>
+
+                        <TextBlock Text="Restricted hardware maintenance, junction telemetry, and silicon reset controls" Style="{StaticResource SubLabelStyle}" Margin="0,0,0,10" />
+
+                        <!-- Locked View: Enter PIN, Unlock button, Error text -->
+                        <StackPanel x:Name="PanelAdvancedLocked" Visibility="Visible">
+                            <TextBlock Text="Enter 8-digit technician PIN to unlock advanced telemetry and hardware maintenance:" FontSize="11" Foreground="{DynamicResource ThemeTextSecondaryBrush}" Margin="0,0,0,6" TextWrapping="Wrap" />
+
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <PasswordBox x:Name="TxtTechnicianPin" 
+                                             MaxLength="8" 
+                                             PasswordChar="●" 
+                                             Background="{DynamicResource ThemeInputBackgroundBrush}" 
+                                             Foreground="{DynamicResource ThemeInputForegroundBrush}" 
+                                             BorderBrush="{DynamicResource ThemeInputBorderBrush}" 
+                                             BorderThickness="1" 
+                                             Padding="8,6" 
+                                             FontSize="13" 
+                                             MinHeight="36" 
+                                             VerticalContentAlignment="Center" 
+                                             KeyDown="TxtTechnicianPin_KeyDown" />
+
+                                <Button x:Name="BtnUnlockAdvanced" Grid.Column="2" 
+                                        Content="Unlock" 
+                                        Click="BtnUnlockAdvanced_Click" 
+                                        Background="{DynamicResource ThemeAccentBrush}" 
+                                        Foreground="{DynamicResource ThemeAccentForegroundBrush}" 
+                                        FontWeight="SemiBold" 
+                                        Padding="18,6" 
+                                        MinHeight="36" 
+                                        BorderThickness="0" 
+                                        Cursor="Hand">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Border" Property="Opacity" Value="0.9" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="Border" Property="Opacity" Value="0.75" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
+
+                            <TextBlock x:Name="TxtPinError" 
+                                       Text="Invalid PIN. Default is 8 zeros (00000000)." 
+                                       Foreground="#EF4444" 
+                                       FontSize="11" 
+                                       FontWeight="SemiBold" 
+                                       Visibility="Collapsed" 
+                                       Margin="0,4,0,0" />
+                        </StackPanel>
+
+                        <!-- Unlocked View: Relock button -->
+                        <StackPanel x:Name="PanelAdvancedUnlocked" Visibility="Collapsed">
+                            <TextBlock Text="Technician access is granted for the current session. The [ ⚙ Advanced ] tab is visible in the sidebar." FontSize="11" Foreground="{DynamicResource ThemeTextSecondaryBrush}" Margin="0,0,0,10" TextWrapping="Wrap" />
+
+                            <Button x:Name="BtnLockAdvanced" 
+                                    Content="Lock Advanced Settings" 
+                                    Click="BtnLockAdvanced_Click" 
+                                    HorizontalAlignment="Left" 
+                                    Background="{DynamicResource ThemeButtonBackgroundBrush}" 
+                                    Foreground="#EF4444" 
+                                    BorderBrush="#EF4444" 
+                                    BorderThickness="1" 
+                                    FontWeight="SemiBold" 
+                                    Padding="14,6" 
+                                    MinHeight="34" 
+                                    Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Border" Property="Background" Value="#1AEF4444" />
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="Border" Property="Opacity" Value="0.75" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
+
+
             </StackPanel>
         </ScrollViewer>
 

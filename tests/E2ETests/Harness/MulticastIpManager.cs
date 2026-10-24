@@ -22,8 +22,8 @@ namespace E2ETests.Harness
         public int BasePort { get; }
 
         public MulticastIpManager(
-            string startIpStr = "224.1.1.1",
-            string endIpStr = "224.1.3.225",
+            string startIpStr = "225.0.0.1",
+            string endIpStr = "225.0.1.254",
             int basePort = 6792)
         {
             _startIp = IpToUint(IPAddress.Parse(startIpStr));

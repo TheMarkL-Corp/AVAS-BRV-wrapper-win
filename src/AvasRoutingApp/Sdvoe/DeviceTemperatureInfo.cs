@@ -50,12 +50,12 @@ namespace AvasRoutingApp.Sdvoe
         public bool IsActive { get; set; } = true;
 
         /// <summary>
-        /// Vendor ID (105 for AVAS, 192 for Advantech VEGA).
+        /// Vendor ID (105 for AVAS).
         /// </summary>
         public int VendorId { get; set; } = 105;
 
         /// <summary>
-        /// Product ID (81 for AVAS-223, 11 for VEGA-1100).
+        /// Product ID (81 for AVAS-223).
         /// </summary>
         public int ProductId { get; set; } = 81;
 
@@ -65,7 +65,6 @@ namespace AvasRoutingApp.Sdvoe
         public DeviceFamily Family => VendorId switch
         {
             105 => DeviceFamily.Avas,
-            192 when ProductId == 11 => DeviceFamily.Vega,
             _ => DeviceFamily.GenericSdvoe
         };
 

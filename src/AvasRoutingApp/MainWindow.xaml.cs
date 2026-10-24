@@ -267,7 +267,7 @@ namespace AvasRoutingApp
 
         private void BtnSettings_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new SettingsDialog(_configService)
+            var dialog = new SettingsDialog(_configService, ViewModel)
             {
                 Owner = this
             };

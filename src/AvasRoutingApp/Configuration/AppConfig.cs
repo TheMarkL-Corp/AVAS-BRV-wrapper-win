@@ -10,16 +10,15 @@ namespace AvasRoutingApp.Configuration
     {
         public string BlueRiverUrl { get; set; } = "http://localhost:80";
         public string ControlServerIp { get; set; } = "127.0.0.1";
-        public int RestPort { get; set; } = 8090;
+        public int RestPort { get; set; } = 8080;
         public int TelnetPort { get; set; } = 6970;
-        public string MulticastStartIp { get; set; } = "224.1.3.1";
-        public string MulticastEndIp { get; set; } = "224.1.3.225";
+        public string MulticastStartIp { get; set; } = "225.0.0.1";
+        public string MulticastEndIp { get; set; } = "225.0.1.254";
         public int BasePort { get; set; } = 5000;
         public string LocalNetworkInterfaceIp { get; set; } = "";
         public string Theme { get; set; } = "Light";
         public double SidebarWidth { get; set; } = 400.0;
         public string SidebarFontSize { get; set; } = "Normal";
-        public bool EnableVegaDevices { get; set; } = false;
 
         /// <summary>
         /// Returns the typography scale multiplier for the configured sidebar font size.
@@ -62,8 +61,7 @@ namespace AvasRoutingApp.Configuration
                 LocalNetworkInterfaceIp = this.LocalNetworkInterfaceIp,
                 Theme = this.Theme,
                 SidebarWidth = this.SidebarWidth,
-                SidebarFontSize = this.SidebarFontSize,
-                EnableVegaDevices = this.EnableVegaDevices
+                SidebarFontSize = this.SidebarFontSize
             };
         }
     }

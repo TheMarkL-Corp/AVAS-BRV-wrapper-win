@@ -119,6 +119,7 @@ namespace AvasRoutingApp.Tests
         }
 
         [Fact]
+#pragma warning disable CS0618
         public void EncoderCardViewModel_ActivationProperties_UpdateAndNotifyCorrectly()
         {
             var vm = new EncoderCardViewModel();
@@ -144,6 +145,7 @@ namespace AvasRoutingApp.Tests
             Assert.Equal("Unactivated", vm.ActivationBadgeText);
             Assert.Contains("Activation: Unactivated", vm.McuTooltipText);
         }
+#pragma warning restore CS0618
 
         [Fact]
         public void EncoderCardViewModel_TooltipText_HidesEmptyFields()

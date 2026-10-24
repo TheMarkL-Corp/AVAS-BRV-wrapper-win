@@ -140,8 +140,8 @@ namespace E2ETests.Suites
             {
                 var service = new ConfigServiceHelper(tempConfig);
                 Assert.NotNull(service.Current);
-                Assert.Equal("224.1.3.1", service.Current.MulticastStartIp);
-                Assert.Equal("224.1.3.225", service.Current.MulticastEndIp);
+                Assert.Equal("225.0.0.1", service.Current.MulticastStartIp);
+                Assert.Equal("225.0.1.254", service.Current.MulticastEndIp);
                 Assert.Equal(6792, service.Current.BasePort);
             }
             finally
@@ -673,7 +673,7 @@ namespace E2ETests.Suites
             var card = coordinator.ActiveCards.FirstOrDefault(c => c.MacAddress == "f8228500aaaa");
 
             Assert.NotNull(card);
-            Assert.StartsWith("224.1.1.", card.MulticastIp);
+            Assert.StartsWith("225.0.0.", card.MulticastIp);
             Assert.Equal(6792, card.Port);
         }
 

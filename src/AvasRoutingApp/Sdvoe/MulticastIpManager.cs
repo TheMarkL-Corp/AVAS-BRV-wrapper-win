@@ -32,8 +32,8 @@ namespace AvasRoutingApp.Sdvoe
         public string EndIp { get; }
 
         public MulticastIpManager(
-            string startIpStr = "224.1.1.1",
-            string endIpStr = "224.1.3.225",
+            string startIpStr = "225.0.0.1",
+            string endIpStr = "225.0.1.254",
             int basePort = 5000)
         {
             if (!IPAddress.TryParse(startIpStr, out var startAddr))

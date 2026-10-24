@@ -1,4 +1,4 @@
-<Window x:Class="AvasRoutingApp.Views.MaintenanceDialog"
+﻿<Window x:Class="AvasRoutingApp.Views.MaintenanceDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:AvasRoutingApp.ViewModels"
@@ -171,14 +171,17 @@
                 <Grid Margin="0,4,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="6" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="6" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="6" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <!-- Factory Reset AVP -->
                     <Button Grid.Column="0" Content="Factory Reset (AVP)" Command="{Binding FactoryResetAvpCommand}"
+                            ToolTip="Clears BlueRiver switch routes and restores PHY defaults"
                             Background="{DynamicResource ThemeButtonBackgroundBrush}" Foreground="{DynamicResource ThemeButtonForegroundBrush}"
                             BorderBrush="{DynamicResource ThemeButtonBorderBrush}" BorderThickness="1" MinHeight="36" FontWeight="SemiBold" FontSize="11" Cursor="Hand" />
 
@@ -188,8 +191,15 @@
                             Background="{DynamicResource ThemeButtonBackgroundBrush}" Foreground="{DynamicResource ThemeButtonForegroundBrush}"
                             BorderBrush="{DynamicResource ThemeButtonBorderBrush}" BorderThickness="1" MinHeight="36" FontWeight="SemiBold" FontSize="11" Cursor="Hand" />
 
-                    <!-- Reboot -->
+                    <!-- Reboot Silicon -->
                     <Button Grid.Column="4" Content="Reboot Silicon" Command="{Binding RebootCommand}"
+                            ToolTip="Sends 'reboot' to BlueRiver AVP transceiver PHY"
+                            Background="{DynamicResource ThemeButtonBackgroundBrush}" Foreground="{DynamicResource ThemeButtonForegroundBrush}"
+                            BorderBrush="{DynamicResource ThemeButtonBorderBrush}" BorderThickness="1" MinHeight="36" FontWeight="SemiBold" FontSize="11" Cursor="Hand" />
+
+                    <!-- Reboot MCU -->
+                    <Button Grid.Column="6" Content="Reboot MCU" Command="{Binding RebootMcuCommand}"
+                            ToolTip="Sends 'set system reboot' to MCU via Chip 0 UART"
                             Background="{DynamicResource ThemeButtonBackgroundBrush}" Foreground="{DynamicResource ThemeButtonForegroundBrush}"
                             BorderBrush="{DynamicResource ThemeButtonBorderBrush}" BorderThickness="1" MinHeight="36" FontWeight="SemiBold" FontSize="11" Cursor="Hand" />
                 </Grid>

@@ -447,12 +447,15 @@ namespace E2ETests.Mocks
             uint ipNum = ((uint)bytes[0] << 24) | ((uint)bytes[1] << 16) | ((uint)bytes[2] << 8) | bytes[3];
 
             // 224.1.1.1 = 0xE0010101, 224.1.3.255 = 0xE00103FF
+            // 225.0.0.1 = 0xE1000001, 225.0.1.255 = 0xE10001FF
             uint minAllowed = 0xE0010101;
             uint maxAllowed = 0xE00103FF;
+            uint minAllowed225 = 0xE1000001;
+            uint maxAllowed225 = 0xE10001FF;
 
-            if (ipNum < minAllowed || ipNum > maxAllowed)
+            if ((ipNum < minAllowed || ipNum > maxAllowed) && (ipNum < minAllowed225 || ipNum > maxAllowed225))
             {
-                return "{\"status\":\"ERROR\",\"request_id\":null,\"result\":null,\"error\":{\"reason\":\"ILLEGAL_ARGUMENT\",\"message\":\"If a multicast IP address is specified, it must be in the configured range 224.1.1.1 to 224.1.3.255\"}}";
+                return "{\"status\":\"ERROR\",\"request_id\":null,\"result\":null,\"error\":{\"reason\":\"ILLEGAL_ARGUMENT\",\"message\":\"If a multicast IP address is specified, it must be in the configured range 224.1.1.1 to 224.1.3.255 or 225.0.0.1 to 225.0.1.254\"}}";
             }
 
             return null;

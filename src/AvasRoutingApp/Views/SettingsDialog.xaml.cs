@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using AvasRoutingApp.Configuration;
+using AvasRoutingApp.ViewModels;
 
 namespace AvasRoutingApp.Views
 {
@@ -11,13 +12,16 @@ namespace AvasRoutingApp.Views
     public partial class SettingsDialog : Window
     {
         private readonly IConfigService _configService;
+        private readonly MainViewModel? _mainViewModel;
 
-        public SettingsDialog(IConfigService configService)
+        public SettingsDialog(IConfigService configService, MainViewModel? mainViewModel = null)
         {
             InitializeComponent();
             _configService = configService ?? throw new ArgumentNullException(nameof(configService));
+            _mainViewModel = mainViewModel;
             ApplyAppLogo();
             LoadConfigToUi(_configService.Current);
+            UpdateAdvancedLockState();
         }
 
         private void ApplyAppLogo()
@@ -80,7 +84,6 @@ namespace AvasRoutingApp.Views
             TxtMulticastEndIp.Text = config.MulticastEndIp;
             TxtBasePort.Text = config.BasePort.ToString();
             TxtLocalNetworkInterfaceIp.Text = config.LocalNetworkInterfaceIp;
-            ChkEnableVegaDevices.IsChecked = config.EnableVegaDevices;
             BorderErrors.Visibility = Visibility.Collapsed;
         }
 
@@ -165,7 +168,6 @@ namespace AvasRoutingApp.Views
                 MulticastEndIp = TxtMulticastEndIp.Text.Trim(),
                 BasePort = basePort,
                 LocalNetworkInterfaceIp = TxtLocalNetworkInterfaceIp.Text.Trim(),
-                EnableVegaDevices = ChkEnableVegaDevices.IsChecked ?? false
             };
 
             var (isValid, validatorErrors) = ConfigValidator.Validate(candidateConfig);
@@ -238,6 +240,72 @@ namespace AvasRoutingApp.Views
                 TxtTestResult.Text = $"✗ Connection failed: {ex.Message}";
                 TxtTestResult.Foreground = (System.Windows.Media.Brush)FindResource("ThemeStatusOfflineBrush");
             }
+        }
+
+        private void UpdateAdvancedLockState()
+        {
+            bool isUnlocked = _mainViewModel?.IsAdvancedUnlocked ?? false;
+            if (isUnlocked)
+            {
+                BadgeAdvancedUnlocked.Visibility = Visibility.Visible;
+                PanelAdvancedUnlocked.Visibility = Visibility.Visible;
+                PanelAdvancedLocked.Visibility = Visibility.Collapsed;
+                TxtPinError.Visibility = Visibility.Collapsed;
+                TxtTechnicianPin.Password = string.Empty;
+            }
+            else
+            {
+                BadgeAdvancedUnlocked.Visibility = Visibility.Collapsed;
+                PanelAdvancedUnlocked.Visibility = Visibility.Collapsed;
+                PanelAdvancedLocked.Visibility = Visibility.Visible;
+                TxtPinError.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void TxtTechnicianPin_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                BtnUnlockAdvanced_Click(sender, e);
+            }
+        }
+
+        private void BtnUnlockAdvanced_Click(object sender, RoutedEventArgs e)
+        {
+            string pin = TxtTechnicianPin.Password;
+            if (_mainViewModel != null)
+            {
+                bool success = _mainViewModel.UnlockAdvancedSettings(pin);
+                if (success)
+                {
+                    TxtPinError.Visibility = Visibility.Collapsed;
+                    UpdateAdvancedLockState();
+                }
+                else
+                {
+                    TxtPinError.Visibility = Visibility.Visible;
+                }
+            }
+            else
+            {
+                if (string.Equals(pin?.Trim(), MainViewModel.DefaultAdvancedPin, StringComparison.Ordinal))
+                {
+                    TxtPinError.Visibility = Visibility.Collapsed;
+                    BadgeAdvancedUnlocked.Visibility = Visibility.Visible;
+                    PanelAdvancedUnlocked.Visibility = Visibility.Visible;
+                    PanelAdvancedLocked.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    TxtPinError.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
+        private void BtnLockAdvanced_Click(object sender, RoutedEventArgs e)
+        {
+            _mainViewModel?.LockAdvancedSettings();
+            UpdateAdvancedLockState();
         }
     }
 }

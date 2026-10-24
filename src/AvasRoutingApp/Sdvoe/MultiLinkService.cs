@@ -34,9 +34,9 @@ namespace AvasRoutingApp.Sdvoe
         private IEnumerable<int> GetPortsToTry()
         {
             var cfg = _configService.Current;
-            int configured = cfg.RestPort > 0 ? cfg.RestPort : 8090;
+            int configured = cfg.RestPort > 0 ? cfg.RestPort : 8080;
             int resolved = _resolvedRestPort > 0 ? _resolvedRestPort : configured;
-            return new[] { resolved, configured, 8090, 8080, 80 }.Distinct();
+            return new[] { resolved, configured, 8080, 8090, 80 }.Distinct();
         }
 
         private static string NormalizeMac(string mac)

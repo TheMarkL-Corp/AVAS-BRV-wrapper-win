@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -99,6 +99,7 @@ namespace AvasRoutingApp.ViewModels
         public ICommand FactoryResetAvpCommand { get; }
         public ICommand FactoryResetMcuCommand { get; }
         public ICommand RebootCommand { get; }
+        public ICommand RebootMcuCommand { get; }
 
         public MaintenanceViewModel(AvasDevice device, IMulticastController multicastController, IReadOnlyList<AvasDevice>? availableDevices = null)
         {
@@ -117,6 +118,7 @@ namespace AvasRoutingApp.ViewModels
             FactoryResetAvpCommand = new RelayCommand(async () => await ExecuteFactoryResetAvpAsync(), () => !IsBusy);
             FactoryResetMcuCommand = new RelayCommand(async () => await ExecuteFactoryResetMcuAsync(), () => !IsBusy);
             RebootCommand = new RelayCommand(async () => await ExecuteRebootAsync(), () => !IsBusy);
+            RebootMcuCommand = new RelayCommand(async () => await ExecuteRebootMcuAsync(), () => !IsBusy);
 
             AppendLog($"Initialized Diagnostics panel for {DeviceName} ({Chip0Mac}) [{DeviceTypeBadge}]. Link mode: {LinkMode}.");
         }
@@ -231,6 +233,31 @@ namespace AvasRoutingApp.ViewModels
             catch (Exception ex)
             {
                 AppendLog($"Reboot exception: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        public async Task ExecuteRebootMcuAsync()
+        {
+            if (ConfirmActionCallback != null && !ConfirmActionCallback())
+            {
+                AppendLog("MCU Reboot aborted by user.");
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                AppendLog($"Starting MCU reboot via Chip 0 ({Chip0Mac})...");
+                bool ok = await _multicastController.RebootMcuAsync(_device);
+                AppendLog(ok ? "MCU reboot SUCCESS (watchdog reset initiated)." : "MCU reboot FAILED.");
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"MCU reboot exception: {ex.Message}");
             }
             finally
             {

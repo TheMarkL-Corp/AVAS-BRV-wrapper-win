@@ -234,7 +234,7 @@ namespace AvasRoutingApp.Tests
                     var txtServerStatus = (TextBlock)window.FindName("TxtServerStatus");
                     var txtUrlDisplay = (TextBlock)window.FindName("TxtCurrentUrlDisplay");
 
-                    Assert.Equal("SDVoE Server: 127.0.0.1:8090", txtServerStatus.Text);
+                    Assert.Equal("SDVoE Server: 127.0.0.1:8080", txtServerStatus.Text);
                     Assert.Equal("URL: http://localhost:80", txtUrlDisplay.Text);
 
                     // Update config

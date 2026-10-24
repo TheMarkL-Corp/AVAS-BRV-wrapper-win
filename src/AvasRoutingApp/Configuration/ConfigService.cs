@@ -143,10 +143,15 @@ namespace AvasRoutingApp.Configuration
                 var loaded = JsonSerializer.Deserialize<AppConfig>(json, _jsonOptions);
                 if (loaded != null)
                 {
-                    if (loaded.MulticastStartIp.StartsWith("225.") || loaded.MulticastEndIp.StartsWith("225."))
+                    if ((loaded.MulticastStartIp == "224.1.3.1" && loaded.MulticastEndIp == "224.1.3.225") ||
+                        (loaded.MulticastStartIp == "225.1.1.1" && loaded.MulticastEndIp == "225.1.1.254"))
                     {
-                        loaded.MulticastStartIp = "224.1.3.1";
-                        loaded.MulticastEndIp = "224.1.3.225";
+                        loaded.MulticastStartIp = "225.0.0.1";
+                        loaded.MulticastEndIp = "225.0.1.254";
+                    }
+                    if (loaded.RestPort == 8090)
+                    {
+                        loaded.RestPort = 8080;
                     }
                     return loaded;
                 }

@@ -207,7 +207,7 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock x:Name="TxtStatus" Text="Ready | Portable WebView2 UserData: .\WebView2_UserData" Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="11" VerticalAlignment="Center" />
                 </StackPanel>
-                <TextBlock x:Name="TxtServerStatus" Text="SDVoE Server: 127.0.0.1:8090" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" FontWeight="SemiBold" />
+                <TextBlock x:Name="TxtServerStatus" Text="SDVoE Server: 127.0.0.1:8080" Foreground="{DynamicResource ThemeAccentBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center" FontWeight="SemiBold" />
             </DockPanel>
         </Border>
     </Grid>

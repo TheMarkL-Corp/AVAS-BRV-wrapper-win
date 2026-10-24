@@ -79,15 +79,15 @@ namespace AvasRoutingApp.Tests
                 LinkMode = "SINGLE"
             };
 
-            Assert.Equal("SINGLE", card.LinkModeBadgeText);
+            Assert.Equal("Single Link", card.LinkModeBadgeText);
             Assert.False(card.IsDualLink);
 
             card.LinkMode = "DUAL";
-            Assert.Equal("DUAL", card.LinkModeBadgeText);
+            Assert.Equal("Dual Link", card.LinkModeBadgeText);
             Assert.True(card.IsDualLink);
 
             card.LinkMode = "UNKNOWN";
-            Assert.Equal("---", card.LinkModeBadgeText);
+            Assert.Equal("Unknown Link", card.LinkModeBadgeText);
         }
 
         [Fact]
@@ -156,7 +156,7 @@ namespace AvasRoutingApp.Tests
             var previewCard = mainVm.EncoderCards[0];
             Assert.Equal("74fe488b07bb", previewCard.MacAddress);
             Assert.Equal("DUAL", previewCard.LinkMode);
-            Assert.Equal("DUAL", previewCard.LinkModeBadgeText);
+            Assert.Equal("Dual Link", previewCard.LinkModeBadgeText);
             Assert.Equal("74FE488B07BC", previewCard.CompanionMac);
             Assert.True(previewCard.CompanionIsActive);
 
