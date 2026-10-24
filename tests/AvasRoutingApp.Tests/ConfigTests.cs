@@ -228,7 +228,7 @@ namespace AvasRoutingApp.Tests
 
             Assert.NotNull(current);
             Assert.Equal("192.168.1.100", current.ControlServerIp);
-            Assert.Equal(8080, current.RestPort);
+            Assert.Equal(8090, current.RestPort);
             Assert.Equal("225.0.0.1", current.MulticastStartIp);
             Assert.Equal("225.0.1.254", current.MulticastEndIp);
         }
@@ -401,6 +401,14 @@ namespace AvasRoutingApp.Tests
             Assert.True(isValid);
             Assert.Empty(errors);
             Assert.Equal(expectedWidth, config.SidebarWidth);
+        }
+        [Fact]
+        public void Load_WhenConfigContainsRestPort8090_Preserves8090WithoutOverwritingTo8080()
+        {
+            string tempFile = Path.Combine(_testDirectory, "cfg_test_" + Guid.NewGuid().ToString("N") + ".json");
+            File.WriteAllText(tempFile, "{\"RestPort\": 8090, \"ControlServerIp\": \"127.0.0.1\"}");
+            var service = new ConfigService(tempFile);
+            Assert.Equal(8090, service.Current.RestPort);
         }
     }
 }

@@ -23,6 +23,7 @@ namespace AvasRoutingApp.Sdvoe
         private readonly bool _ownsHttpClient;
         private readonly bool _enableVoipSdk;
         private bool _disposed;
+        private int _resolvedRestPort = 0;
 
         public TemperatureService(
             IConfigService configService,
@@ -35,15 +36,25 @@ namespace AvasRoutingApp.Sdvoe
             _enableVoipSdk = enableVoipSdk;
         }
 
-        private string BaseUrl
+        private string BaseUrl => GetBaseUrl(_resolvedRestPort > 0 ? _resolvedRestPort : (_configService.Current.RestPort > 0 ? _configService.Current.RestPort : 8090));
+
+        private string GetBaseUrl(int port)
         {
-            get
-            {
-                var cfg = _configService.Current;
-                string ip = string.IsNullOrWhiteSpace(cfg.ControlServerIp) ? "127.0.0.1" : cfg.ControlServerIp;
-                int port = cfg.RestPort > 0 ? cfg.RestPort : 8080;
-                return $"http://{ip}:{port}";
-            }
+            var cfg = _configService.Current;
+            string ip = string.IsNullOrWhiteSpace(cfg.ControlServerIp) ? "127.0.0.1" : cfg.ControlServerIp;
+            return $"http://{ip}:{port}";
+        }
+
+        private IEnumerable<int> GetCandidatePorts()
+        {
+            var cfg = _configService.Current;
+            var list = new List<int>();
+            if (_resolvedRestPort > 0) list.Add(_resolvedRestPort);
+            if (cfg.RestPort > 0) list.Add(cfg.RestPort);
+            list.Add(8090);
+            list.Add(8080);
+            list.Add(80);
+            return list.Distinct();
         }
 
         public async Task<IReadOnlyList<DeviceTemperatureInfo>> QueryAllTemperaturesAsync(CancellationToken ct = default)
@@ -477,34 +488,58 @@ namespace AvasRoutingApp.Sdvoe
 
         private async Task<JsonDocument?> HttpGetJsonAsync(string endpoint, CancellationToken ct)
         {
-            try
+            foreach (int port in GetCandidatePorts())
             {
-                using var resp = await _httpClient.GetAsync($"{BaseUrl}{endpoint}", ct);
-                if (!resp.IsSuccessStatusCode) return null;
-                var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
-                return JsonDocument.Parse(bytes);
+                try
+                {
+                    string url = $"{GetBaseUrl(port)}{endpoint}";
+                    using var resp = await _httpClient.GetAsync(url, ct);
+                    if (resp.IsSuccessStatusCode)
+                    {
+                        if (_resolvedRestPort != port)
+                        {
+                            AppLogger.Info("Temperature", $"Resolved active SDVoE REST port for temperatures: {port}");
+                            _resolvedRestPort = port;
+                        }
+                        var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
+                        return JsonDocument.Parse(bytes);
+                    }
+                }
+                catch
+                {
+                    // Continue to next candidate port
+                }
             }
-            catch
-            {
-                return null;
-            }
+            return null;
         }
 
         private async Task<JsonDocument?> HttpPostJsonAsync(string endpoint, object payload, CancellationToken ct)
         {
-            try
+            string json = JsonSerializer.Serialize(payload);
+            foreach (int port in GetCandidatePorts())
             {
-                string json = JsonSerializer.Serialize(payload);
-                using var content = new StringContent(json, Encoding.UTF8, "application/json");
-                using var resp = await _httpClient.PostAsync($"{BaseUrl}{endpoint}", content, ct);
-                if (!resp.IsSuccessStatusCode) return null;
-                var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
-                return JsonDocument.Parse(bytes);
+                try
+                {
+                    string url = $"{GetBaseUrl(port)}{endpoint}";
+                    using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    using var resp = await _httpClient.PostAsync(url, content, ct);
+                    if (resp.IsSuccessStatusCode)
+                    {
+                        if (_resolvedRestPort != port)
+                        {
+                            AppLogger.Info("Temperature", $"Resolved active SDVoE REST port for temperatures: {port}");
+                            _resolvedRestPort = port;
+                        }
+                        var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
+                        return JsonDocument.Parse(bytes);
+                    }
+                }
+                catch
+                {
+                    // Continue to next candidate port
+                }
             }
-            catch
-            {
-                return null;
-            }
+            return null;
         }
 
         private async Task<JsonDocument?> HttpPostAndPollAsync(
@@ -571,7 +606,7 @@ namespace AvasRoutingApp.Sdvoe
                 {
                     var cfg = _configService.Current;
                     string host = string.IsNullOrWhiteSpace(cfg.ControlServerIp) ? "127.0.0.1" : cfg.ControlServerIp;
-                    int port = cfg.RestPort > 0 ? cfg.RestPort : 8080;
+                    int port = _resolvedRestPort > 0 ? _resolvedRestPort : (cfg.RestPort > 0 ? cfg.RestPort : 8090);
 
                     var voips = new VOIPS_LIB.VOIPS();
                     voips.SET_CONTROL_SERVER(host);

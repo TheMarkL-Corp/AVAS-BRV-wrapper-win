@@ -149,10 +149,7 @@ namespace AvasRoutingApp.Configuration
                         loaded.MulticastStartIp = "225.0.0.1";
                         loaded.MulticastEndIp = "225.0.1.254";
                     }
-                    if (loaded.RestPort == 8090)
-                    {
-                        loaded.RestPort = 8080;
-                    }
+
                     return loaded;
                 }
                 return new AppConfig();
