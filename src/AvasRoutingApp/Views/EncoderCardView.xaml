@@ -7,6 +7,7 @@
              d:DesignHeight="260" d:DesignWidth="350">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </UserControl.Resources>
 
     <Border Background="{DynamicResource ThemeCardBackgroundBrush}" BorderBrush="{DynamicResource ThemeCardBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,12" Padding="10">
@@ -17,61 +18,75 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Card Header: Device Name & Mode Badge -->
+            <!-- Card Header: Device Name & Link Mode Badge (Minimalist) -->
             <DockPanel Grid.Row="0" Margin="0,0,0,8">
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <!-- Activation Status Badge with MCU Telemetry Tooltip -->
-                    <Border Background="{Binding ActivationBadgeBrush}" CornerRadius="3" Padding="6,2" Margin="0,0,6,0" VerticalAlignment="Center"
-                            Visibility="{Binding ShowActivationBadge, Converter={StaticResource BoolToVisConverter}}"
-                            ToolTip="{Binding McuTooltipText}" Cursor="Help">
-                        <TextBlock Text="{Binding ActivationBadgeText}" Foreground="White" FontSize="10" FontWeight="Bold" />
+                <!-- Right: Segmented Chip Toggle & Link Mode Badge -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <!-- Single Link Chip 0 / Chip 1 Toggle (Only visible if CanSelectChip1 is true) -->
+                    <Border Visibility="{Binding CanSelectChip1, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Background="#0F172A"
+                            BorderBrush="#334155"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Margin="0,0,8,0"
+                            Padding="2">
+                        <StackPanel Orientation="Horizontal">
+                            <!-- Chip 0 Button -->
+                            <Button Command="{Binding SelectChip0Command}"
+                                    Content="Chip 0"
+                                    FontSize="10"
+                                    FontWeight="SemiBold"
+                                    Padding="6,2"
+                                    BorderThickness="0"
+                                    Cursor="Hand">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsChip0Selected}" Value="True">
+                                                <Setter Property="Background" Value="#2563EB"/>
+                                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <!-- Chip 1 Button -->
+                            <Button Command="{Binding SelectChip1Command}"
+                                    Content="Chip 1"
+                                    FontSize="10"
+                                    FontWeight="SemiBold"
+                                    Padding="6,2"
+                                    BorderThickness="0"
+                                    Cursor="Hand">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsChip1Selected}" Value="True">
+                                                <Setter Property="Background" Value="#2563EB"/>
+                                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
                     </Border>
-                    <Border Background="{Binding LinkModeBrush}" CornerRadius="3" Padding="5,2" Margin="0,0,6,0" VerticalAlignment="Center">
+
+                    <!-- Link Mode Badge (Single Link / Dual Link) -->
+                    <Border Background="{Binding LinkModeBrush}"
+                            CornerRadius="4"
+                            Padding="7,2"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding ShowLinkModeBadge, Converter={StaticResource BoolToVisConverter}}">
                         <TextBlock Text="{Binding LinkModeBadgeText}" Foreground="White" FontSize="10" FontWeight="Bold" />
                     </Border>
-                    <Border CornerRadius="3" Padding="6,2" VerticalAlignment="Center">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="{DynamicResource ThemePillBackgroundBrush}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsVegaDevice}" Value="True">
-                                        <Setter Property="Background" Value="{Binding BadgeBackgroundBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <TextBlock Text="{Binding BadgeText}" FontSize="10" FontWeight="SemiBold">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="{DynamicResource ThemeTextSecondaryBrush}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsVegaDevice}" Value="True">
-                                            <Setter Property="Foreground" Value="{Binding BadgeForegroundBrush}" />
-                                            <Setter Property="FontWeight" Value="Bold" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </Border>
-                    <!-- Diagnostics Button (Strictly for AVAS devices, hidden for VEGA) -->
-                    <Button Command="{Binding OpenDiagnosticsCommand}"
-                            Visibility="{Binding IsMaintenanceAvailable, Converter={StaticResource BoolToVisConverter}}"
-                            Background="{DynamicResource ThemePillBackgroundBrush}"
-                            BorderThickness="1"
-                            BorderBrush="{DynamicResource ThemeAccentBrush}"
-                            Padding="8,3"
-                            Margin="6,0,0,0"
-                            MinHeight="26"
-                            VerticalAlignment="Center"
-                            Cursor="Hand"
-                            ToolTip="AVAS Hardware Diagnostics &amp; Maintenance">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="⚙" FontSize="11" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,4,0" VerticalAlignment="Center" />
-                            <TextBlock Text="Diag" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
                 </StackPanel>
+
+                <!-- Left: Device Name & Status Dot -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
                     <TextBlock Text="●" Foreground="{DynamicResource ThemeAccentBrush}" Margin="0,0,6,0" VerticalAlignment="Center" FontSize="10" />
                     <TextBlock Text="{Binding DeviceName}" FontWeight="Bold" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="280" />
@@ -104,47 +119,32 @@
                 </Grid>
             </Border>
 
-            <!-- Card Footer: Telemetry & Live Color-Coded FPS Indicator -->
+            <!-- Card Footer: Minimalist 2-line Telemetry & Live Color-Coded FPS Indicator -->
             <Grid Grid.Row="2" Margin="0,8,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: Telemetry Details (MAC, Multicast IP:Port, Unicast IP) with Quick Copy -->
+                <!-- Left: Telemetry Details (IP and MAC with Quick Copy) -->
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <!-- MAC Row -->
-                    <DockPanel LastChildFill="False" Margin="0,0,0,3">
+                    <!-- Line 1: IP -->
+                    <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" Margin="0,0,0,3" TextTrimming="CharacterEllipsis">
+                        <Run Text="IP: " FontWeight="SemiBold" /><Run Text="{Binding UnicastIp, Mode=OneWay}" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontFamily="Consolas, Courier New" />
+                    </TextBlock>
+
+                    <!-- Line 2: MAC with quick copy button -->
+                    <DockPanel LastChildFill="False" VerticalAlignment="Center">
                         <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" VerticalAlignment="Center">
-                            <Run Text="MAC: " FontWeight="SemiBold" />
-                            <Run Text="{Binding MacAddress, Mode=OneWay}" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontFamily="Consolas, Courier New" />
+                            <Run Text="MAC: " FontWeight="SemiBold" /><Run Text="{Binding MacAddress, Mode=OneWay}" Foreground="{DynamicResource ThemeTextPrimaryBrush}" FontFamily="Consolas, Courier New" />
                         </TextBlock>
-                        <Button Command="{Binding CopyMacCommand}" Background="{DynamicResource ThemePillBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}" Padding="7,3" Margin="8,0,0,0" Cursor="Hand" ToolTip="Copy MAC Address" MinHeight="26">
+                        <Button Command="{Binding CopyMacCommand}" Background="{DynamicResource ThemePillBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}" Padding="6,2" Margin="8,0,0,0" Cursor="Hand" ToolTip="Copy MAC Address" MinHeight="22" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Path Data="{DynamicResource IconGeometryCopy}" Fill="{DynamicResource ThemeTextMutedBrush}" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center" />
+                                <Path Data="{DynamicResource IconGeometryCopy}" Fill="{DynamicResource ThemeTextMutedBrush}" Width="10" Height="10" Stretch="Uniform" VerticalAlignment="Center" />
                                 <TextBlock Text=" Copied!" Foreground="{DynamicResource ThemeStatusOnlineBrush}" FontSize="9" FontWeight="Bold" Visibility="{Binding IsMacCopied, Converter={StaticResource BoolToVisConverter}}" />
                             </StackPanel>
                         </Button>
                     </DockPanel>
-
-                    <!-- Multicast Row -->
-                    <DockPanel LastChildFill="False" Margin="0,3,0,3">
-                        <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" VerticalAlignment="Center">
-                            <Run Text="Mcast: " FontWeight="SemiBold" />
-                            <Run Text="{Binding MulticastEndpoint, Mode=OneWay}" Foreground="{DynamicResource ThemeAccentBrush}" FontFamily="Consolas, Courier New" />
-                        </TextBlock>
-                        <Button Command="{Binding CopyMulticastCommand}" Background="{DynamicResource ThemePillBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource ThemeCardBorderBrush}" Padding="7,3" Margin="8,0,0,0" Cursor="Hand" ToolTip="Copy Multicast Endpoint" MinHeight="26">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Path Data="{DynamicResource IconGeometryCopy}" Fill="{DynamicResource ThemeTextMutedBrush}" Width="11" Height="11" Stretch="Uniform" VerticalAlignment="Center" />
-                                <TextBlock Text=" Copied!" Foreground="{DynamicResource ThemeStatusOnlineBrush}" FontSize="9" FontWeight="Bold" Visibility="{Binding IsMulticastCopied, Converter={StaticResource BoolToVisConverter}}" />
-                            </StackPanel>
-                        </Button>
-                    </DockPanel>
-
-                    <!-- IP & Resolution Row -->
-                    <TextBlock Foreground="{DynamicResource ThemeTextSecondaryBrush}" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
-                        <Run Text="IP: " FontWeight="SemiBold" /><Run Text="{Binding UnicastIp, Mode=OneWay}" FontFamily="Consolas, Courier New" />
-                    </TextBlock>
                 </StackPanel>
 
                 <!-- Right: Visual Color-Coded Live FPS Badge (Green >= 1.0, Amber < 1.0) -->

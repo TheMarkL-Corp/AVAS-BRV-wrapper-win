@@ -18,7 +18,14 @@ namespace AvasRoutingApp.ViewModels
     {
         Previews,
         MultiLink,
+        Advanced,
         Temperature,
+        Diagnostics
+    }
+
+    public enum AdvancedSubTab
+    {
+        Thermals,
         Diagnostics
     }
 
@@ -29,6 +36,8 @@ namespace AvasRoutingApp.ViewModels
     /// </summary>
     public class MainViewModel : ViewModelBase, IAsyncDisposable, IDisposable
     {
+        public const string DefaultAdvancedPin = "00000000";
+
         private readonly ISdvoeDiscoveryService _discoveryService;
         private readonly IMulticastController _multicastController;
         private readonly IConfigService _configService;
@@ -38,11 +47,13 @@ namespace AvasRoutingApp.ViewModels
         private readonly SemaphoreSlim _actionLock = new(1, 1);
 
         private SidebarTab _selectedTab = SidebarTab.Previews;
+        private bool _isAdvancedUnlocked;
+        private AdvancedSubTab _advancedSubTab = AdvancedSubTab.Thermals;
         private bool _isSidebarExpanded;
         private double _sidebarWidth;
         private string _statusText = "Ready";
         private string _serverStatusText = "SDVoE Server: Ready";
-        private string _multicastPoolRangeText = "Multicast: 224.1.1.1 - 224.1.3.225";
+        private string _multicastPoolRangeText = "Multicast: 225.0.0.1 - 225.0.1.254";
         private int _discoveredEncoderCount;
         private int _activeStreamCount;
         private bool _isBusy;
@@ -55,6 +66,7 @@ namespace AvasRoutingApp.ViewModels
         private string _lastTemperatureUpdatedText = "Not updated yet";
 
         public ObservableCollection<EncoderCardViewModel> EncoderCards { get; } = new();
+        public ObservableCollection<EncoderCardViewModel> Cards => EncoderCards;
         public ObservableCollection<MultiLinkCardViewModel> MultiLinkCards { get; } = new();
         public ObservableCollection<DeviceTemperatureCardViewModel> TemperatureCards { get; } = new();
         public ObservableCollection<DeviceTemperatureCardViewModel> FilteredTxCards { get; } = new();
@@ -62,6 +74,34 @@ namespace AvasRoutingApp.ViewModels
         public ObservableCollection<MaintenanceCardViewModel> MaintenanceCards { get; } = new();
         public ObservableCollection<MaintenanceCardViewModel> FilteredTxMaintenanceCards { get; } = new();
         public ObservableCollection<MaintenanceCardViewModel> FilteredRxMaintenanceCards { get; } = new();
+
+        public bool IsAdvancedUnlocked
+        {
+            get => _isAdvancedUnlocked;
+            set
+            {
+                if (SetProperty(ref _isAdvancedUnlocked, value))
+                {
+                    OnPropertyChanged(nameof(IsAdvancedTabVisible));
+                }
+            }
+        }
+
+        public bool IsAdvancedTabVisible => IsAdvancedUnlocked;
+
+        public AdvancedSubTab SelectedAdvancedSubTab
+        {
+            get => _advancedSubTab;
+            set
+            {
+                if (SetProperty(ref _advancedSubTab, value))
+                {
+                    OnPropertyChanged(nameof(IsAdvancedThermalsSelected));
+                    OnPropertyChanged(nameof(IsAdvancedDiagnosticsSelected));
+                    UpdateTemperaturePollingState();
+                }
+            }
+        }
 
         public SidebarTab SelectedTab
         {
@@ -72,8 +112,11 @@ namespace AvasRoutingApp.ViewModels
                 {
                     OnPropertyChanged(nameof(IsPreviewsTabSelected));
                     OnPropertyChanged(nameof(IsMultiLinkTabSelected));
+                    OnPropertyChanged(nameof(IsAdvancedTabSelected));
                     OnPropertyChanged(nameof(IsTemperatureTabSelected));
                     OnPropertyChanged(nameof(IsDiagnosticsTabSelected));
+                    OnPropertyChanged(nameof(IsAdvancedThermalsSelected));
+                    OnPropertyChanged(nameof(IsAdvancedDiagnosticsSelected));
                     UpdateTemperaturePollingState();
                 }
             }
@@ -81,8 +124,12 @@ namespace AvasRoutingApp.ViewModels
 
         public bool IsPreviewsTabSelected => _selectedTab == SidebarTab.Previews;
         public bool IsMultiLinkTabSelected => _selectedTab == SidebarTab.MultiLink;
+        public bool IsAdvancedTabSelected => _selectedTab == SidebarTab.Advanced || _selectedTab == SidebarTab.Temperature || _selectedTab == SidebarTab.Diagnostics;
         public bool IsTemperatureTabSelected => _selectedTab == SidebarTab.Temperature;
         public bool IsDiagnosticsTabSelected => _selectedTab == SidebarTab.Diagnostics;
+
+        public bool IsAdvancedThermalsSelected => _selectedTab == SidebarTab.Temperature || (_selectedTab == SidebarTab.Advanced && _advancedSubTab == AdvancedSubTab.Thermals);
+        public bool IsAdvancedDiagnosticsSelected => _selectedTab == SidebarTab.Diagnostics || (_selectedTab == SidebarTab.Advanced && _advancedSubTab == AdvancedSubTab.Diagnostics);
 
         public bool IsSidebarExpanded
         {
@@ -258,8 +305,13 @@ namespace AvasRoutingApp.ViewModels
         public ICommand StartAllStreamsCommand { get; }
         public ICommand SelectPreviewsTabCommand { get; }
         public ICommand SelectMultiLinkTabCommand { get; }
+        public ICommand SelectAdvancedTabCommand { get; }
+        public ICommand SelectAdvancedThermalsCommand { get; }
+        public ICommand SelectAdvancedDiagnosticsCommand { get; }
+        public ICommand LockAdvancedSettingsCommand { get; }
         public ICommand SelectTemperatureTabCommand { get; }
         public ICommand SelectDiagnosticsTabCommand { get; }
+        public ICommand OpenDiagnosticsCommand { get; }
         public ICommand SetFilterAllCommand { get; }
         public ICommand SetFilterTxCommand { get; }
         public ICommand SetFilterRxCommand { get; }
@@ -309,8 +361,39 @@ namespace AvasRoutingApp.ViewModels
             StartAllStreamsCommand = new RelayCommand(async () => await StartAllStreamsAsync());
             SelectPreviewsTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.Previews);
             SelectMultiLinkTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.MultiLink);
-            SelectTemperatureTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.Temperature);
-            SelectDiagnosticsTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.Diagnostics);
+            SelectAdvancedTabCommand = new RelayCommand(() => SelectedTab = SidebarTab.Advanced);
+            SelectAdvancedThermalsCommand = new RelayCommand(() =>
+            {
+                _advancedSubTab = AdvancedSubTab.Thermals;
+                SelectedTab = SidebarTab.Advanced;
+                OnPropertyChanged(nameof(IsAdvancedThermalsSelected));
+                OnPropertyChanged(nameof(IsAdvancedDiagnosticsSelected));
+                UpdateTemperaturePollingState();
+            });
+            SelectAdvancedDiagnosticsCommand = new RelayCommand(() =>
+            {
+                _advancedSubTab = AdvancedSubTab.Diagnostics;
+                SelectedTab = SidebarTab.Advanced;
+                OnPropertyChanged(nameof(IsAdvancedThermalsSelected));
+                OnPropertyChanged(nameof(IsAdvancedDiagnosticsSelected));
+                UpdateTemperaturePollingState();
+            });
+            LockAdvancedSettingsCommand = new RelayCommand(LockAdvancedSettings);
+            SelectTemperatureTabCommand = new RelayCommand(() =>
+            {
+                _advancedSubTab = AdvancedSubTab.Thermals;
+                SelectedTab = SidebarTab.Temperature;
+            });
+            SelectDiagnosticsTabCommand = new RelayCommand(() =>
+            {
+                _advancedSubTab = AdvancedSubTab.Diagnostics;
+                SelectedTab = SidebarTab.Diagnostics;
+            });
+            OpenDiagnosticsCommand = new RelayCommand(() =>
+            {
+                var dev = MaintenanceCards.FirstOrDefault()?.Device ?? new AvasDevice { MacAddress = "00:14:95:00:00:00", DeviceName = "AVAS-223", VendorId = 105, ChipIndex = 0 };
+                OpenDiagnosticsDialog(dev);
+            });
 
             SetFilterAllCommand = new RelayCommand(() => SelectedTemperatureFilter = "ALL");
             SetFilterTxCommand = new RelayCommand(() => SelectedTemperatureFilter = "TX");
@@ -330,7 +413,8 @@ namespace AvasRoutingApp.ViewModels
                 _temperatureTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
                 _temperatureTimer.Tick += async (s, e) =>
                 {
-                    if (IsTemperatureTabSelected && IsSidebarExpanded && !IsRefreshingTemperatures)
+                    bool isThermalsActive = IsTemperatureTabSelected || (IsAdvancedTabSelected && IsAdvancedThermalsSelected);
+                    if (isThermalsActive && IsSidebarExpanded && !IsRefreshingTemperatures)
                     {
                         await RefreshTemperaturesAsync();
                     }
@@ -551,8 +635,7 @@ namespace AvasRoutingApp.ViewModels
             try
             {
                 AppLogger.Info("Discovery", "Querying SDVoE Control Server for connected endpoints...");
-                bool enableVega = _configService.Current.EnableVegaDevices;
-                devices = await _discoveryService.DiscoverAvas223DevicesAsync(enableVega, ct);
+                devices = await _discoveryService.DiscoverAvas223DevicesAsync(ct);
                 AppLogger.Info("Discovery", $"Discovered {devices.Count} total endpoints from SDVoE server.");
             }
             catch (Exception ex)
@@ -562,12 +645,11 @@ namespace AvasRoutingApp.ViewModels
                 return;
             }
 
-            // Filter for target encoders (AVAS-223 chip_0 transmitters and optionally VEGA-1100)
-            bool enableVegaFilter = _configService.Current.EnableVegaDevices;
-            var filteredEncoders = SdvoeDiscoveryFilter.FilterTargetDevices(devices, enableVegaFilter);
+            // Filter for target encoders (AVAS-223 chip_0 transmitters)
+            var filteredEncoders = SdvoeDiscoveryFilter.FilterTargetDevices(devices);
 
             DiscoveredEncoderCount = filteredEncoders.Count;
-            AppLogger.Info("Discovery", $"Filtered for target encoders: {DiscoveredEncoderCount} matching device(s) (enableVega={enableVegaFilter}).");
+            AppLogger.Info("Discovery", $"Filtered for target encoders: {DiscoveredEncoderCount} matching device(s).");
 
             // Query Multi-Link topology to populate MultiLinkCards and enrich preview cards
             IReadOnlyList<MultiLinkInfo> multiLinkPairs = Array.Empty<MultiLinkInfo>();
@@ -696,6 +778,7 @@ namespace AvasRoutingApp.ViewModels
                     existingCard.LinkMode = linkMode;
                     existingCard.CompanionMac = companionMac;
                     existingCard.CompanionIsActive = compActive;
+                    WireUpCardChipSelection(existingCard);
                     continue;
                 }
 
@@ -709,9 +792,7 @@ namespace AvasRoutingApp.ViewModels
                 AppLogger.Info("StreamControl", $"Allocated Multicast IP {mcastIp}:{basePort} for MAC {dev.MacAddress} ({dev.DeviceName})");
 
                 // Command SDVoE Control Server to start thumbnail streaming
-                bool started = dev.Family == DeviceFamily.Vega
-                    ? await _multicastController.StartVegaPreviewStreamAsync(dev.MacAddress, mcastIp, basePort, ct)
-                    : await _multicastController.StartPreviewStreamAsync(dev.MacAddress, mcastIp, basePort, ct);
+                bool started = await _multicastController.StartPreviewStreamAsync(dev.MacAddress, mcastIp, basePort, linkMode, dev.SelectedPreviewChipIndex, ct);
                 AppLogger.Info("StreamControl", $"Start preview stream response for {dev.MacAddress} ({dev.Family}): {(started ? "SUCCESS" : "FAILED / UNSUPPORTED")}");
 
                 // Build Card ViewModel
@@ -722,12 +803,10 @@ namespace AvasRoutingApp.ViewModels
                     UnicastIp = dev.IpAddress,
                     MulticastIp = mcastIp,
                     Port = basePort,
-                    Resolution = dev.Family == DeviceFamily.Vega ? "HDMI (10G)" : "320x180",
-                    IsStreaming = dev.Family == DeviceFamily.Vega ? false : started,
-                    StatusMessage = dev.Family == DeviceFamily.Vega
-                        ? "Full 10G Stream Only (Preview N/A)"
-                        : (started ? "Streaming" : "Stream start request unacknowledged"),
-                    LinkMode = dev.Family == DeviceFamily.Vega ? "10G Native" : linkMode,
+                    Resolution = "320x180",
+                    IsStreaming = started,
+                    StatusMessage = started ? "Streaming" : "Stream start request unacknowledged",
+                    LinkMode = linkMode,
                     CompanionMac = companionMac,
                     CompanionIsActive = compActive,
                     Family = dev.Family,
@@ -737,9 +816,13 @@ namespace AvasRoutingApp.ViewModels
                     FactorySerialNumber = string.Empty
                 };
 
-                // Wire Diagnostics Action (Restricted to AVAS devices)
+                WireUpCardChipSelection(card);
+
+                // Wire Diagnostics Action for backwards compatibility
                 var currentDev = dev;
+#pragma warning disable CS0618
                 card.OpenDiagnosticsAction = _ => OpenDiagnosticsDialog(currentDev);
+#pragma warning restore CS0618
 
                 // For AVAS devices only: Attach Unified RTP demux receiver channel and query MCU telemetry
                 if (dev.Family == DeviceFamily.Avas)
@@ -808,6 +891,35 @@ namespace AvasRoutingApp.ViewModels
             AppLogger.Info("Sidebar", $"Sidebar update finished: {ActiveStreamCount} card(s) active.");
         }
 
+        public void WireUpCardChipSelection(EncoderCardViewModel card)
+        {
+            card.OnChipSelectionChanged = async (c, targetChip) =>
+            {
+                string oldMac = targetChip == 1 ? c.MacAddress : c.CompanionMac;
+                string newMac = targetChip == 1 ? c.CompanionMac : c.MacAddress;
+
+                AppLogger.Info("StreamControl", $"Switching preview stream for card {c.DeviceName} from {oldMac} (Chip {1 - targetChip}) to {newMac} (Chip {targetChip})");
+
+                c.StatusMessage = $"Switching to Chip {targetChip}...";
+
+                // Teardown previous stream
+                await _multicastController.StopPreviewStreamAsync(oldMac, c.LinkMode, 1 - targetChip, CancellationToken.None);
+                await Task.Delay(100);
+
+                // Start new stream on target chip
+                bool started = await _multicastController.StartPreviewStreamAsync(newMac, c.MulticastIp, c.Port, c.LinkMode, targetChip, CancellationToken.None);
+                c.IsStreaming = started;
+                c.StatusMessage = started ? $"Streaming (Chip {targetChip})" : "Stream restart failed";
+
+                // Update channel alias and re-attach
+                var aliases = new List<string> { c.MacAddress };
+                if (!string.IsNullOrEmpty(c.CompanionMac)) aliases.Add(c.CompanionMac);
+
+                var channel = UnifiedRtpDemuxReceiver.Instance.GetOrCreateChannel(c.UnicastIp, c.MulticastIp, aliases);
+                c.AttachReceiver(channel);
+            };
+        }
+
         private async Task OnCardModeSwitchStartedAsync(MultiLinkCardViewModel mlCard, string targetMode)
         {
             AppLogger.Info("MainViewModel", $"Mode switch initiated for {mlCard.PrimaryMac} -> {targetMode}. Gracefully pausing preview stream...");
@@ -825,14 +937,7 @@ namespace AvasRoutingApp.ViewModels
                     }
                     UnifiedRtpDemuxReceiver.Instance.RemoveChannel(previewCard.UnicastIp);
 
-                    if (previewCard.Family == DeviceFamily.Vega)
-                    {
-                        await _multicastController.StopVegaPreviewStreamAsync(previewCard.MacAddress, CancellationToken.None);
-                    }
-                    else
-                    {
-                        await _multicastController.StopPreviewStreamAsync(previewCard.MacAddress, CancellationToken.None);
-                    }
+                    await _multicastController.StopPreviewStreamAsync(previewCard.MacAddress, previewCard.LinkMode, previewCard.SelectedChipIndex, CancellationToken.None);
                     _multicastController.ReleaseMulticastIp(previewCard.MacAddress);
 
                     previewCard.IsStreaming = false;
@@ -875,6 +980,7 @@ namespace AvasRoutingApp.ViewModels
                 previewCard.LinkMode = mlCard.LinkMode;
                 previewCard.CompanionMac = mlCard.CompanionMac;
                 previewCard.CompanionIsActive = mlCard.CompanionIsActive;
+                WireUpCardChipSelection(previewCard);
 
                 int basePort = _configService.Current.BasePort;
                 string localNic = _configService.Current.LocalNetworkInterfaceIp;
@@ -885,7 +991,7 @@ namespace AvasRoutingApp.ViewModels
                     previewCard.MulticastIp = mcastIp;
                     previewCard.Port = basePort;
 
-                    bool started = await _multicastController.StartPreviewStreamAsync(previewCard.MacAddress, mcastIp, basePort, CancellationToken.None);
+                    bool started = await _multicastController.StartPreviewStreamAsync(previewCard.MacAddress, mcastIp, basePort, previewCard.LinkMode, previewCard.SelectedChipIndex, CancellationToken.None);
                     previewCard.IsStreaming = started;
                     previewCard.StatusMessage = started ? "Streaming" : "Stream restart pending";
 
@@ -945,14 +1051,7 @@ namespace AvasRoutingApp.ViewModels
                 {
                     // 2. Command encoder to stop streaming
                     AppLogger.Debug("StreamControl", $"Stopping preview stream on hardware for {card.MacAddress} ({card.Family})");
-                    if (card.Family == DeviceFamily.Vega)
-                    {
-                        await _multicastController.StopVegaPreviewStreamAsync(card.MacAddress, ct);
-                    }
-                    else
-                    {
-                        await _multicastController.StopPreviewStreamAsync(card.MacAddress, ct);
-                    }
+                    await _multicastController.StopPreviewStreamAsync(card.MacAddress, card.LinkMode, card.SelectedChipIndex, ct);
                 }
                 catch (Exception ex)
                 {
@@ -979,11 +1078,35 @@ namespace AvasRoutingApp.ViewModels
             AppLogger.Info("Sidebar", "All cards cleared and stopped.");
         }
 
+        #region Advanced Settings & PIN Security
+
+        public bool UnlockAdvancedSettings(string? pin)
+        {
+            if (string.Equals(pin?.Trim(), DefaultAdvancedPin, StringComparison.Ordinal))
+            {
+                IsAdvancedUnlocked = true;
+                return true;
+            }
+            return false;
+        }
+
+        public void LockAdvancedSettings()
+        {
+            IsAdvancedUnlocked = false;
+            if (IsAdvancedTabSelected)
+            {
+                SelectedTab = SidebarTab.Previews;
+            }
+        }
+
+        #endregion
+
         #region Temperature Monitoring & Dual-Source Discrepancy
 
         private void UpdateTemperaturePollingState()
         {
-            if (IsTemperatureTabSelected && IsSidebarExpanded && !_disposed)
+            bool isThermalsActive = IsTemperatureTabSelected || (IsAdvancedTabSelected && IsAdvancedThermalsSelected);
+            if (isThermalsActive && IsSidebarExpanded && !_disposed)
             {
                 if (_temperatureTimer != null && !_temperatureTimer.IsEnabled)
                 {

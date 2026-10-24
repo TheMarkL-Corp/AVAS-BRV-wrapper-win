@@ -38,6 +38,8 @@ namespace AvasRoutingApp.Tests
         public List<string> ReleasedMacs { get; } = new();
         public List<(string mac, string mcastIp, int port)> StartedStreams { get; } = new();
         public List<string> StoppedStreams { get; } = new();
+        public List<(string Mac, string MulticastIp, int Port, string LinkMode, int ChipIndex)> StartCalls { get; } = new();
+        public List<(string Mac, string LinkMode, int ChipIndex)> StopCalls { get; } = new();
         public int NextIpSuffix = 1;
         public bool SimulatePoolExhaustion = false;
 
@@ -56,12 +58,14 @@ namespace AvasRoutingApp.Tests
         public Task<bool> StartPreviewStreamAsync(string macAddress, string multicastIp, int port, string linkMode = "UNKNOWN", int chipIndex = 0, CancellationToken ct = default)
         {
             StartedStreams.Add((macAddress, multicastIp, port));
+            StartCalls.Add((macAddress, multicastIp, port, linkMode, chipIndex));
             return Task.FromResult(true);
         }
 
         public Task<bool> StopPreviewStreamAsync(string macAddress, string linkMode = "UNKNOWN", int chipIndex = 0, CancellationToken ct = default)
         {
             StoppedStreams.Add(macAddress);
+            StopCalls.Add((macAddress, linkMode, chipIndex));
             return Task.FromResult(true);
         }
 
@@ -578,6 +582,40 @@ namespace AvasRoutingApp.Tests
             Assert.Equal(2, vm.MaintenanceCards.Count);
             Assert.Single(vm.MaintenanceCards, c => c.IsTransmitter && c.DeviceTypeBadge == "TX");
             Assert.Single(vm.MaintenanceCards, c => c.IsReceiver && c.DeviceTypeBadge == "RX");
+        }
+
+        [Fact]
+        public async Task SwitchingChipOnSingleLinkCard_RestartsStreamOnCompanionMac()
+        {
+            var mockDiscovery = new MockDiscoveryService();
+            var mockController = new MockMulticastController();
+            var configService = new ConfigService();
+            using var vm = new MainViewModel(mockDiscovery, mockController, configService);
+
+            var card = new EncoderCardViewModel
+            {
+                MacAddress = "74fe4887fdf4",
+                UnicastIp = "192.168.1.151",
+                LinkMode = "SINGLE",
+                CompanionMac = "74fe4887fdf5",
+                MulticastIp = "225.0.0.10",
+                Port = 5004
+            };
+            vm.Cards.Add(card);
+            vm.WireUpCardChipSelection(card);
+
+            // Switch to Chip 1
+            card.SelectChip1Command.Execute(null);
+
+            // Wait for async execution
+            for (int i = 0; i < 20 && mockController.StartCalls.Count == 0; i++)
+            {
+                await Task.Delay(50);
+            }
+
+            // Assert that Stop was called on Chip 0 and Start was called on Chip 1
+            Assert.Contains(mockController.StopCalls, c => c.Mac == "74fe4887fdf4" && c.ChipIndex == 0);
+            Assert.Contains(mockController.StartCalls, c => c.Mac == "74fe4887fdf5" && c.ChipIndex == 1);
         }
     }
 }
