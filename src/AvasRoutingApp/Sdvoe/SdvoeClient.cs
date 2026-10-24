@@ -677,11 +677,50 @@ namespace AvasRoutingApp.Sdvoe
                 {
                     info.McuIpAddress = ParseMcuField(ipResp, "ipaddr", string.Empty);
                 }
+
+                string igmpResp = await SendMcuCommandAsync(normMac, "get rtp igmp", ct);
+                var igmpMatch = System.Text.RegularExpressions.Regex.Match(igmpResp, @"rtp\s*igmp\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (igmpMatch.Success)
+                {
+                    info.MulticastIp = igmpMatch.Groups[1].Value;
+                }
+                else if (string.IsNullOrEmpty(info.MulticastIp))
+                {
+                    info.MulticastIp = ParseMcuField(igmpResp, "rtp igmp", string.Empty);
+                }
             }
             catch (Exception ex)
             {
                 AppLogger.Warn("SdvoeClient", $"QueryMcuDeviceInfoAsync error for {chip0Mac}: {ex.Message}");
             }
+            return info;
+        }
+
+        public static McuDeviceInfo ParseMcuDeviceInfo(string raw)
+        {
+            var info = new McuDeviceInfo();
+            if (string.IsNullOrWhiteSpace(raw)) return info;
+
+            var snMatch = System.Text.RegularExpressions.Regex.Match(raw, @"status\s*:\s*fac\s*sn\s*(?<val>\S+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            if (snMatch.Success) info.FactorySerialNumber = snMatch.Groups["val"].Value.Trim();
+
+            var igmpMatch = System.Text.RegularExpressions.Regex.Match(raw, @"status\s*:\s*rtp\s*igmp\s*(?<val>\d+\.\d+\.\d+\.\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            if (igmpMatch.Success) info.MulticastIp = igmpMatch.Groups["val"].Value.Trim();
+
+            var ipMatch = System.Text.RegularExpressions.Regex.Match(raw, @"status\s*:\s*ipaddr\s*(?<val>\d+\.\d+\.\d+\.\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            if (ipMatch.Success) info.McuIpAddress = ipMatch.Groups["val"].Value.Trim();
+
+            var verMatch = System.Text.RegularExpressions.Regex.Match(raw, @"MCU\s*VER:\s*(?<val>\S+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            if (verMatch.Success)
+            {
+                info.FirmwareVersion = verMatch.Groups["val"].Value.Trim();
+            }
+            else
+            {
+                var fwMatch = System.Text.RegularExpressions.Regex.Match(raw, @"status\s*:\s*fw\s*ver\s*(?<val>\S+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (fwMatch.Success) info.FirmwareVersion = fwMatch.Groups["val"].Value.Trim();
+            }
+
             return info;
         }
 

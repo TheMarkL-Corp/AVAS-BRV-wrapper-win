@@ -21,5 +21,6 @@ namespace AvasRoutingApp.Sdvoe
         public string HardwareVersion { get; set; } = string.Empty;
         public string FactorySerialNumber { get; set; } = string.Empty;
         public string McuIpAddress { get; set; } = string.Empty;
+        public string MulticastIp { get; set; } = string.Empty;
     }
 }

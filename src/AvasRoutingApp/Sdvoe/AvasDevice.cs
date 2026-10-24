@@ -37,8 +37,11 @@ namespace AvasRoutingApp.Sdvoe
         public string LinkMode { get; set; } = "UNKNOWN";
         public string CompanionMac { get; set; } = "NONE";
         public string CompanionName { get; set; } = "";
-        public bool CompanionIsActive { get; set; } = false;
-        public string McuIpAddress { get; set; } = string.Empty;
+        public bool CompanionIsActive { get; set; } = false;        public string McuIpAddress { get; set; } = string.Empty;
+        public string FactorySerialNumber { get; set; } = string.Empty;
+        public string McuFirmwareVersion { get; set; } = string.Empty;
+        public string CurrentMulticastIp { get; set; } = string.Empty;
         public int SelectedPreviewChipIndex { get; set; } = 0;
     }
+
 }

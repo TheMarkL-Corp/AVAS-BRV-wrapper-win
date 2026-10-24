@@ -899,5 +899,16 @@ namespace AvasRoutingApp.Tests
         }
 
         #endregion
+        [Fact]
+        public void QueryMcuDeviceInfo_ParsesExactReaAsciiResponses()
+        {
+            string ascii = "status : fac sn GSD7467312\r\nstatus : rtp igmp 225.0.0.1\r\nstatus : ipaddr 10.32.32.14\r\nMCU VER: V1.2.3\r\n";
+            var info = SdvoeClient.ParseMcuDeviceInfo(ascii);
+
+            Assert.Equal("GSD7467312", info.FactorySerialNumber);
+            Assert.Equal("225.0.0.1", info.MulticastIp);
+            Assert.Equal("10.32.32.14", info.McuIpAddress);
+            Assert.Equal("V1.2.3", info.FirmwareVersion);
+        }
     }
 }
