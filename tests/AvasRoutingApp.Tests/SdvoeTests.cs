@@ -741,6 +741,25 @@ namespace AvasRoutingApp.Tests
         }
 
         [Fact]
+        public async Task StartPreviewStreamAsync_SingleLinkChip0_WhenMcuUartSupported_PrioritizesMcuRtp()
+        {
+            var mockTelnet = new MockTelnetServer(supportUart: true);
+            int port = mockTelnet.Start();
+            var client = new SdvoeClient("127.0.0.1", telnetPort: port, restPort: 8080);
+
+            // Act with linkMode = "SINGLE", chipIndex = 0
+            bool started = await client.StartPreviewStreamAsync("74fe4887fdf4", "225.0.0.10", 5004, linkMode: "SINGLE", chipIndex: 0);
+
+            Assert.True(started);
+            // Verify MCU UART was sent (rtp igmp and rtp ON)
+            Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("rs232:1") && c.Contains("rtp igmp 225.0.0.10"));
+            Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("rs232:1") && c.Contains("rtp ON"));
+            // Verify that native BlueRiver scaler Stream 1 was NOT called because MCU UART succeeded
+            Assert.DoesNotContain(mockTelnet.ReceivedCommands, c => c.Contains("stream HDMI 1 enable true address"));
+            mockTelnet.Stop();
+        }
+
+        [Fact]
         public async Task StopPreviewStreamAsync_IssuesDeterministicAddressNullification()
         {
             var mockTelnet = new MockTelnetServer();
@@ -761,7 +780,7 @@ namespace AvasRoutingApp.Tests
 
         private class MockTelnetServer : TestTelnetServer
         {
-            public MockTelnetServer(bool handshakeSuccess = true) : base(handshakeSuccess) { }
+            public MockTelnetServer(bool handshakeSuccess = true, bool supportUart = false) : base(handshakeSuccess, supportUart) { }
             public new int Start()
             {
                 base.Start();
@@ -776,6 +795,7 @@ namespace AvasRoutingApp.Tests
             private readonly List<string> _receivedCommands = new();
             private readonly object _lock = new();
             private readonly bool _handshakeSuccess;
+            private readonly bool _supportUart;
             private readonly CancellationTokenSource _cts = new();
 
             public int Port { get; }
@@ -787,9 +807,10 @@ namespace AvasRoutingApp.Tests
                 }
             }
 
-            public TestTelnetServer(bool handshakeSuccess = true)
+            public TestTelnetServer(bool handshakeSuccess = true, bool supportUart = false)
             {
                 _handshakeSuccess = handshakeSuccess;
+                _supportUart = supportUart;
                 _listener = new TcpListener(IPAddress.Loopback, 0);
                 _listener.Start();
                 Port = ((IPEndPoint)_listener.LocalEndpoint).Port;
@@ -884,6 +905,10 @@ namespace AvasRoutingApp.Tests
 
                 if (command.StartsWith("send ", StringComparison.OrdinalIgnoreCase))
                 {
+                    if (_supportUart)
+                    {
+                        return "{\"status\":\"SUCCESS\",\"request_id\":null,\"result\":{\"status\":\"ok\"},\"error\":null}";
+                    }
                     return "{\"status\":\"ERROR\",\"request_id\":null,\"result\":null,\"error\":{\"reason\":\"INVALID_COMMAND\",\"message\":\"Device does not support UART\"}}";
                 }
 

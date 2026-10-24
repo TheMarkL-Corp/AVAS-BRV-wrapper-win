@@ -8,23 +8,39 @@ namespace E2ETests.Suites
     public class SingleAndDualLinkPreviewE2ETests
     {
         [Fact]
-        public async Task E2E_SingleLinkTransmitter_StartsStreamViaScaler_AndTearsDownWithZeroAddress()
+        public async Task E2E_SingleLinkTransmitter_PrioritizesMcuUart_AndTearsDownWithZeroAddress()
         {
             var mockTelnet = new MockTelnetServer();
             int port = mockTelnet.Start();
             var client = new AvasRoutingApp.Sdvoe.SdvoeClient("127.0.0.1", telnetPort: port, restPort: 8080);
 
-            // Start stream in Single Link mode
+            // Start stream in Single Link mode (Chip 0 on AVAS hardware)
             bool started = await client.StartPreviewStreamAsync("74fe4887fdf4", "225.0.0.10", 5004, linkMode: "SINGLE", chipIndex: 0);
             Assert.True(started);
-            Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("stream HDMI 1 enable true address 225.0.0.10"));
-            Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("auto_stop true"));
+            Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("rs232:1") && c.Contains("rtp ON"));
 
             // Teardown
             bool stopped = await client.StopPreviewStreamAsync("74fe4887fdf4", linkMode: "SINGLE", chipIndex: 0);
             Assert.True(stopped);
             Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("stream HDMI 1 enable false address 0.0.0.0"));
             Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("stop 74fe4887fdf4:thumbnail:0 free"));
+
+            client.Dispose();
+            mockTelnet.Stop();
+        }
+
+        [Fact]
+        public async Task E2E_SecondaryChip_UsesScalerStream1()
+        {
+            var mockTelnet = new MockTelnetServer();
+            int port = mockTelnet.Start();
+            var client = new AvasRoutingApp.Sdvoe.SdvoeClient("127.0.0.1", telnetPort: port, restPort: 8080);
+
+            // Chip 1 (Secondary chip)
+            bool started = await client.StartPreviewStreamAsync("74fe4887fdf5", "225.0.0.10", 5004, linkMode: "DUAL", chipIndex: 1);
+            Assert.True(started);
+            Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("stream HDMI 1 enable true address 225.0.0.10"));
+            Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("auto_stop true"));
 
             client.Dispose();
             mockTelnet.Stop();

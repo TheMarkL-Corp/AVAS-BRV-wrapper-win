@@ -140,8 +140,9 @@ namespace AvasRoutingApp.Sdvoe
                     throw new InvalidOperationException("Telnet client is not connected.");
                 }
 
-                AppLogger.Debug("Telnet", $"TX >> {command}");
-                await _telnetWriter.WriteLineAsync(command);
+                string cleanCmd = command.TrimEnd('\r', '\n');
+                AppLogger.Debug("Telnet", $"TX >> {cleanCmd}");
+                await _telnetWriter.WriteLineAsync(cleanCmd);
                 string? line = await _telnetReader.ReadLineAsync(ct);
                 AppLogger.Debug("Telnet", $"RX << {line}");
                 return line ?? string.Empty;
@@ -818,16 +819,24 @@ namespace AvasRoutingApp.Sdvoe
 
                     if (IsTelnetConnected)
                     {
-                        string telnetSetCmd = $"send {normMac} rs232:1 set rtp igmp {multicastIp}\r";
+                        string telnetSetCmd = $"send {normMac} rs232:1 set rtp igmp {multicastIp}";
                         string tSetResp = await SendTelnetCommandAsync(telnetSetCmd, ct);
                         AppLogger.Info("SdvoeClient", $"RS-232 'set rtp igmp' Telnet response: {tSetResp}");
                         setSuccess = IsCommandSuccessful(tSetResp) || IsRestResponseSuccess(tSetResp);
+
+                        if (!setSuccess)
+                        {
+                            // Secondary fallback without 'set' prefix
+                            string altCmd = $"send {normMac} rs232:1 rtp igmp {multicastIp}";
+                            string altResp = await SendTelnetCommandAsync(altCmd, ct);
+                            setSuccess = IsCommandSuccessful(altResp) || IsRestResponseSuccess(altResp);
+                        }
                     }
                 }
 
                 if (!setSuccess)
                 {
-                    AppLogger.Warn("SdvoeClient", $"RS-232 'set rtp igmp' failed on both REST and Telnet for {normMac}");
+                    AppLogger.Warn("SdvoeClient", $"RS-232 'rtp igmp' failed on both REST and Telnet for {normMac}");
                     return false;
                 }
 
@@ -863,10 +872,18 @@ namespace AvasRoutingApp.Sdvoe
 
                     if (IsTelnetConnected)
                     {
-                        string telnetOnCmd = $"send {normMac} rs232:1 set rtp ON\r";
+                        string telnetOnCmd = $"send {normMac} rs232:1 set rtp ON";
                         string tOnResp = await SendTelnetCommandAsync(telnetOnCmd, ct);
                         AppLogger.Info("SdvoeClient", $"RS-232 'set rtp ON' Telnet response: {tOnResp}");
                         onSuccess = IsCommandSuccessful(tOnResp) || IsRestResponseSuccess(tOnResp);
+
+                        if (!onSuccess)
+                        {
+                            // Secondary fallback without 'set' prefix
+                            string altCmd = $"send {normMac} rs232:1 rtp ON";
+                            string altResp = await SendTelnetCommandAsync(altCmd, ct);
+                            onSuccess = IsCommandSuccessful(altResp) || IsRestResponseSuccess(altResp);
+                        }
                     }
                 }
 
@@ -918,10 +935,18 @@ namespace AvasRoutingApp.Sdvoe
 
                 if (IsTelnetConnected)
                 {
-                    string telnetCmd = $"send {normMac} rs232:1 set rtp OFF\r";
+                    string telnetCmd = $"send {normMac} rs232:1 set rtp OFF";
                     string tResp = await SendTelnetCommandAsync(telnetCmd, ct);
                     AppLogger.Info("SdvoeClient", $"RS-232 'set rtp OFF' via Telnet response: {tResp}");
-                    return IsCommandSuccessful(tResp) || IsRestResponseSuccess(tResp);
+                    if (IsCommandSuccessful(tResp) || IsRestResponseSuccess(tResp))
+                    {
+                        return true;
+                    }
+
+                    // Secondary fallback without 'set' prefix
+                    string altCmd = $"send {normMac} rs232:1 rtp OFF";
+                    string altResp = await SendTelnetCommandAsync(altCmd, ct);
+                    return IsCommandSuccessful(altResp) || IsRestResponseSuccess(altResp);
                 }
 
                 return false;
@@ -1056,7 +1081,8 @@ namespace AvasRoutingApp.Sdvoe
 
         /// <summary>
         /// Starts the preview multicast stream for the given MAC address on the specified multicast IP and port.
-        /// Prioritizes native BlueRiver Stream 1 for Single-Link devices, and AVAS-223 AVP RS-232 commands with fallback for Dual-Link devices.
+        /// Prioritizes AVAS-223 native AVP RS-232 tunneling (MCU UART 1: rtp ON) for Chip 0 across both Single-Link and Dual-Link modes.
+        /// Uses native BlueRiver Stream 1 Scaler for Chip 1 or as fallback if MCU RS-232 is unavailable.
         /// </summary>
         public async Task<bool> StartPreviewStreamAsync(
             string macAddress,
@@ -1068,8 +1094,18 @@ namespace AvasRoutingApp.Sdvoe
         {
             string normMac = NormalizeMac(macAddress);
 
-            // If device is explicitly in SINGLE link mode, directly invoke native BlueRiver Stream 1 Scaler
-            if (string.Equals(linkMode, "SINGLE", StringComparison.OrdinalIgnoreCase))
+            // 1. For Chip 0 on any AVAS device, ALWAYS prioritize native MCU UART preview stream (rtp ON)
+            if (chipIndex == 0)
+            {
+                if (await StartPreviewStreamViaAvpRs232Async(normMac, multicastIp, ct))
+                {
+                    AppLogger.Info("SdvoeClient", $"Started AVAS-223 AVP thumbnail stream via RS-232 for {normMac} -> {multicastIp}");
+                    return true;
+                }
+            }
+
+            // 2. For Chip 1 (Dual-Link secondary chip) or as fallback for Chip 0:
+            if (chipIndex == 1 || string.Equals(linkMode, "SINGLE", StringComparison.OrdinalIgnoreCase))
             {
                 if (await StartSingleLinkStreamAsync(normMac, multicastIp, port, streamIndex: 1, ct))
                 {
@@ -1077,14 +1113,7 @@ namespace AvasRoutingApp.Sdvoe
                 }
             }
 
-            // Otherwise (DUAL link mode or UNKNOWN), prioritize AVAS-223 native AVP RS-232 tunneling
-            if (await StartPreviewStreamViaAvpRs232Async(normMac, multicastIp, ct))
-            {
-                AppLogger.Info("SdvoeClient", $"Started AVAS-223 AVP thumbnail stream via RS-232 for {normMac} -> {multicastIp}");
-                return true;
-            }
-
-            // Fall back to standard Semtech BlueRiver thumbnail stream commands
+            // 3. Fall back to standard Semtech BlueRiver thumbnail stream commands
             await ConfigureThumbnailStreamAsync(normMac, 1.0, 12345, port, ct);
 
             string cmd = $"start {normMac}:thumbnail:0 {multicastIp}";
