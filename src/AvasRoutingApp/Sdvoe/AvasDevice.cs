@@ -5,7 +5,6 @@ namespace AvasRoutingApp.Sdvoe
     public enum DeviceFamily
     {
         Avas,
-        Vega,
         GenericSdvoe
     }
 
@@ -18,7 +17,6 @@ namespace AvasRoutingApp.Sdvoe
         public DeviceFamily Family => VendorId switch
         {
             105 => DeviceFamily.Avas,
-            192 when ProductId == 11 => DeviceFamily.Vega,
             _ => DeviceFamily.GenericSdvoe
         };
         public string MacAddress { get; set; } = "";
@@ -41,5 +39,6 @@ namespace AvasRoutingApp.Sdvoe
         public string CompanionName { get; set; } = "";
         public bool CompanionIsActive { get; set; } = false;
         public string McuIpAddress { get; set; } = string.Empty;
+        public int SelectedPreviewChipIndex { get; set; } = 0;
     }
 }

@@ -1,5 +1,7 @@
 using System;
 using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using AvasRoutingApp.Rtp;
@@ -9,7 +11,7 @@ namespace AvasRoutingApp.ViewModels
 {
     /// <summary>
     /// ViewModel representing a single AVAS-223 chip_0 encoder preview card.
-    /// Manages the video viewport WriteableBitmap, device telemetry, activation badge, and color-coded FPS indicator.
+    /// Manages the video viewport WriteableBitmap, device telemetry, link mode badge, and color-coded FPS indicator.
     /// </summary>
     public class EncoderCardViewModel : ViewModelBase, IDisposable
     {
@@ -21,8 +23,6 @@ namespace AvasRoutingApp.ViewModels
         private static readonly SolidColorBrush OnlineGreenBrush = new(Color.FromRgb(0x10, 0xB9, 0x81));
         private static readonly SolidColorBrush WarningAmberBrush = new(Color.FromRgb(0xF5, 0x9E, 0x0B));
         private static readonly SolidColorBrush NeutralGrayBrush = new(Color.FromRgb(0x64, 0x74, 0x8B));
-        private static readonly SolidColorBrush VegaBadgeBrush = new(Color.FromRgb(0x7C, 0x3A, 0xED)); // Violet / Purple test badge
-        private static readonly SolidColorBrush VegaTextBrush = new(Color.FromRgb(0xFF, 0xFF, 0xFF));
 
         static EncoderCardViewModel()
         {
@@ -34,8 +34,6 @@ namespace AvasRoutingApp.ViewModels
             OnlineGreenBrush.Freeze();
             WarningAmberBrush.Freeze();
             NeutralGrayBrush.Freeze();
-            VegaBadgeBrush.Freeze();
-            VegaTextBrush.Freeze();
         }
 
         private string _macAddress = string.Empty;
@@ -63,6 +61,36 @@ namespace AvasRoutingApp.ViewModels
         private bool _companionIsActive = false;
         private bool _isMacCopied;
         private bool _isMulticastCopied;
+        private int _selectedChipIndex = 0;
+
+        public int SelectedChipIndex
+        {
+            get => _selectedChipIndex;
+            set
+            {
+                if (SetProperty(ref _selectedChipIndex, value))
+                {
+                    OnPropertyChanged(nameof(IsChip0Selected));
+                    OnPropertyChanged(nameof(IsChip1Selected));
+                    OnPropertyChanged(nameof(ActiveStreamingMac));
+                }
+            }
+        }
+
+        public bool IsChip0Selected => _selectedChipIndex == 0;
+        public bool IsChip1Selected => _selectedChipIndex == 1;
+
+        public bool CanSelectChip1 => !IsDualLink &&
+                                      !string.IsNullOrEmpty(_companionMac) &&
+                                      !string.Equals(_companionMac, "NONE", StringComparison.OrdinalIgnoreCase);
+
+        public string ActiveStreamingMac => (_selectedChipIndex == 1 && CanSelectChip1)
+            ? _companionMac
+            : _macAddress;
+
+        public ICommand SelectChip0Command { get; }
+        public ICommand SelectChip1Command { get; }
+        public Func<EncoderCardViewModel, int, Task>? OnChipSelectionChanged { get; set; }
 
         public bool IsMacCopied
         {
@@ -77,22 +105,76 @@ namespace AvasRoutingApp.ViewModels
         }
 
         public System.Windows.Input.ICommand CopyMacCommand { get; }
+
+        #region Deprecated UI Properties (Retained for Backwards Compatibility)
+
+        [Obsolete("Removed from preview card UI in v1.7.0. Multicast endpoint copied from Settings.")]
         public System.Windows.Input.ICommand CopyMulticastCommand { get; }
+
+        [Obsolete("Removed from preview card UI in v1.7.0. Diagnostics moved to Settings > Advanced.")]
         public System.Windows.Input.ICommand OpenDiagnosticsCommand { get; }
 
+        [Obsolete("Removed from preview card UI in v1.7.0. Diagnostics moved to Settings > Advanced.")]
         public Action<EncoderCardViewModel>? OpenDiagnosticsAction { get; set; }
+
+        [Obsolete("Removed from preview card UI in v1.7.0.")]
+        public bool ShowActivationBadge => _family == DeviceFamily.Avas;
+
+        [Obsolete("Removed from preview card UI in v1.7.0.")]
+        public string BadgeText => "chip_0 (TX)";
+
+        [Obsolete("Removed from preview card UI in v1.7.0.")]
+        public bool IsMaintenanceAvailable => _family == DeviceFamily.Avas;
+
+        [Obsolete("Removed from preview card UI in v1.7.0.")]
+        public bool IsActivated => _activationState == DeviceActivationState.Activated;
+
+        [Obsolete("Removed from preview card UI in v1.7.0.")]
+        public string ActivationBadgeText => _activationState switch
+        {
+            DeviceActivationState.Activated => "Activated",
+            DeviceActivationState.Unactivated => "Unactivated",
+            _ => "Checking..."
+        };
+
+        [Obsolete("Removed from preview card UI in v1.7.0.")]
+        public SolidColorBrush ActivationBadgeBrush => _activationState switch
+        {
+            DeviceActivationState.Activated => OnlineGreenBrush,
+            DeviceActivationState.Unactivated => WarningAmberBrush,
+            _ => NeutralGrayBrush
+        };
+
+        #endregion
 
         public EncoderCardViewModel()
         {
             CopyMacCommand = new RelayCommand(ExecuteCopyMac);
+#pragma warning disable CS0618 // Type or member is obsolete
             CopyMulticastCommand = new RelayCommand(ExecuteCopyMulticast);
             OpenDiagnosticsCommand = new RelayCommand(ExecuteOpenDiagnostics, () => IsMaintenanceAvailable);
+            SelectChip0Command = new RelayCommand(async () => await SetSelectedChipAsync(0));
+            SelectChip1Command = new RelayCommand(async () => await SetSelectedChipAsync(1), () => CanSelectChip1);
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         private void ExecuteOpenDiagnostics()
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             if (!IsMaintenanceAvailable) return;
             OpenDiagnosticsAction?.Invoke(this);
+#pragma warning restore CS0618 // Type or member is obsolete
+        }
+
+        private async Task SetSelectedChipAsync(int chipIndex)
+        {
+            if (chipIndex == 1 && !CanSelectChip1) return;
+            if (_selectedChipIndex == chipIndex) return;
+            SelectedChipIndex = chipIndex;
+            if (OnChipSelectionChanged != null)
+            {
+                await OnChipSelectionChanged(this, chipIndex);
+            }
         }
 
         private async void ExecuteCopyMac()
@@ -130,7 +212,13 @@ namespace AvasRoutingApp.ViewModels
         public string MacAddress
         {
             get => _macAddress;
-            set => SetProperty(ref _macAddress, value);
+            set
+            {
+                if (SetProperty(ref _macAddress, value))
+                {
+                    OnPropertyChanged(nameof(ActiveStreamingMac));
+                }
+            }
         }
 
         public string DeviceName
@@ -252,15 +340,18 @@ namespace AvasRoutingApp.ViewModels
                     OnPropertyChanged(nameof(LinkModeBadgeText));
                     OnPropertyChanged(nameof(LinkModeBrush));
                     OnPropertyChanged(nameof(IsDualLink));
+                    OnPropertyChanged(nameof(ShowLinkModeBadge));
+                    OnPropertyChanged(nameof(CanSelectChip1));
+                    OnPropertyChanged(nameof(ActiveStreamingMac));
                 }
             }
         }
 
         public string LinkModeBadgeText => _linkMode.ToUpperInvariant() switch
         {
-            "DUAL" => "DUAL",
-            "SINGLE" => "SINGLE",
-            _ => "---"
+            "DUAL" => "Dual Link",
+            "SINGLE" => "Single Link",
+            _ => "Unknown Link"
         };
 
         public SolidColorBrush LinkModeBrush => _linkMode.ToUpperInvariant() switch
@@ -270,12 +361,22 @@ namespace AvasRoutingApp.ViewModels
             _ => UnknownLinkBrush
         };
 
+        public bool ShowLinkModeBadge => string.Equals(_linkMode, "DUAL", StringComparison.OrdinalIgnoreCase) ||
+                                         string.Equals(_linkMode, "SINGLE", StringComparison.OrdinalIgnoreCase);
+
         public bool IsDualLink => string.Equals(_linkMode, "DUAL", StringComparison.OrdinalIgnoreCase);
 
         public string CompanionMac
         {
             get => _companionMac;
-            set => SetProperty(ref _companionMac, value);
+            set
+            {
+                if (SetProperty(ref _companionMac, value))
+                {
+                    OnPropertyChanged(nameof(CanSelectChip1));
+                    OnPropertyChanged(nameof(ActiveStreamingMac));
+                }
+            }
         }
 
         public string CompanionName
@@ -297,9 +398,11 @@ namespace AvasRoutingApp.ViewModels
             {
                 if (SetProperty(ref _activationState, value))
                 {
+#pragma warning disable CS0618 // Type or member is obsolete
                     OnPropertyChanged(nameof(IsActivated));
                     OnPropertyChanged(nameof(ActivationBadgeText));
                     OnPropertyChanged(nameof(ActivationBadgeBrush));
+#pragma warning restore CS0618 // Type or member is obsolete
                     OnPropertyChanged(nameof(McuTooltipText));
                 }
             }
@@ -312,46 +415,14 @@ namespace AvasRoutingApp.ViewModels
             {
                 if (SetProperty(ref _family, value))
                 {
-                    OnPropertyChanged(nameof(IsVegaDevice));
+#pragma warning disable CS0618 // Type or member is obsolete
                     OnPropertyChanged(nameof(BadgeText));
-                    OnPropertyChanged(nameof(BadgeBackgroundBrush));
-                    OnPropertyChanged(nameof(BadgeForegroundBrush));
                     OnPropertyChanged(nameof(IsMaintenanceAvailable));
                     OnPropertyChanged(nameof(ShowActivationBadge));
+#pragma warning restore CS0618 // Type or member is obsolete
                 }
             }
         }
-
-        public bool IsVegaDevice => _family == DeviceFamily.Vega;
-
-        public bool ShowActivationBadge => _family == DeviceFamily.Avas;
-
-        public string BadgeText => _family switch
-        {
-            DeviceFamily.Vega => "[VEGA-1100 (Test)]",
-            _ => "chip_0 (TX)"
-        };
-
-        public SolidColorBrush? BadgeBackgroundBrush => _family == DeviceFamily.Vega ? VegaBadgeBrush : null;
-        public SolidColorBrush? BadgeForegroundBrush => _family == DeviceFamily.Vega ? VegaTextBrush : null;
-
-        public bool IsMaintenanceAvailable => _family == DeviceFamily.Avas;
-
-        public bool IsActivated => _activationState == DeviceActivationState.Activated;
-
-        public string ActivationBadgeText => _activationState switch
-        {
-            DeviceActivationState.Activated => "Activated",
-            DeviceActivationState.Unactivated => "Unactivated",
-            _ => "Checking..."
-        };
-
-        public SolidColorBrush ActivationBadgeBrush => _activationState switch
-        {
-            DeviceActivationState.Activated => OnlineGreenBrush,
-            DeviceActivationState.Unactivated => WarningAmberBrush,
-            _ => NeutralGrayBrush
-        };
 
         public string FirmwareVersion
         {
@@ -394,7 +465,9 @@ namespace AvasRoutingApp.ViewModels
             get
             {
                 var sb = new StringBuilder();
+#pragma warning disable CS0618 // Type or member is obsolete
                 sb.AppendLine($"Activation: {ActivationBadgeText}");
+#pragma warning restore CS0618 // Type or member is obsolete
                 if (!string.IsNullOrWhiteSpace(_firmwareVersion)) sb.AppendLine($"MCU FW: {_firmwareVersion}");
                 if (!string.IsNullOrWhiteSpace(_hardwareVersion)) sb.AppendLine($"Hardware: {_hardwareVersion}");
                 if (!string.IsNullOrWhiteSpace(_factorySerialNumber)) sb.AppendLine($"Serial No: {_factorySerialNumber}");
