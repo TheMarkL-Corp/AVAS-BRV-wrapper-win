@@ -833,6 +833,10 @@ namespace AvasRoutingApp.ViewModels
                     {
                         aliases.Add(companionMac);
                     }
+                    if (!string.IsNullOrWhiteSpace(dev.McuIpAddress))
+                    {
+                        aliases.Add(dev.McuIpAddress);
+                    }
                     if (IPAddress.TryParse(dev.IpAddress, out var avasIp) && avasIp.AddressFamily == AddressFamily.InterNetwork)
                     {
                         byte[] ipBytes = avasIp.GetAddressBytes();
@@ -871,6 +875,7 @@ namespace AvasRoutingApp.ViewModels
                                 if (!string.IsNullOrEmpty(mcuInfo.FactorySerialNumber)) card.FactorySerialNumber = mcuInfo.FactorySerialNumber;
                                 if (!string.IsNullOrEmpty(mcuInfo.McuIpAddress))
                                 {
+                                    dev.McuIpAddress = mcuInfo.McuIpAddress;
                                     UnifiedRtpDemuxReceiver.Instance.RegisterAlias(mcuInfo.McuIpAddress, dev.IpAddress);
                                 }
                             }

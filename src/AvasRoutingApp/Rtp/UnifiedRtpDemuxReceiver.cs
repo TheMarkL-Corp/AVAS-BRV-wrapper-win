@@ -407,28 +407,21 @@ namespace AvasRoutingApp.Rtp
                 return true;
             }
 
-            // 3. Subnet /24 fallback: Match ONLY if exactly one registered channel belongs to this /24 subnet.
-            // If multiple channels share the subnet, we cannot unambiguously infer the target channel.
+            // 3. Subnet /24 fallback: Match channels sharing the same IPv4 /24 subnet
             if (IPAddress.TryParse(cleanIp, out var senderAddr) && senderAddr.AddressFamily == AddressFamily.InterNetwork)
             {
                 string senderPrefix = GetSubnet24Prefix(cleanIp);
-                DemuxChannel? matchCandidate = null;
-                int matchCount = 0;
+                var subnetMatches = _channels.Where(kvp => GetSubnet24Prefix(kvp.Key) == senderPrefix).Select(kvp => kvp.Value).ToList();
 
-                foreach (var kvp in _channels)
+                if (subnetMatches.Count > 0)
                 {
-                    if (GetSubnet24Prefix(kvp.Key) == senderPrefix)
-                    {
-                        matchCandidate = kvp.Value;
-                        matchCount++;
-                    }
-                }
+                    // If exactly one channel on this subnet is actively listening, route to it
+                    var activeOnSubnet = subnetMatches.Where(c => c.IsListening).ToList();
+                    DemuxChannel candidate = activeOnSubnet.Count == 1 ? activeOnSubnet[0] : subnetMatches[0];
 
-                if (matchCount == 1 && matchCandidate != null)
-                {
                     // Auto-alias this IP for future zero-latency O(1) routing
-                    _aliases[cleanIp] = matchCandidate;
-                    channel = matchCandidate;
+                    _aliases[cleanIp] = candidate;
+                    channel = candidate;
                     return true;
                 }
             }

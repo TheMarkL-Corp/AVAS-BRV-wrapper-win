@@ -941,6 +941,43 @@ namespace AvasRoutingApp.Tests
             Assert.Empty(receiver.ListeningPorts);
         }
 
+        [Fact]
+        public void DemuxPacket_MultipleDevicesOnSameSubnet_ResolvesByMcuIpAliasWithoutDropping()
+        {
+            using var receiver = new UnifiedRtpDemuxReceiver();
+            var ch1 = (UnifiedRtpDemuxReceiver.DemuxChannel)receiver.GetOrCreateChannel("10.32.32.12", "225.0.0.1", new[] { "10.32.32.14" });
+            var ch2 = (UnifiedRtpDemuxReceiver.DemuxChannel)receiver.GetOrCreateChannel("10.32.32.22", "225.0.0.2", new[] { "10.32.32.24" });
+
+            Assert.True(receiver.TryResolveChannel("10.32.32.14", out var resolved));
+            Assert.Same(ch1, resolved);
+        }
+
+        [Fact]
+        public void DemuxPacket_SingleChannelRegistered_ResolvesDynamicSenderIpWithoutDropping()
+        {
+            using var receiver = new UnifiedRtpDemuxReceiver();
+            var ch1 = (UnifiedRtpDemuxReceiver.DemuxChannel)receiver.GetOrCreateChannel("10.32.32.12", "225.0.0.1");
+
+            // Packet arriving from dynamically assigned MCU IP on same subnet (e.g. 10.32.32.99) must resolve to ch1 via subnet match
+            Assert.True(receiver.TryResolveChannel("10.32.32.99", out var resolved));
+            Assert.Same(ch1, resolved);
+        }
+
+        [Fact]
+        public void DemuxPacket_MultipleDevicesOnSubnet_SingleActiveListeningChannel_ResolvesActiveChannel()
+        {
+            using var receiver = new UnifiedRtpDemuxReceiver();
+            var ch1 = (UnifiedRtpDemuxReceiver.DemuxChannel)receiver.GetOrCreateChannel("10.32.32.12", "225.0.0.1");
+            var ch2 = (UnifiedRtpDemuxReceiver.DemuxChannel)receiver.GetOrCreateChannel("10.32.32.22", "225.0.0.2");
+
+            // ch2 is active listening, ch1 is not
+            ch2.StartListening("225.0.0.2", 5000);
+
+            // A packet arrives from unaliased IP on same subnet 10.32.32.55
+            Assert.True(receiver.TryResolveChannel("10.32.32.55", out var resolved));
+            Assert.Same(ch2, resolved);
+        }
+
         #endregion
     }
 }
