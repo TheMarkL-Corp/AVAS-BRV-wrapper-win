@@ -65,8 +65,8 @@ namespace AvasRoutingApp.Sdvoe
                 config?.TelnetPort ?? 6970,
                 config?.RestPort ?? 8080,
                 ipManager ?? new MulticastIpManager(
-                    config?.MulticastStartIp ?? "224.1.1.1",
-                    config?.MulticastEndIp ?? "224.1.3.225",
+                    config?.MulticastStartIp ?? "225.0.0.1",
+                    config?.MulticastEndIp ?? "225.0.1.254",
                     config?.BasePort ?? 6792),
                 multiLinkService)
         {
@@ -187,17 +187,10 @@ namespace AvasRoutingApp.Sdvoe
         #region Device Discovery & Filtering
 
         /// <summary>
-        /// Backward-compatible overload for discovering AVAS-223 chip_0 encoders.
-        /// </summary>
-        public Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(CancellationToken ct) 
-            => DiscoverAvas223DevicesAsync(false, ct);
-
-        /// <summary>
-        /// Discovers all devices on the network and filters strictly for AVAS-223 chip_0 encoders
-        /// (and optionally Advantech VEGA-1100 transceivers when enableVegaDevices is true).
+        /// Discovers all devices on the network and filters strictly for AVAS-223 chip_0 encoders.
         /// Fires DevicesDiscovered event on completion.
         /// </summary>
-        public async Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(bool enableVegaDevices = false, CancellationToken ct = default)
+        public async Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(CancellationToken ct = default)
         {
             IReadOnlyList<AvasDevice> allDevices;
 
@@ -211,7 +204,7 @@ namespace AvasRoutingApp.Sdvoe
                 allDevices = await DiscoverDevicesViaRestAsync(ct);
             }
 
-            var filtered = SdvoeDiscoveryFilter.FilterTargetDevices(allDevices, enableVegaDevices);
+            var filtered = SdvoeDiscoveryFilter.FilterTargetDevices(allDevices);
 
             // Sync currently allocated multicast IPs
             foreach (var dev in filtered)
@@ -379,7 +372,7 @@ namespace AvasRoutingApp.Sdvoe
         /// </summary>
         private async Task<HttpResponseMessage?> PostDeviceRestAsync(string relativePath, object payload, CancellationToken ct)
         {
-            var portsToTry = new[] { _restPort, 8090, 8080, 80 }.Distinct().ToArray();
+            var portsToTry = new[] { _restPort, 8080, 8090, 80 }.Distinct().ToArray();
             string jsonPayload = JsonSerializer.Serialize(payload);
 
             foreach (int port in portsToTry)
@@ -459,6 +452,14 @@ namespace AvasRoutingApp.Sdvoe
                 }
 
                 // If REST is not connected or fails, try Telnet fallback
+                try
+                {
+                    if (!_isTelnetAuthenticated)
+                    {
+                        await ConnectTelnetAsync(ct);
+                    }
+                }
+                catch { }
                 if (IsTelnetConnected)
                 {
                     string telnetCmd = $"set {normMac} configuration:rs232:1:mode api";
@@ -511,10 +512,19 @@ namespace AvasRoutingApp.Sdvoe
                     return body;
                 }
 
-                // Telnet fallback if REST fails
+                // Telnet fallback if REST fails or is unavailable
+                try
+                {
+                    if (!_isTelnetAuthenticated)
+                    {
+                        await ConnectTelnetAsync(ct);
+                    }
+                }
+                catch { }
                 if (IsTelnetConnected)
                 {
-                    string telnetCmd = $"send {normMac} rs232 1 \"{command.Trim()}\"";
+                    string cleanCmd = command.Trim();
+                    string telnetCmd = $"send {normMac} rs232:1 {cleanCmd}\r";
                     string tResp = await SendTelnetCommandAsync(telnetCmd, ct);
                     AppLogger.Debug("SdvoeClient", $"SendMcuCommandAsync via Telnet for {normMac}: {tResp}");
                     return tResp;
@@ -723,8 +733,9 @@ namespace AvasRoutingApp.Sdvoe
 
         /// <summary>
         /// Starts AVAS-223 AVP thumbnail streaming via RS-232 tunneling (MCU port index 1).
-        /// Ensures UART 1 API mode, sends 'set rtp igmp <multicastIp>' then 'set rtp ON'.
+        /// Ensures UART 1 API mode, sends 'set rtp igmp <multicastIp>\r\n' then 'set rtp ON\r\n'.
         /// Note: The hardware streams directly to UDP port 5000 without requiring a port parameter.
+        /// Supports REST API with automatic Telnet fallback.
         /// </summary>
         public async Task<bool> StartPreviewStreamViaAvpRs232Async(string mac, string multicastIp, CancellationToken ct = default)
         {
@@ -737,43 +748,90 @@ namespace AvasRoutingApp.Sdvoe
                 await EnsureUartApiModeAsync(normMac, ct);
 
                 // Step 1: Set multicast IP address for RTP stream
+                bool setSuccess = false;
                 var setPayload = new
                 {
                     op = "send:rs232",
                     port_index = 1,
                     data_string = $"set rtp igmp {multicastIp}\r\n"
                 };
-                using var setResp = await PostDeviceRestAsync(path, setPayload, ct);
-                if (setResp == null || !setResp.IsSuccessStatusCode)
+                using (var setResp = await PostDeviceRestAsync(path, setPayload, ct))
                 {
-                    AppLogger.Warn("SdvoeClient", $"RS-232 'set rtp igmp' HTTP request failed or timed out for {normMac}");
-                    return false;
+                    if (setResp != null && setResp.IsSuccessStatusCode)
+                    {
+                        string setBody = await setResp.Content.ReadAsStringAsync(ct);
+                        AppLogger.Info("SdvoeClient", $"RS-232 'set rtp igmp' REST response: {setBody}");
+                        setSuccess = IsRestResponseSuccess(setBody);
+                    }
                 }
 
-                string setBody = await setResp.Content.ReadAsStringAsync(ct);
-                AppLogger.Info("SdvoeClient", $"RS-232 'set rtp igmp' response: {setBody}");
-                if (!IsRestResponseSuccess(setBody))
+                // Telnet fallback for Step 1
+                if (!setSuccess)
                 {
+                    try
+                    {
+                        if (!_isTelnetAuthenticated)
+                        {
+                            await ConnectTelnetAsync(ct);
+                        }
+                    }
+                    catch { }
+
+                    if (IsTelnetConnected)
+                    {
+                        string telnetSetCmd = $"send {normMac} rs232:1 set rtp igmp {multicastIp}\r";
+                        string tSetResp = await SendTelnetCommandAsync(telnetSetCmd, ct);
+                        AppLogger.Info("SdvoeClient", $"RS-232 'set rtp igmp' Telnet response: {tSetResp}");
+                        setSuccess = IsCommandSuccessful(tSetResp) || IsRestResponseSuccess(tSetResp);
+                    }
+                }
+
+                if (!setSuccess)
+                {
+                    AppLogger.Warn("SdvoeClient", $"RS-232 'set rtp igmp' failed on both REST and Telnet for {normMac}");
                     return false;
                 }
 
                 // Step 2: Turn on RTP streaming
+                bool onSuccess = false;
                 var onPayload = new
                 {
                     op = "send:rs232",
                     port_index = 1,
                     data_string = "set rtp ON\r\n"
                 };
-                using var onResp = await PostDeviceRestAsync(path, onPayload, ct);
-                if (onResp == null || !onResp.IsSuccessStatusCode)
+                using (var onResp = await PostDeviceRestAsync(path, onPayload, ct))
                 {
-                    AppLogger.Warn("SdvoeClient", $"RS-232 'set rtp ON' HTTP request failed or timed out for {normMac}");
-                    return false;
+                    if (onResp != null && onResp.IsSuccessStatusCode)
+                    {
+                        string onBody = await onResp.Content.ReadAsStringAsync(ct);
+                        AppLogger.Info("SdvoeClient", $"RS-232 'set rtp ON' REST response: {onBody}");
+                        onSuccess = IsRestResponseSuccess(onBody);
+                    }
                 }
 
-                string onBody = await onResp.Content.ReadAsStringAsync(ct);
-                AppLogger.Info("SdvoeClient", $"RS-232 'set rtp ON' response: {onBody}");
-                return IsRestResponseSuccess(onBody);
+                // Telnet fallback for Step 2
+                if (!onSuccess)
+                {
+                    try
+                    {
+                        if (!_isTelnetAuthenticated)
+                        {
+                            await ConnectTelnetAsync(ct);
+                        }
+                    }
+                    catch { }
+
+                    if (IsTelnetConnected)
+                    {
+                        string telnetOnCmd = $"send {normMac} rs232:1 set rtp ON\r";
+                        string tOnResp = await SendTelnetCommandAsync(telnetOnCmd, ct);
+                        AppLogger.Info("SdvoeClient", $"RS-232 'set rtp ON' Telnet response: {tOnResp}");
+                        onSuccess = IsCommandSuccessful(tOnResp) || IsRestResponseSuccess(tOnResp);
+                    }
+                }
+
+                return onSuccess;
             }
             catch (Exception ex)
             {
@@ -784,7 +842,7 @@ namespace AvasRoutingApp.Sdvoe
 
         /// <summary>
         /// Stops AVAS-223 AVP thumbnail streaming via RS-232 tunneling (MCU port index 1).
-        /// Sends 'set rtp OFF'.
+        /// Sends 'set rtp OFF\r\n' with REST and Telnet fallback.
         /// </summary>
         public async Task<bool> StopPreviewStreamViaAvpRs232Async(string mac, CancellationToken ct = default)
         {
@@ -810,12 +868,21 @@ namespace AvasRoutingApp.Sdvoe
                 }
 
                 // Telnet fallback if REST fails or returns unacknowledged
+                try
+                {
+                    if (!_isTelnetAuthenticated)
+                    {
+                        await ConnectTelnetAsync(ct);
+                    }
+                }
+                catch { }
+
                 if (IsTelnetConnected)
                 {
-                    string telnetCmd = $"send {normMac} rs232 1 \"set rtp OFF\"";
+                    string telnetCmd = $"send {normMac} rs232:1 set rtp OFF\r";
                     string tResp = await SendTelnetCommandAsync(telnetCmd, ct);
                     AppLogger.Info("SdvoeClient", $"RS-232 'set rtp OFF' via Telnet response: {tResp}");
-                    return IsCommandSuccessful(tResp);
+                    return IsCommandSuccessful(tResp) || IsRestResponseSuccess(tResp);
                 }
 
                 return false;
@@ -828,120 +895,183 @@ namespace AvasRoutingApp.Sdvoe
         }
 
         /// <summary>
+        /// Starts the Single-Link native Semtech BlueRiver stream (Stream 1 Scaler) via Telnet/REST.
+        /// Sends 'set {normMac} stream HDMI {streamIndex} enable true address {multicastIp}' and 'auto_stop true'.
+        /// </summary>
+        public async Task<bool> StartSingleLinkStreamAsync(string macAddress, string multicastIp, int port = 5004, int streamIndex = 1, CancellationToken ct = default)
+        {
+            string normMac = NormalizeMac(macAddress);
+            AppLogger.Info("SdvoeClient", $"Starting Single-Link native BlueRiver Stream {streamIndex} (Scaler) for {normMac} -> {multicastIp}:{port}");
+
+            bool telnetOk = false;
+            try
+            {
+                if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
+                if (IsTelnetConnected)
+                {
+                    string cmdEnable = $"set {normMac} stream HDMI {streamIndex} enable true address {multicastIp}";
+                    string resp1 = await SendTelnetCommandAsync(cmdEnable, ct);
+
+                    string cmdAutoStop = $"set {normMac} stream HDMI {streamIndex} auto_stop true";
+                    string resp2 = await SendTelnetCommandAsync(cmdAutoStop, ct);
+
+                    telnetOk = IsCommandSuccessful(resp1) || IsRestResponseSuccess(resp1);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Warn("SdvoeClient", $"Telnet StartSingleLinkStreamAsync failed on {normMac}: {ex.Message}");
+            }
+
+            if (telnetOk) return true;
+
+            // REST fallback
+            try
+            {
+                string path = $"/api/device/{normMac}";
+                var payload = new
+                {
+                    op = "set",
+                    streams = new[]
+                    {
+                        new
+                        {
+                            type = "HDMI",
+                            index = streamIndex,
+                            configuration = new
+                            {
+                                enable = true,
+                                address = multicastIp,
+                                auto_stop = true
+                            }
+                        }
+                    }
+                };
+                using var resp = await PostDeviceRestAsync(path, payload, ct);
+                if (resp != null && resp.IsSuccessStatusCode)
+                {
+                    string body = await resp.Content.ReadAsStringAsync(ct);
+                    return IsRestResponseSuccess(body) || IsCommandSuccessful(body);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("SdvoeClient", $"REST StartSingleLinkStreamAsync failed on {normMac}", ex);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Stops the Single-Link native Semtech BlueRiver stream (Stream 1 and 0) with deterministic 0.0.0.0 address nullification.
+        /// </summary>
+        public async Task<bool> StopSingleLinkStreamAsync(string macAddress, int streamIndex = 1, CancellationToken ct = default)
+        {
+            string normMac = NormalizeMac(macAddress);
+            AppLogger.Info("SdvoeClient", $"Stopping Single-Link native BlueRiver Stream for {normMac} with address 0.0.0.0");
+
+            bool telnetOk = false;
+            try
+            {
+                if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
+                if (IsTelnetConnected)
+                {
+                    string cmd1 = $"set {normMac} stream HDMI {streamIndex} enable false address 0.0.0.0";
+                    await SendTelnetCommandAsync(cmd1, ct);
+
+                    string cmd0 = $"set {normMac} stream HDMI 0 enable false address 0.0.0.0";
+                    await SendTelnetCommandAsync(cmd0, ct);
+
+                    telnetOk = true;
+                }
+            }
+            catch { }
+
+            // REST fallback for 0.0.0.0 nullification
+            try
+            {
+                string path = $"/api/device/{normMac}";
+                var payload = new
+                {
+                    op = "set",
+                    streams = new[]
+                    {
+                        new
+                        {
+                            type = "HDMI",
+                            index = streamIndex,
+                            configuration = new
+                            {
+                                enable = false,
+                                address = "0.0.0.0"
+                            }
+                        }
+                    }
+                };
+                await PostDeviceRestAsync(path, payload, ct);
+            }
+            catch { }
+
+            return telnetOk;
+        }
+
+        /// <summary>
         /// Starts the preview multicast stream for the given MAC address on the specified multicast IP and port.
-        /// Prioritizes AVAS-223 AVP RS-232 commands with fallback to standard Semtech BlueRiver thumbnail commands.
+        /// Prioritizes native BlueRiver Stream 1 for Single-Link devices, and AVAS-223 AVP RS-232 commands with fallback for Dual-Link devices.
         /// </summary>
         public async Task<bool> StartPreviewStreamAsync(
             string macAddress,
             string multicastIp,
             int port,
+            string linkMode = "UNKNOWN",
+            int chipIndex = 0,
             CancellationToken ct = default)
         {
-            // 1. Prioritize AVAS-223 native AVP RS-232 tunneling (portless multicast configuration)
-            if (await StartPreviewStreamViaAvpRs232Async(macAddress, multicastIp, ct))
-            {
-                AppLogger.Info("SdvoeClient", $"Started AVAS-223 AVP thumbnail stream via RS-232 for {macAddress} -> {multicastIp}");
-                return true;
-            }
+            string normMac = NormalizeMac(macAddress);
 
-            // 2. Fall back to standard Semtech BlueRiver thumbnail stream commands
-            await ConfigureThumbnailStreamAsync(macAddress, 1.0, 12345, port, ct);
-
-            string cmd = $"start {macAddress}:thumbnail:0 {multicastIp}";
-            try
+            // If device is explicitly in SINGLE link mode, directly invoke native BlueRiver Stream 1 Scaler
+            if (string.Equals(linkMode, "SINGLE", StringComparison.OrdinalIgnoreCase))
             {
-                if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
-                string resp = await SendTelnetCommandAsync(cmd, ct);
-                if (IsCommandSuccessful(resp))
+                if (await StartSingleLinkStreamAsync(normMac, multicastIp, port, streamIndex: 1, ct))
                 {
                     return true;
                 }
             }
-            catch
+
+            // Otherwise (DUAL link mode or UNKNOWN), prioritize AVAS-223 native AVP RS-232 tunneling
+            if (await StartPreviewStreamViaAvpRs232Async(normMac, multicastIp, ct))
             {
-                // Fallback to REST
+                AppLogger.Info("SdvoeClient", $"Started AVAS-223 AVP thumbnail stream via RS-232 for {normMac} -> {multicastIp}");
+                return true;
             }
 
-            return await StartPreviewStreamViaRestAsync(macAddress, multicastIp, ct);
-        }
+            // Fall back to standard Semtech BlueRiver thumbnail stream commands
+            await ConfigureThumbnailStreamAsync(normMac, 1.0, 12345, port, ct);
 
-        /// <summary>
-        /// Starts preview streaming for Advantech VEGA-1100 transceivers using standard BlueRiver SDVoE thumbnail commands.
-        /// Bypasses CYP MCU UART (set rtp igmp).
-        /// </summary>
-        public async Task<bool> StartVegaPreviewStreamAsync(
-            string macAddress,
-            string multicastIp,
-            int port,
-            CancellationToken ct = default)
-        {
+            string cmd = $"start {normMac}:thumbnail:0 {multicastIp}";
             try
             {
-                string normMac = NormalizeMac(macAddress);
-                AppLogger.Info("SdvoeClient", $"Configuring standard SDVoE thumbnail for VEGA-1100: {normMac} -> {multicastIp}:{port}");
-                
-                await ConfigureThumbnailStreamAsync(normMac, 20.0, 100, port, ct);
-
-                string cmd = $"start {normMac}:thumbnail:0 {multicastIp}";
-                try
-                {
-                    if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
-                    string resp = await SendTelnetCommandAsync(cmd, ct);
-                    if (IsCommandSuccessful(resp))
-                    {
-                        AppLogger.Info("SdvoeClient", $"Successfully started VEGA-1100 thumbnail stream via Telnet: {normMac}");
-                        return true;
-                    }
-                }
-                catch
-                {
-                    // Fallback to REST
-                }
-
-                return await StartPreviewStreamViaRestAsync(normMac, multicastIp, ct);
+                if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
+                string resp = await SendTelnetCommandAsync(cmd, ct);
+                if (IsCommandSuccessful(resp)) return true;
             }
-            catch (Exception ex)
+            catch { }
+
+            if (await StartPreviewStreamViaRestAsync(normMac, multicastIp, ct))
             {
-                AppLogger.Warn("SdvoeClient", $"StartVegaPreviewStreamAsync exception for {macAddress}: {ex.Message}");
-                return false;
+                return true;
             }
+
+            // Final fallback to native BlueRiver Stream 1 Scaler
+            return await StartSingleLinkStreamAsync(normMac, multicastIp, port, streamIndex: 1, ct);
         }
 
-        /// <summary>
-        /// Stops preview streaming for Advantech VEGA-1100 transceivers using standard BlueRiver thumbnail stop commands.
-        /// Bypasses CYP MCU UART.
-        /// </summary>
-        public async Task<bool> StopVegaPreviewStreamAsync(string macAddress, CancellationToken ct = default)
+        public Task<bool> StartPreviewStreamAsync(string macAddress, string multicastIp, int port, CancellationToken ct)
         {
-            try
-            {
-                string normMac = NormalizeMac(macAddress);
-                string cmd = $"stop {normMac}:thumbnail:0 free";
-                bool success = false;
-
-                try
-                {
-                    if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
-                    string resp = await SendTelnetCommandAsync(cmd, ct);
-                    if (IsCommandSuccessful(resp))
-                    {
-                        success = true;
-                    }
-                }
-                catch
-                {
-                    success = await StopPreviewStreamViaRestAsync(normMac, true, ct);
-                }
-
-                _ipManager.ReleaseMulticastIp(normMac);
-                return success;
-            }
-            catch (Exception ex)
-            {
-                AppLogger.Warn("SdvoeClient", $"StopVegaPreviewStreamAsync exception for {macAddress}: {ex.Message}");
-                return false;
-            }
+            return StartPreviewStreamAsync(macAddress, multicastIp, port, "UNKNOWN", 0, ct);
         }
+
+
 
         /// <summary>
         /// Sends AVP silicon factory reset command ('factory <targetMac>') for the target chip.
@@ -958,21 +1088,59 @@ namespace AvasRoutingApp.Sdvoe
             string cmd = $"factory {normMac}";
             AppLogger.Info("SdvoeClient", $"Issuing AVP factory reset to {normMac} (parent: {device.MacAddress})");
 
+            // 1. First try Telnet
             try
             {
                 if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
-                string resp = await SendTelnetCommandAsync(cmd, ct);
-                return IsCommandSuccessful(resp);
+                if (IsTelnetConnected)
+                {
+                    string resp = await SendTelnetCommandAsync(cmd, ct);
+                    if (IsCommandSuccessful(resp))
+                    {
+                        return true;
+                    }
+                }
             }
             catch (Exception ex)
             {
-                AppLogger.Error("SdvoeClient", $"Error executing AVP factory reset on {normMac}", ex);
-                return false;
+                AppLogger.Warn("SdvoeClient", $"Telnet AVP factory reset failed on {normMac}: {ex.Message}");
             }
+
+            // 2. Fallback to REST API if Telnet is disconnected or fails
+            try
+            {
+                string path = $"/api/device/{normMac}";
+                var payload = new { op = "factory_default" };
+                using var resp = await PostDeviceRestAsync(path, payload, ct);
+                if (resp != null && resp.IsSuccessStatusCode)
+                {
+                    string body = await resp.Content.ReadAsStringAsync(ct);
+                    AppLogger.Info("SdvoeClient", $"AVP factory reset via REST for {normMac}: {body}");
+                    if (IsRestResponseSuccess(body) || IsCommandSuccessful(body))
+                    {
+                        return true;
+                    }
+                }
+
+                var altPayload = new { op = "factory" };
+                using var altResp = await PostDeviceRestAsync(path, altPayload, ct);
+                if (altResp != null && altResp.IsSuccessStatusCode)
+                {
+                    string body = await altResp.Content.ReadAsStringAsync(ct);
+                    AppLogger.Info("SdvoeClient", $"AVP factory reset via REST (alt) for {normMac}: {body}");
+                    return IsRestResponseSuccess(body) || IsCommandSuccessful(body);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("SdvoeClient", $"Error executing AVP factory reset via REST on {normMac}", ex);
+            }
+
+            return false;
         }
 
         /// <summary>
-        /// Sends MCU factory reset command ('send <chip0Mac> rs232:1 set factory default') to restore MCU EEPROM.
+        /// Sends MCU factory reset command ('send <chip0Mac> rs232:1 set factory default\r') to restore MCU EEPROM.
         /// Strictly restricted to AVAS devices (Vendor ID 105) and always dispatched via Chip 0 MAC.
         /// </summary>
         public async Task<bool> FactoryResetMcuAsync(AvasDevice device, CancellationToken ct = default)
@@ -983,14 +1151,12 @@ namespace AvasRoutingApp.Sdvoe
             }
 
             string chip0Mac = NormalizeMac(device.MacAddress);
-            string cmd = $"send {chip0Mac} rs232:1 set factory default";
             AppLogger.Info("SdvoeClient", $"Issuing MCU factory reset to {chip0Mac}");
 
             try
             {
-                if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
-                string resp = await SendTelnetCommandAsync(cmd, ct);
-                return IsCommandSuccessful(resp);
+                string resp = await SendMcuCommandAsync(chip0Mac, "set factory default\r\n", ct);
+                return IsCommandSuccessful(resp) || IsRestResponseSuccess(resp);
             }
             catch (Exception ex)
             {
@@ -1014,15 +1180,67 @@ namespace AvasRoutingApp.Sdvoe
             string cmd = $"reboot {normMac}";
             AppLogger.Info("SdvoeClient", $"Issuing reboot command to {normMac}");
 
+            // 1. First try Telnet
             try
             {
                 if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
-                string resp = await SendTelnetCommandAsync(cmd, ct);
-                return IsCommandSuccessful(resp);
+                if (IsTelnetConnected)
+                {
+                    string resp = await SendTelnetCommandAsync(cmd, ct);
+                    if (IsCommandSuccessful(resp))
+                    {
+                        return true;
+                    }
+                }
             }
             catch (Exception ex)
             {
-                AppLogger.Error("SdvoeClient", $"Error executing reboot on {normMac}", ex);
+                AppLogger.Warn("SdvoeClient", $"Telnet reboot failed on {normMac}: {ex.Message}");
+            }
+
+            // 2. Fallback to REST API if Telnet is disconnected or fails
+            try
+            {
+                string path = $"/api/device/{normMac}";
+                var payload = new { op = "reboot" };
+                using var resp = await PostDeviceRestAsync(path, payload, ct);
+                if (resp != null && resp.IsSuccessStatusCode)
+                {
+                    string body = await resp.Content.ReadAsStringAsync(ct);
+                    AppLogger.Info("SdvoeClient", $"Reboot via REST for {normMac}: {body}");
+                    return IsRestResponseSuccess(body) || IsCommandSuccessful(body);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("SdvoeClient", $"Error executing reboot via REST on {normMac}", ex);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Sends MCU soft reboot command ('send <chip0Mac> rs232:1 set system reboot\r') to initiate MCU watchdog reset.
+        /// Strictly restricted to AVAS devices (Vendor ID 105) and always dispatched via Chip 0 MAC.
+        /// </summary>
+        public async Task<bool> RebootMcuAsync(AvasDevice device, CancellationToken ct = default)
+        {
+            if (device.Family != DeviceFamily.Avas)
+            {
+                throw new InvalidOperationException($"Hardware diagnostics and factory resets are restricted to AVAS devices. Device family: {device.Family}");
+            }
+
+            string chip0Mac = NormalizeMac(device.MacAddress);
+            AppLogger.Info("SdvoeClient", $"Issuing MCU reboot to {chip0Mac}");
+
+            try
+            {
+                string resp = await SendMcuCommandAsync(chip0Mac, "set system reboot\r\n", ct);
+                return IsCommandSuccessful(resp) || IsRestResponseSuccess(resp);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("SdvoeClient", $"Error executing MCU reboot on {chip0Mac}", ex);
                 return false;
             }
         }
@@ -1076,21 +1294,33 @@ namespace AvasRoutingApp.Sdvoe
         /// </summary>
         public Task<bool> StartPreviewStreamAsync(string macAddress, string multicastIp, CancellationToken ct = default)
         {
-            return StartPreviewStreamAsync(macAddress, multicastIp, _ipManager.BasePort, ct);
+            return StartPreviewStreamAsync(macAddress, multicastIp, _ipManager.BasePort, "UNKNOWN", 0, ct);
         }
 
         /// <summary>
         /// Stops the preview multicast stream for the given MAC address.
         /// If free is true, appends 'free' to release the IP on the server and deallocates from the local pool.
+        /// Performs deterministic teardown:
+        /// 1. Address 0.0.0.0 nullification on Stream 1 and Stream 0
+        /// 2. AVAS-223 AVP RS-232 stop ('set rtp OFF')
+        /// 3. BlueRiver thumbnail stop command
         /// </summary>
-        public async Task<bool> StopPreviewStreamAsync(string macAddress, bool free, CancellationToken ct = default)
+        public async Task<bool> StopPreviewStreamAsync(
+            string macAddress,
+            bool free,
+            string linkMode = "UNKNOWN",
+            int chipIndex = 0,
+            CancellationToken ct = default)
         {
             string normMac = NormalizeMac(macAddress);
 
-            // 1. Attempt AVAS-223 AVP RS-232 stop ('set rtp OFF')
+            // 1. Issue deterministic Stream 1 & Stream 0 nullification (address 0.0.0.0)
+            bool singleStopped = await StopSingleLinkStreamAsync(normMac, streamIndex: 1, ct);
+
+            // 2. Attempt AVAS-223 AVP RS-232 stop ('set rtp OFF')
             bool avpStopped = await StopPreviewStreamViaAvpRs232Async(normMac, ct);
 
-            // 2. Also attempt Semtech BlueRiver thumbnail stop command
+            // 3. Also attempt Semtech BlueRiver thumbnail stop command
             string cmd = free ? $"stop {normMac}:thumbnail:0 free" : $"stop {normMac}:thumbnail:0";
             bool semtechSuccess = false;
 
@@ -1114,15 +1344,24 @@ namespace AvasRoutingApp.Sdvoe
                 _ipManager.ReleaseMulticastIp(normMac);
             }
 
-            return avpStopped || semtechSuccess;
+            return singleStopped || avpStopped || semtechSuccess;
         }
 
         /// <summary>
         /// Stops the preview stream and frees the multicast IP by default per IMulticastController.
         /// </summary>
-        public Task<bool> StopPreviewStreamAsync(string macAddress, CancellationToken ct = default)
+        public async Task<bool> StopPreviewStreamAsync(
+            string macAddress,
+            string linkMode = "UNKNOWN",
+            int chipIndex = 0,
+            CancellationToken ct = default)
         {
-            return StopPreviewStreamAsync(macAddress, free: true, ct);
+            return await StopPreviewStreamAsync(macAddress, free: true, linkMode, chipIndex, ct);
+        }
+
+        public Task<bool> StopPreviewStreamAsync(string macAddress, CancellationToken ct)
+        {
+            return StopPreviewStreamAsync(macAddress, free: true, "UNKNOWN", 0, ct);
         }
 
         /// <summary>

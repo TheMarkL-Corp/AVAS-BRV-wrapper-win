@@ -20,9 +20,6 @@ namespace AvasRoutingApp.Tests
         public event Action<IReadOnlyList<AvasDevice>>? DevicesDiscovered;
 
         public Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(CancellationToken ct = default)
-            => DiscoverAvas223DevicesAsync(false, ct);
-
-        public Task<IReadOnlyList<AvasDevice>> DiscoverAvas223DevicesAsync(bool enableVegaDevices = false, CancellationToken ct = default)
         {
             IReadOnlyList<AvasDevice> list = DevicesToReturn.ToList();
             DevicesDiscovered?.Invoke(list);
@@ -56,29 +53,19 @@ namespace AvasRoutingApp.Tests
             ReleasedMacs.Add(macAddress);
         }
 
-        public Task<bool> StartPreviewStreamAsync(string macAddress, string multicastIp, int port, CancellationToken ct = default)
+        public Task<bool> StartPreviewStreamAsync(string macAddress, string multicastIp, int port, string linkMode = "UNKNOWN", int chipIndex = 0, CancellationToken ct = default)
         {
             StartedStreams.Add((macAddress, multicastIp, port));
             return Task.FromResult(true);
         }
 
-        public Task<bool> StopPreviewStreamAsync(string macAddress, CancellationToken ct = default)
+        public Task<bool> StopPreviewStreamAsync(string macAddress, string linkMode = "UNKNOWN", int chipIndex = 0, CancellationToken ct = default)
         {
             StoppedStreams.Add(macAddress);
             return Task.FromResult(true);
         }
 
-        public Task<bool> StartVegaPreviewStreamAsync(string macAddress, string multicastIp, int port, CancellationToken ct = default)
-        {
-            StartedStreams.Add((macAddress, multicastIp, port));
-            return Task.FromResult(true);
-        }
 
-        public Task<bool> StopVegaPreviewStreamAsync(string macAddress, CancellationToken ct = default)
-        {
-            StoppedStreams.Add(macAddress);
-            return Task.FromResult(true);
-        }
 
         public Task<bool> FactoryResetAvpAsync(AvasDevice device, string targetMac, CancellationToken ct = default)
         {
@@ -91,6 +78,11 @@ namespace AvasRoutingApp.Tests
         }
 
         public Task<bool> RebootChipAsync(AvasDevice device, string targetMac, CancellationToken ct = default)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> RebootMcuAsync(AvasDevice device, CancellationToken ct = default)
         {
             return Task.FromResult(true);
         }

@@ -15,13 +15,12 @@ namespace AvasRoutingApp.Tests
             public List<string> AvpResetCalls { get; } = new();
             public List<string> McuResetCalls { get; } = new();
             public List<string> RebootCalls { get; } = new();
+            public List<string> McuRebootCalls { get; } = new();
 
             public string? AllocateMulticastIp(string macAddress) => null;
             public void ReleaseMulticastIp(string macAddress) { }
-            public Task<bool> StartPreviewStreamAsync(string macAddress, string multicastIp, int port, CancellationToken ct = default) => Task.FromResult(true);
-            public Task<bool> StopPreviewStreamAsync(string macAddress, CancellationToken ct = default) => Task.FromResult(true);
-            public Task<bool> StartVegaPreviewStreamAsync(string macAddress, string multicastIp, int port, CancellationToken ct = default) => Task.FromResult(true);
-            public Task<bool> StopVegaPreviewStreamAsync(string macAddress, CancellationToken ct = default) => Task.FromResult(true);
+            public Task<bool> StartPreviewStreamAsync(string macAddress, string multicastIp, int port, string linkMode = "UNKNOWN", int chipIndex = 0, CancellationToken ct = default) => Task.FromResult(true);
+            public Task<bool> StopPreviewStreamAsync(string macAddress, string linkMode = "UNKNOWN", int chipIndex = 0, CancellationToken ct = default) => Task.FromResult(true);
 
             public Task<bool> FactoryResetAvpAsync(AvasDevice device, string targetMac, CancellationToken ct = default)
             {
@@ -38,6 +37,12 @@ namespace AvasRoutingApp.Tests
             public Task<bool> RebootChipAsync(AvasDevice device, string targetMac, CancellationToken ct = default)
             {
                 RebootCalls.Add(targetMac);
+                return Task.FromResult(true);
+            }
+
+            public Task<bool> RebootMcuAsync(AvasDevice device, CancellationToken ct = default)
+            {
+                McuRebootCalls.Add(device.MacAddress);
                 return Task.FromResult(true);
             }
         }
@@ -208,14 +213,14 @@ namespace AvasRoutingApp.Tests
         }
 
         [Fact]
-        public void MaintenanceCardViewModel_VegaDevice_DisablesDiagnostics()
+        public void MaintenanceCardViewModel_NonAvasDevice_DisablesDiagnostics()
         {
             var device = new AvasDevice
             {
                 MacAddress = "00:16:C0:58:9C:1E",
-                DeviceName = "VEGA_1100",
-                VendorId = 192,
-                ProductId = 11,
+                DeviceName = "Generic_Endpoint",
+                VendorId = 999,
+                ProductId = 1,
                 IsTransmitter = true,
                 IsReceiver = false
             };
@@ -272,6 +277,50 @@ namespace AvasRoutingApp.Tests
             Assert.Equal("00:14:95:AA:BB:CD", vm.Chip1Mac);
             Assert.True(vm.IsChip1Available);
             Assert.Contains("Target device switched to RX_UNIT", vm.StatusLog);
+        }
+    [Fact]
+        public async Task ExecuteRebootMcu_AlwaysRoutesThroughChip0Mac()
+        {
+            var controller = new MockDiagnosticsController();
+            var device = new AvasDevice
+            {
+                MacAddress = "00:14:95:11:22:33",
+                CompanionMac = "00:14:95:11:22:34",
+                LinkMode = "DUAL"
+            };
+
+            var vm = new MaintenanceViewModel(device, controller)
+            {
+                ConfirmActionCallback = () => true
+            };
+            vm.SelectedTarget = TargetChipSelection.Chip1; // Even if user selected Chip 1
+
+            await vm.ExecuteRebootMcuAsync();
+
+            Assert.Single(controller.McuRebootCalls);
+            Assert.Equal("00:14:95:11:22:33", controller.McuRebootCalls[0]);
+            Assert.Contains("MCU reboot SUCCESS", vm.StatusLog);
+        }
+
+        [Fact]
+        public async Task ExecuteRebootMcu_WhenUserAborts_DoesNotCallController()
+        {
+            var controller = new MockDiagnosticsController();
+            var device = new AvasDevice
+            {
+                MacAddress = "00:14:95:11:22:33",
+                LinkMode = "SINGLE"
+            };
+
+            var vm = new MaintenanceViewModel(device, controller)
+            {
+                ConfirmActionCallback = () => false
+            };
+
+            await vm.ExecuteRebootMcuAsync();
+
+            Assert.Empty(controller.McuRebootCalls);
+            Assert.Contains("MCU Reboot aborted by user", vm.StatusLog);
         }
     }
 }

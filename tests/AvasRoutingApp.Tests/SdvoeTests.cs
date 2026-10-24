@@ -215,8 +215,8 @@ namespace AvasRoutingApp.Tests
         {
             var mgr = new MulticastIpManager();
 
-            Assert.Equal("224.1.1.1", mgr.StartIp);
-            Assert.Equal("224.1.3.225", mgr.EndIp);
+            Assert.Equal("225.0.0.1", mgr.StartIp);
+            Assert.Equal("225.0.1.254", mgr.EndIp);
             Assert.Equal(5000, mgr.BasePort);
             Assert.Equal(0, mgr.ActiveAllocationCount);
         }
@@ -723,9 +723,52 @@ namespace AvasRoutingApp.Tests
             Assert.True(stopOk);
         }
 
+        [Fact]
+        public async Task StartPreviewStreamAsync_SingleLink_UsesNativeBlueRiverStream1Scaler()
+        {
+            var mockTelnet = new MockTelnetServer();
+            int port = mockTelnet.Start();
+            var client = new SdvoeClient("127.0.0.1", telnetPort: port, restPort: 8080);
+
+            // Act with linkMode = "SINGLE"
+            bool started = await client.StartPreviewStreamAsync("74fe4887fdf4", "225.0.0.10", 5004, linkMode: "SINGLE", chipIndex: 0);
+
+            // Verify commands sent to telnet
+            Assert.True(started);
+            Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("stream HDMI 1 enable true address 225.0.0.10"));
+            Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("stream HDMI 1 auto_stop true"));
+            mockTelnet.Stop();
+        }
+
+        [Fact]
+        public async Task StopPreviewStreamAsync_IssuesDeterministicAddressNullification()
+        {
+            var mockTelnet = new MockTelnetServer();
+            int port = mockTelnet.Start();
+            var client = new SdvoeClient("127.0.0.1", telnetPort: port, restPort: 8080);
+
+            bool stopped = await client.StopPreviewStreamAsync("74fe4887fdf4", linkMode: "SINGLE", chipIndex: 0);
+
+            Assert.True(stopped);
+            Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("stream HDMI 1 enable false address 0.0.0.0"));
+            Assert.Contains(mockTelnet.ReceivedCommands, c => c.Contains("stop 74fe4887fdf4:thumbnail:0 free"));
+            mockTelnet.Stop();
+        }
+
         #endregion
 
         #region Helper: Test Telnet Server
+
+        private class MockTelnetServer : TestTelnetServer
+        {
+            public MockTelnetServer(bool handshakeSuccess = true) : base(handshakeSuccess) { }
+            public new int Start()
+            {
+                base.Start();
+                return Port;
+            }
+            public void Stop() => Dispose();
+        }
 
         private class TestTelnetServer : IDisposable
         {
@@ -837,6 +880,11 @@ namespace AvasRoutingApp.Tests
                     command.StartsWith("list multicast", StringComparison.OrdinalIgnoreCase))
                 {
                     return "{\"status\":\"SUCCESS\",\"request_id\":null,\"result\":{\"status\":\"ok\"},\"error\":null}";
+                }
+
+                if (command.StartsWith("send ", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "{\"status\":\"ERROR\",\"request_id\":null,\"result\":null,\"error\":{\"reason\":\"INVALID_COMMAND\",\"message\":\"Device does not support UART\"}}";
                 }
 
                 return "{\"status\":\"SUCCESS\",\"request_id\":null,\"result\":null,\"error\":null}";
