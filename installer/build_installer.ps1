@@ -11,7 +11,7 @@
 #>
 
 param(
-    [string]$Version = "1.6.0",
+    [string]$Version = "1.8.0",
     [string]$Configuration = "Release"
 )
 
