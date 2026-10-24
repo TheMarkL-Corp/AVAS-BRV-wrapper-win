@@ -134,20 +134,94 @@ namespace E2ETests.Harness
             return resp.Contains("\"status\":\"SUCCESS\"", StringComparison.OrdinalIgnoreCase);
         }
 
-        public async Task<bool> StartPreviewStreamAsync(string mac, string multicastIp, CancellationToken ct = default)
+        public async Task<bool> StartSingleLinkStreamAsync(string macAddress, string multicastIp, int port = 5004, int streamIndex = 1, CancellationToken ct = default)
         {
+            if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
+            string cmdEnable = $"set {macAddress} stream HDMI {streamIndex} enable true address {multicastIp}";
+            string resp1 = await SendTelnetCommandAsync(cmdEnable, ct);
+
+            string cmdAutoStop = $"set {macAddress} stream HDMI {streamIndex} auto_stop true";
+            string resp2 = await SendTelnetCommandAsync(cmdAutoStop, ct);
+
+            return resp1.Contains("\"status\":\"SUCCESS\"", StringComparison.OrdinalIgnoreCase) || resp1.Contains("SUCCESS");
+        }
+
+        public async Task<bool> StopSingleLinkStreamAsync(string macAddress, int streamIndex = 1, CancellationToken ct = default)
+        {
+            if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
+            string cmd1 = $"set {macAddress} stream HDMI {streamIndex} enable false address 0.0.0.0";
+            await SendTelnetCommandAsync(cmd1, ct);
+
+            string cmd0 = $"set {macAddress} stream HDMI 0 enable false address 0.0.0.0";
+            await SendTelnetCommandAsync(cmd0, ct);
+
+            return true;
+        }
+
+        public async Task<bool> StartPreviewStreamAsync(
+            string mac,
+            string multicastIp,
+            int port,
+            string linkMode = "UNKNOWN",
+            int chipIndex = 0,
+            CancellationToken ct = default)
+        {
+            if (string.Equals(linkMode, "SINGLE", StringComparison.OrdinalIgnoreCase))
+            {
+                return await StartSingleLinkStreamAsync(mac, multicastIp, port, streamIndex: 1, ct);
+            }
+
             if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
             string cmd = $"start {mac}:thumbnail:0 {multicastIp}";
             string resp = await SendTelnetCommandAsync(cmd, ct);
             return resp.Contains("\"status\":\"SUCCESS\"", StringComparison.OrdinalIgnoreCase);
         }
 
-        public async Task<bool> StopPreviewStreamAsync(string mac, bool free = true, CancellationToken ct = default)
+        public Task<bool> StartPreviewStreamAsync(string mac, string multicastIp, int port, CancellationToken ct)
         {
+            return StartPreviewStreamAsync(mac, multicastIp, port, "UNKNOWN", 0, ct);
+        }
+
+        public Task<bool> StartPreviewStreamAsync(string mac, string multicastIp, CancellationToken ct = default)
+        {
+            return StartPreviewStreamAsync(mac, multicastIp, 6792, "UNKNOWN", 0, ct);
+        }
+
+        public async Task<bool> StopPreviewStreamAsync(
+            string mac,
+            bool free,
+            string linkMode,
+            int chipIndex = 0,
+            CancellationToken ct = default)
+        {
+            if (string.Equals(linkMode, "SINGLE", StringComparison.OrdinalIgnoreCase))
+            {
+                await StopSingleLinkStreamAsync(mac, streamIndex: 1, ct);
+            }
+
             if (!_isTelnetAuthenticated) await ConnectTelnetAsync(ct);
             string cmd = free ? $"stop {mac}:thumbnail:0 free" : $"stop {mac}:thumbnail:0";
             string resp = await SendTelnetCommandAsync(cmd, ct);
             return resp.Contains("\"status\":\"SUCCESS\"", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public Task<bool> StopPreviewStreamAsync(string mac, bool free, CancellationToken ct = default)
+        {
+            return StopPreviewStreamAsync(mac, free, "UNKNOWN", 0, ct);
+        }
+
+        public Task<bool> StopPreviewStreamAsync(
+            string mac,
+            string linkMode = "UNKNOWN",
+            int chipIndex = 0,
+            CancellationToken ct = default)
+        {
+            return StopPreviewStreamAsync(mac, free: true, linkMode, chipIndex, ct);
+        }
+
+        public Task<bool> StopPreviewStreamAsync(string mac, CancellationToken ct)
+        {
+            return StopPreviewStreamAsync(mac, free: true, "UNKNOWN", 0, ct);
         }
 
         public static IReadOnlyList<AvasDevice> ParseDevicesJson(string json)
