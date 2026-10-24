@@ -23,3 +23,12 @@ releases/AVAS-Routing-SW-Installer*
 ## Agent Skills & Local Cache
 .agents/
 scratch/
+
+## Internal Artifacts & Non-Customer Documentation
+.superpowers/
+docs/superpowers/
+AG_learnings/
+LOOP_TEST_RESULTS.md
+**/LOOP_TEST_RESULTS.md
+ORIGINAL_REQUEST.md
+TEST_*.md
